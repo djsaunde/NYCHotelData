@@ -1,3 +1,5 @@
+from __future__ import division
+
 '''
 Helper method for the .ipynb notebook(s) which contain the experiments done with the NYC hotel and taxicab trip data.
 
@@ -11,7 +13,144 @@ from sklearn.metrics import silhouette_score
 
 import numpy as np
 import matplotlib.pyplot as plt
+import math, itertools
 
+
+# tolerance level for intersection point
+EPS = 0.000001
+
+def get_intersection_point(centers, radii):
+    '''
+    Given four centers and radii, each specifying a circle, calculate their intersection point, if it exists. It should be
+    unique.
+    
+    input:
+        centers: coordinates in the (x, y) plane specifying where each of the circles' centers lie
+        radii: the length of the circles' radii
+        
+    output:
+        The unique intersection point of the four circles in the (x, y) plane, if it exists. If not, we output None.
+    '''
+    
+    # store x and y dimensions and radius for easy-to-read code 
+    x0, x1, x2, x3 = centers[0][0], centers[1][0], centers[2][0], centers[3][0]
+    y0, y1, y2, y3 = centers[0][1], centers[1][1], centers[2][1], centers[3][1]
+    r0, r1, r2, r3 = radii[0], radii[1], radii[2], radii[3]
+    
+    # store distances between circle centers (for circle 0 and 1)
+    dx = x1 - x0
+    dy = y1 - y0
+        
+    # determine the straight-line distance between the two centers
+    dist = math.sqrt(dy ** 2 + dx ** 2)
+        
+    # check for solutions for the 2-circle case (do these circles intersect or does one contain the other?)
+    if dist > r0 + r1:
+        return None
+    if dist < abs(r0 - r1):
+        return None
+    
+    # calculate distance from the line through the circle intersection points and the line between the circle centers
+    a = (r0 ** 2 - r1 ** 2 + dist ** 2) / (2.0 * dist)
+    
+    # determine coordinates of this point
+    point_x = x0 + dx * (a / dist)
+    point_y = y0 + dy * (a / dist)
+    
+    # determine distance from this point to either of the intersection points
+    h = math.sqrt(r0 ** 2 - a ** 2)
+    
+    # determine the offsets of the intersection points from this point
+    rx = -dy * (h / dist)
+    ry = dx * (h / dist)
+    
+    # determine the absolute intersection points
+    intersection1_x = point_x + rx
+    intersection2_x = point_x - rx
+    intersection1_y = point_y + ry
+    intersection2_y = point_y - ry
+    
+    # determine if circle 3 intersects at either of the above intersection points
+    dx = intersection1_x - x2
+    dy = intersection1_y - y2
+    d1 = math.sqrt(dy ** 2 + dx ** 2)
+    
+    dx = intersection2_x - x2
+    dy = intersection2_y - y2
+    d2 = math.sqrt(dy ** 2 + dx ** 2)
+    
+    # determine if circle 4 intersects at either of the above intersection points
+    dx = intersection1_x - x3
+    dy = intersection1_y - y3
+    d3 = math.sqrt(dy ** 2 + dx ** 2)
+    
+    dx = intersection2_x - x3
+    dy = intersection2_y - y3
+    d4 = math.sqrt(dy ** 2 + dx ** 2)
+        
+    # check for intersection
+    if abs(d1 - r2) < EPS and abs(d3 - r3) < EPS:
+        return intersection1_x, intersection1_y
+    elif abs(d2 - r2) < EPS and abs(d4 - r3) < EPS:
+        return intersection2_x, intersection2_y
+    return None  
+
+def get_hotel_coords(attr_coords, distances):
+    '''
+    Function which receives an unordered list of attraction coordinates and corresponding distances, and searches through all
+    permutations of these in order to find the correct correspondence (based on whether or not there is an intersection point).
+    
+    input:
+        attr_coords: the latitude, longitude pair for each of the four attractions specified by the data provider
+        distances: the distances (in miles) from each attraction to a given hotel
+        
+    output:
+        The coordinates (latitude, longitude) of the hotel in question.
+    '''
+    
+    # try each permutation of the distances
+    for perm in itertools.permutations(distances):
+        # calculate intersection point
+        intersection = get_intersection_point(attr_coords, perm)
+        # could come back as NoneType; we check for this here
+        if intersection:
+            return intersection
+        
+def get_radius(cx, cy, px, py):
+    '''
+    Calculates the radius of a circle given its center (location of a hotel) and a point on its perimeter.
+    
+    input:
+        cx, cy: (x, y) coordinates of the center
+        px, py: (x, y) perimeter coordinates
+        
+    output:
+        The radius of the circle.
+    '''
+    
+    dx = px - cx
+    dy = py - cy
+    return math.sqrt(dx ** 2 + dy ** 2)
+
+def coords_to_distance_miles(start_coords, end_coords):
+    '''
+    Given coordinates of two points, calculate the distance between them in miles.
+    
+    input:
+        start_coords: tuple of latitude, longitude coordinates for starting point
+        end_coords: tuple of latitude, longitude coordinates for destination point
+    '''
+    
+    # variables for computing coordinates -> miles
+    R = 6371e3
+    phi_1, phi_2 = math.radians(start_coords[0]), math.radians(end_coords[0])
+    delta_phi = abs(math.radians(start_coords[0] - end_coords[0]))
+    delta_lambda = abs(math.radians(start_coords[1] - end_coords[1]))
+        
+    # computing distance in miles
+    a = (math.sin(delta_phi / 2) ** 2) + math.sin(phi_1) * math.sin(phi_2) * (math.sin(delta_lambda / 2) ** 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return R * c
 
 def get_destinations(pickup_coords, dropoff_coords, hotel_coords, distance, unit):
     '''
