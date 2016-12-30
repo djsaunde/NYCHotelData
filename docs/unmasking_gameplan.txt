@@ -1,0 +1,15 @@
+Unmasking Hotel Identities - Approach
+
+- We need to load up the distances and hotel IDs spreadsheet, as well as the
+hotel names, addresses, and distances spreadsheet.
+
+- The end goal will be to create a new spreadsheet will columns for hotel name,
+hotel address, and corresponding hotel ID.
+
+- For each row of the (ID, distances) spreadsheet, we will look for the row in
+the (name, address, distances) spreadsheet which minimizes the absolute value
+difference in distances.
+
+- In the new (name, address, ID) spreadsheet, we will create an entry including
+the name and address of the matching row, and the ID of the row which we are
+trying to match.
