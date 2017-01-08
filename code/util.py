@@ -1,7 +1,7 @@
 from __future__ import division
 
 '''
-Helper method for the .ipynb notebook(s) which contain the experiments done with the NYC hotel and taxicab trip data.
+Helper methods for the .ipynb notebook(s) which contain the experiments done with the NYC hotel and taxicab trip data.
 
 author: Dan Saunders (djsaunde@umass.edu)
 '''
@@ -139,6 +139,9 @@ def coords_to_distance_miles(start_coords, end_coords):
     input:
         start_coords: tuple of latitude, longitude coordinates for starting point
         end_coords: tuple of latitude, longitude coordinates for destination point
+        
+    output:
+        The distance between the two points in miles.
     '''
     
     # variables for computing coordinates -> miles
@@ -154,7 +157,7 @@ def coords_to_distance_miles(start_coords, end_coords):
 
 def get_destinations(pickup_coords, dropoff_coords, hotel_coords, distance, unit):
     '''
-    A function which, given the latitude, longitude coordinates, returns an 
+    A function which, given (latitude, longitude) coordinates, returns an 
     numpy array of (latitude, longitude) pairs such that each pair corresponds 
     to the destination of a taxicab ride orginating from within the distance
     specified in the units specified.
@@ -178,14 +181,8 @@ def get_destinations(pickup_coords, dropoff_coords, hotel_coords, distance, unit
     # get number of taxicab trips in dataset N
     N = len(pickup_coords)
     
-    print '...getting nearby pickup locations and storing their destinations\n'
-
     # loop through each pickup long, lat pair
     for idx, pickup in enumerate(pickup_coords):
-        
-        # print progress to console periodically
-        if idx % 100000 == 0:
-            print 'progress: (' + str(idx) + ' / ' + str(N) + ')'
         
         # branch based off of unit of distance
         if unit == 'miles':
@@ -194,15 +191,68 @@ def get_destinations(pickup_coords, dropoff_coords, hotel_coords, distance, unit
         elif unit == 'meters':
             # get distance in meters
             cur_dist = vincenty(hotel_coords, pickup).meters
+        elif unit == 'feet':
+            # get distance in feet
+            cur_dist = vincenty(hotel_coords, pickup).feet
         else:
             raise NotImplementedError
                         
         # check for satisfaction of criterion (and throw away big outliers for visualization)  
         if cur_dist <= distance and vincenty(hotel_coords, dropoff_coords[idx]).miles < 50.0:
             # add dropoff coordinates to list if it meets the [unit] [distance] criterion
-            destinations.append(dropoff_coords[idx])
-            
-    print 'progress: (' + str(N) + ' / ' + str(N) + ')\n'
+            destinations.append((round(cur_dist), dropoff_coords[idx][0], dropoff_coords[idx][1]))
+    
+    return np.array(destinations).T
+
+
+def get_starting_points(pickup_coords, dropoff_coords, hotel_coords, distance, unit):
+    '''
+    A function which, given (latitude, longitude) coordinates, returns an 
+    numpy array of (latitude, longitude) pairs such that each pair corresponds 
+    to the starting point of a taxicab ride ending within the distance
+    specified in the units specified.
+    
+    input:
+        pickup_coords: tuple of (pickup_lats, pickup_longs)
+        dropoff_coords: typle of (dropoff_lats, dropoff_longs)
+        hotel_coords: (latitude, longitude) of the hotel we are interested 
+            in as the ending point
+        distance: a float specifying the distance from the hotel which we 
+            consider to be "close enough"
+        unit: the unit of the distance parameter
+    
+    output:
+        A numpy array of shape (2, M), where M is equal to the number of 
+        taxicab trips which satisfy the distance criterion.
+    '''
+    
+    # define variable to hold taxicab destinations starting from hotel
+    starting_points = []
+    # get number of taxicab trips in dataset N
+    N = len(dropoff_coords)
+    
+    print '...getting nearby pickup locations and storing their destinations\n'
+
+    # loop through each pickup long, lat pair
+    for idx, dropoff in enumerate(dropoff_coords):
+        
+        # branch based off of unit of distance
+        if unit == 'miles':
+            # get distance in miles
+            cur_dist = vincenty(hotel_coords, dropoff).miles
+        elif unit == 'meters':
+            # get distance in meters
+            cur_dist = vincenty(hotel_coords, dropoff).meters
+        elif unit == 'feet':
+            # get distance in feet
+            cur_dist = vincenty(hotel_coords, dropoff).feet
+        else:
+            raise NotImplementedError
+                        
+        # check for satisfaction of criterion (and throw away big outliers for visualization)  
+        if cur_dist <= distance and vincenty(hotel_coords, pickup_coords[idx]).miles < 50.0:
+            # add dropoff coordinates to list if it meets the [unit] [distance] criterion
+            destinations.append(pickup_coords[idx])
     
     return np.array(destinations).T
 
