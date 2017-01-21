@@ -87,13 +87,61 @@ def get_intersection_point(centers, radii):
     dx = intersection2_x - x3
     dy = intersection2_y - y3
     d4 = math.sqrt(dy ** 2 + dx ** 2)
-        
+    
     # check for intersection
     if abs(d1 - r2) < EPS and abs(d3 - r3) < EPS:
         return intersection1_x, intersection1_y
     elif abs(d2 - r2) < EPS and abs(d4 - r3) < EPS:
         return intersection2_x, intersection2_y
-    return None  
+    return None
+
+def other_vars_same(prop_row, manhattan_row):
+    '''
+    Returns true if all identifying columns are the same. This is to further ensure that we've found the best
+    possible match for the hotel identity unmasking.
+    
+    input:
+        prop_row: The first row.
+        manhattan_row: The second row.
+        
+    output:
+        True if all columns which should be the same, are.
+    '''
+    # checking that the rows match on the Operation column
+    row1_op, row2_op = prop_row['Operation'], manhattan_row['Operation']
+    if not (row1_op == 1 and row2_op == 'Chain Management' or row1_op == 2 and row2_op == 'Franchise' or row1_op == 3 and row2_op == 'Independent'):
+        return False
+    
+    # checking that the rows match on the Scale column
+    row1_scale, row2_scale = prop_row['Scale'], manhattan_row['Scale']
+    if not (row1_scale == 1 and row2_scale == 'Luxury Chains' or row1_scale == 2 and row2_scale == 'Upper Upscale Chains' or row1_scale == 3 and row2_scale == 'Upscale Chains' or row1_scale == 4 and row2_scale == 'Upper Midscale Chains' or row1_scale == 5 and row2_scale == 'Midscale Chains' or row1_scale == 6 and row2_scale == 'Economy Chains' or row1_scale == 7 and row2_scale == 'Independents'):
+        return False
+    
+    # checking that the rows match on the Class column
+    row1_class, row2_class = prop_row['Class'], manhattan_row['Class']
+    if not (row1_class == 1 and row2_class == 'Luxury Class' or row1_class == 2 and row2_class == 'Upper Upscale Class' or row1_class == 3 and row2_class == 'Upscale Class' or row1_class == 4 and row2_class == 'Upper Midscale Class' or row1_class == 5 and row2_class == 'Midscale Class' or row1_class == 6 and row2_class == 'Economy Class'):
+        return False
+    
+    # checking that the rows match on number of rooms / size code columns
+    row1_size, row2_size = prop_row['SizeCode'], manhattan_row['Rooms']
+    if not (row1_size == 1 and row2_size < 75 or row1_size == 2 and row2_size >= 75 and row2_size <= 149 or row1_size == 3 and row2_size >= 150 and row2_size <= 299 or row1_size == 4 and row2_size >= 300 and row2_size <= 500 or row1_size == 5 and row2_size > 500):
+        return False
+    
+    return True
+
+def euclidean_miles(point1, point2):
+    '''
+    A function which, given two coordinates in UTM, returns the Euclidean distance between the
+    two in miles.
+    
+    input:
+        point1: The first point.
+        point2: The second point.
+        
+    output:
+        The Euclidean distance between point1 and point2.
+    '''
+    return math.sqrt(((point1[0] - point2[0]) ** 2) + ((point1[1] - point2[1]) ** 2)) * 0.000621371
 
 def get_hotel_coords(attr_coords, distances):
     '''
