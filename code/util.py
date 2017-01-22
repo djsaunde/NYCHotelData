@@ -127,6 +127,12 @@ def other_vars_same(prop_row, manhattan_row):
     if not (row1_size == 1 and row2_size < 75 or row1_size == 2 and row2_size >= 75 and row2_size <= 149 or row1_size == 3 and row2_size >= 150 and row2_size <= 299 or row1_size == 4 and row2_size >= 300 and row2_size <= 500 or row1_size == 5 and row2_size > 500):
         return False
     
+    # checking that the rows match on year opened / date open
+    if not math.isnan(prop_row['OpenDate']) and manhattan_row['Open Date'] != '    -  -  ':
+        row1_year, row2_year = int(prop_row['OpenDate']), int(manhattan_row['Open Date'][0:4])
+        if not row1_year == row2_year:
+            return False
+    
     return True
 
 def euclidean_miles(point1, point2):
