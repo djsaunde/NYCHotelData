@@ -95,7 +95,7 @@ def get_intersection_point(centers, radii):
         return intersection2_x, intersection2_y
     return None
 
-def other_vars_same(prop_row, manhattan_row):
+def other_vars_same(prop_row, manhattan_row, capacity):
     '''
     Returns true if all identifying columns are the same. This is to further ensure that we've found the best
     possible match for the hotel identity unmasking.
@@ -103,14 +103,21 @@ def other_vars_same(prop_row, manhattan_row):
     input:
         prop_row: The first row.
         manhattan_row: The second row.
+        capacity: The capacity of the hotel from row prop_row (Came from the "capacities by id" workbook).
         
     output:
-        True if all columns which should be the same, are.
+        True if all constraints which should be satisfied, are.
     '''
+    
     # checking that the rows match on the Operation column
     row1_op, row2_op = prop_row['Operation'], manhattan_row['Operation']
     if not (row1_op == 1 and row2_op == 'Chain Management' or row1_op == 2 and row2_op == 'Franchise' or row1_op == 3 and row2_op == 'Independent'):
+        if prop_row['Share ID'] == 94971:
+            print row1_op, row2_op
         return False
+    
+    if prop_row['Share ID'] == 94971:
+            print row1_op, row2_op
     
     # checking that the rows match on the Scale column
     row1_scale, row2_scale = prop_row['Scale'], manhattan_row['Scale']
@@ -128,11 +135,16 @@ def other_vars_same(prop_row, manhattan_row):
         return False
     
     # checking that the rows match on year opened / date open
-    if not math.isnan(prop_row['OpenDate']) and manhattan_row['Open Date'] != '    -  -  ':
-        row1_year, row2_year = int(prop_row['OpenDate']), int(manhattan_row['Open Date'][0:4])
-        if not row1_year == row2_year:
-            return False
+    # if not math.isnan(prop_row['OpenDate']) and manhattan_row['Open Date'] != '    -  -  ':
+    #    row1_year, row2_year = int(prop_row['OpenDate']), int(manhattan_row['Open Date'][0:4])
+    #    if not row1_year == row2_year:
+    #        return False
     
+    # checking that the capacity of the masked hotel matches the capacity of the hotel from the given row
+    # if not int(capacity) == manhattan_row['Rooms']:
+    #    return False
+    
+    # the rows match on all constraints; therefore, return True
     return True
 
 def euclidean_miles(point1, point2):
