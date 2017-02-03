@@ -112,13 +112,8 @@ def other_vars_same(prop_row, manhattan_row, capacity):
     # checking that the rows match on the Operation column
     row1_op, row2_op = prop_row['Operation'], manhattan_row['Operation']
     if not (row1_op == 1 and row2_op == 'Chain Management' or row1_op == 2 and row2_op == 'Franchise' or row1_op == 3 and row2_op == 'Independent'):
-        if prop_row['Share ID'] == 94971:
-            print row1_op, row2_op
         return False
-    
-    if prop_row['Share ID'] == 94971:
-            print row1_op, row2_op
-    
+
     # checking that the rows match on the Scale column
     row1_scale, row2_scale = prop_row['Scale'], manhattan_row['Scale']
     if not (row1_scale == 1 and row2_scale == 'Luxury Chains' or row1_scale == 2 and row2_scale == 'Upper Upscale Chains' or row1_scale == 3 and row2_scale == 'Upscale Chains' or row1_scale == 4 and row2_scale == 'Upper Midscale Chains' or row1_scale == 5 and row2_scale == 'Midscale Chains' or row1_scale == 6 and row2_scale == 'Economy Chains' or row1_scale == 7 and row2_scale == 'Independents'):
