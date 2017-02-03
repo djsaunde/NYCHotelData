@@ -13,7 +13,7 @@ from sklearn.metrics import silhouette_score
 
 import numpy as np
 import matplotlib.pyplot as plt
-import math, itertools
+import math, itertools, timeit
 
 
 # tolerance level for intersection point
@@ -216,7 +216,7 @@ def coords_to_distance_miles(start_coords, end_coords):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return R * c
 
-def get_destinations(pickup_coords, dropoff_coords, hotel_coords, distance, unit):
+def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coords, distance, unit):
     '''
     A function which, given (latitude, longitude) coordinates, returns an 
     numpy array of (latitude, longitude) pairs such that each pair corresponds 
@@ -225,7 +225,12 @@ def get_destinations(pickup_coords, dropoff_coords, hotel_coords, distance, unit
     
     input:
         pickup_coords: tuple of (pickup_lats, pickup_longs)
-        dropoff_coords: typle of (dropoff_lats, dropoff_longs)
+        dropoff_coords: tuple of (dropoff_lats, dropoff_longs)
+        pickup_times: array of datetimes for beginning of taxicab trips
+        dropoff_times: array of datetimes for end of taxicab trips
+        passenger_counts: the number of passengers per taxicab trip
+        trip_distances: the distance in miles per taxicab trip
+        fare_amounts: the dollar cost per taxicab trip
         hotel_coords: (latitude, longitude) of the hotel we are interested 
             in as the starting point
         distance: a float specifying the distance from the hotel which we 
@@ -237,10 +242,11 @@ def get_destinations(pickup_coords, dropoff_coords, hotel_coords, distance, unit
         taxicab trips which satisfy the distance criterion.
     '''
     
+    # begin timer
+    start_time = timeit.default_timer()
+    
     # define variable to hold taxicab destinations starting from hotel
     destinations = []
-    # get number of taxicab trips in dataset N
-    N = len(pickup_coords)
     
     # loop through each pickup long, lat pair
     for idx, pickup in enumerate(pickup_coords):
@@ -261,7 +267,11 @@ def get_destinations(pickup_coords, dropoff_coords, hotel_coords, distance, unit
         # check for satisfaction of criterion (and throw away big outliers for visualization)  
         if cur_dist <= distance and vincenty(hotel_coords, dropoff_coords[idx]).miles < 50.0:
             # add dropoff coordinates to list if it meets the [unit] [distance] criterion
-            destinations.append((round(cur_dist), dropoff_coords[idx][0], dropoff_coords[idx][1]))
+            destinations.append((round(cur_dist), dropoff_coords[idx][0], dropoff_coords[idx][1], pickup_times[idx], dropoff_times[idx], passenger_counts[idx], trip_distances[idx], fare_amounts[idx]))
+            
+    # end timer and report results
+    end_time = timeit.default_timer() - start_time
+    print '( time elapsed:', end_time, ')'
     
     return np.array(destinations).T
 
@@ -316,6 +326,59 @@ def get_starting_points(pickup_coords, dropoff_coords, hotel_coords, distance, u
             destinations.append(pickup_coords[idx])
     
     return np.array(destinations).T
+
+
+def log_progress(sequence, every=None, size=None):
+    '''
+    This method allows me to visualize progress in loops, inline in Jupyter notebooks.
+    '''
+    from ipywidgets import IntProgress, HTML, VBox
+    from IPython.display import display
+
+    is_iterator = False
+    if size is None:
+        try:
+            size = len(sequence)
+        except TypeError:
+            is_iterator = True
+    if size is not None:
+        if every is None:
+            if size <= 200:
+                every = 1
+            else:
+                every = int(size / 200)     # every 0.5%
+    else:
+        assert every is not None, 'sequence is iterator, set every'
+
+    if is_iterator:
+        progress = IntProgress(min=0, max=1, value=1)
+        progress.bar_style = 'info'
+    else:
+        progress = IntProgress(min=0, max=size, value=0)
+    label = HTML()
+    box = VBox(children=[label, progress])
+    display(box)
+
+    index = 0
+    try:
+        for index, record in enumerate(sequence, 1):
+            if index == 1 or index % every == 0:
+                if is_iterator:
+                    label.value = '{index} / ?'.format(index=index)
+                else:
+                    progress.value = index
+                    label.value = u'{index} / {size}'.format(
+                        index=index,
+                        size=size
+                    )
+            yield record
+    except:
+        progress.bar_style = 'danger'
+        raise
+    else:
+        progress.bar_style = 'success'
+        progress.value = index
+        label.value = str(index or '?')
 
 
 def plot_destinations(destinations, append_to_title):
