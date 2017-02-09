@@ -10,14 +10,19 @@ author: Dan Saunders (djsaunde@umass.edu)
 from geopy.distance import vincenty
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
+from joblib import Parallel, delayed
 
 import numpy as np
 import matplotlib.pyplot as plt
-import math, itertools, timeit
+import math, itertools, timeit, multiprocessing
 
 
 # tolerance level for intersection point
 EPS = 0.000001
+
+# get number of CPU cores on this machine
+num_cores = multiprocessing.cpu_count()
+
 
 def get_intersection_point(centers, radii):
     '''
@@ -177,6 +182,7 @@ def get_hotel_coords(attr_coords, distances):
         if intersection:
             return intersection
         
+        
 def get_radius(cx, cy, px, py):
     '''
     Calculates the radius of a circle given its center (location of a hotel) and a point on its perimeter.
@@ -192,6 +198,7 @@ def get_radius(cx, cy, px, py):
     dx = px - cx
     dy = py - cy
     return math.sqrt(dx ** 2 + dy ** 2)
+
 
 def coords_to_distance_miles(start_coords, end_coords):
     '''
@@ -216,7 +223,66 @@ def coords_to_distance_miles(start_coords, end_coords):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return R * c
 
-def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coords, distance, unit):
+
+def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coords, distance):
+    '''
+    A function which, given (latitude, longitude) coordinates, returns an 
+    numpy array of (latitude, longitude) pairs such that each pair corresponds 
+    to the destination of a taxicab ride orginating from within the distance
+    specified in the units specified.
+    
+    input:
+        pickup_coords: tuple of (pickup_lats, pickup_longs)
+        dropoff_coords: tuple of (dropoff_lats, dropoff_longs)
+        pickup_times: array of datetimes for beginning of taxicab trips
+        dropoff_times: array of datetimes for end of taxicab trips
+        passenger_counts: the number of passengers per taxicab trip
+        trip_distances: the distance in miles per taxicab trip
+        fare_amounts: the dollar cost per taxicab trip
+        hotel_coords: (latitude, longitude) of the hotel we are interested 
+            in as the starting point
+        distance: a float specifying the distance from the hotel which we 
+            consider to be "close enough"
+    
+    output:
+        A numpy array of shape (2, M), where M is equal to the number of 
+        taxicab trips which satisfy the distance criterion.
+    '''
+    # begin timer
+    start_time = timeit.default_timer()
+    
+    # define variable to hold taxicab destinations starting from hotel
+    destinations = []
+    
+    # pack up inputs
+    inputs = zip(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts)
+        
+    # run 'get_destination()' in parallel for all taxicab trips
+    satisfying_trips = Parallel(n_jobs=2)(delayed(get_destination)(*inp, hotel_coords=hotel_coords, distance=distance) for inp in log_progress(inputs, every=10000))
+        
+    # end timer and report results
+    end_time = timeit.default_timer() - start_time
+    print '( time elapsed:', end_time, ')', '\n'
+    
+    return np.array([ trip for trip in satisfying_trips if trip is not None ]).T
+
+
+def get_destination(pickup, dropoff, pickup_time, dropoff_time, passenger_count, trip_distance, fare_amount, hotel_coords, distance):
+    '''
+    Helper function for 'get_destinations()'.
+    '''
+    # get distance in feet
+    cur_dist = vincenty(hotel_coords, pickup).feet
+                        
+    # check for satisfaction of criterion
+    if cur_dist <= distance:
+        # add dropoff coordinates to list if it meets the [unit] [distance] criterion
+        return (round(cur_dist), dropoff_coords[idx][0], dropoff_coords[idx][1], pickup_times[idx], dropoff_times[idx], passenger_counts[idx], trip_distances[idx], fare_amounts[idx])
+    
+    return None
+
+
+def get_destinations2(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coords, distance, unit):
     '''
     A function which, given (latitude, longitude) coordinates, returns an 
     numpy array of (latitude, longitude) pairs such that each pair corresponds 
@@ -238,42 +304,39 @@ def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times,
         unit: the unit of the distance parameter
     
     output:
-        A numpy array of shape (2, M), where M is equal to the number of 
-        taxicab trips which satisfy the distance criterion.
+        A numpy array of shape (8, M) where M is equal to the number of 
+        taxicab trips which satisfy the distance criterion, and we have
+        chosen 8 fields of interest to save as relevant data.
     '''
     
-    # begin timer
     start_time = timeit.default_timer()
     
-    # define variable to hold taxicab destinations starting from hotel
-    destinations = []
-    
-    # loop through each pickup long, lat pair
-    for idx, pickup in enumerate(pickup_coords):
+    # branch based on distance measure
+    if unit == 'miles':
+        # get distances in miles
+        dists = np.array([ vincenty(hotel_coords, pickup).miles for pickup in log_progress(pickup_coords, every=10000) ])
         
-        # branch based off of unit of distance
-        if unit == 'miles':
-            # get distance in miles
-            cur_dist = vincenty(hotel_coords, pickup).miles
-        elif unit == 'meters':
-            # get distance in meters
-            cur_dist = vincenty(hotel_coords, pickup).meters
-        elif unit == 'feet':
-            # get distance in feet
-            cur_dist = vincenty(hotel_coords, pickup).feet
-        else:
-            raise NotImplementedError
-                        
-        # check for satisfaction of criterion (and throw away big outliers for visualization)  
-        if cur_dist <= distance and vincenty(hotel_coords, dropoff_coords[idx]).miles < 50.0:
-            # add dropoff coordinates to list if it meets the [unit] [distance] criterion
-            destinations.append((round(cur_dist), dropoff_coords[idx][0], dropoff_coords[idx][1], pickup_times[idx], dropoff_times[idx], passenger_counts[idx], trip_distances[idx], fare_amounts[idx]))
-            
+    elif unit == 'meters':
+        # get distances in meters
+        dists = np.array([ vincenty(hotel_coords, pickup).meters for pickup in log_progress(pickup_coords, every=10000) ])
+        
+    elif unit == 'feet':
+        # get distances in feet
+        dists = np.array([ vincenty(hotel_coords, pickup).feet for pickup in log_progress(pickup_coords, every=10000) ])
+        
+    else:
+        raise NotImplementedError
+                
+    # get indices of distances which satisfy the [unit] [distance] criterion
+    sat_indices = np.where(dists <= distance)
+    
     # end timer and report results
     end_time = timeit.default_timer() - start_time
-    print '( time elapsed:', end_time, ')'
     
-    return np.array(destinations).T
+    print '( time elapsed:', end_time, ')', '\n'
+    
+    # use the satisfying indices to return only the relevant trips
+    return np.array([ (dists[idx], dropoff_coords[idx][0], dropoff_coords[idx][1], pickup_times[idx], dropoff_times[idx], passenger_counts[idx], trip_distances[idx], fare_amounts[idx]) for idx in sat_indices ]).T
 
 
 def get_starting_points(pickup_coords, dropoff_coords, hotel_coords, distance, unit):
@@ -297,15 +360,14 @@ def get_starting_points(pickup_coords, dropoff_coords, hotel_coords, distance, u
         taxicab trips which satisfy the distance criterion.
     '''
     
+    # begin timer
+    start_time = timeit.default_timer()
+    
     # define variable to hold taxicab destinations starting from hotel
     starting_points = []
-    # get number of taxicab trips in dataset N
-    N = len(dropoff_coords)
     
-    print '...getting nearby pickup locations and storing their destinations\n'
-
     # loop through each pickup long, lat pair
-    for idx, dropoff in enumerate(dropoff_coords):
+    for idx, dropoff in log_progress(enumerate(dropoff_coords), every=10000, size=len(dropoff_coords)):
         
         # branch based off of unit of distance
         if unit == 'miles':
@@ -321,11 +383,73 @@ def get_starting_points(pickup_coords, dropoff_coords, hotel_coords, distance, u
             raise NotImplementedError
                         
         # check for satisfaction of criterion (and throw away big outliers for visualization)  
-        if cur_dist <= distance and vincenty(hotel_coords, pickup_coords[idx]).miles < 50.0:
+        if cur_dist <= distance and vincenty(hotel_coords, dropoff_coords[idx]).miles < 50.0:
             # add dropoff coordinates to list if it meets the [unit] [distance] criterion
-            destinations.append(pickup_coords[idx])
+            starting_points.append((round(cur_dist), pickup_coords[idx][0], pickup_coords[idx][1], pickup_times[idx], dropoff_times[idx], passenger_counts[idx], trip_distances[idx], fare_amounts[idx]))
+            
+    # end timer and report results
+    end_time = timeit.default_timer() - start_time
     
-    return np.array(destinations).T
+    print '( time elapsed:', end_time, ')', '\n'
+    
+    return np.array(starting_points).T
+
+
+def get_starting_points2(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coords, distance, unit):
+    '''
+    A function which, given (latitude, longitude) coordinates, returns an 
+    numpy array of (latitude, longitude) pairs such that each pair corresponds 
+    to the destination of a taxicab ride orginating from within the distance
+    specified in the units specified.
+    
+    input:
+        pickup_coords: tuple of (pickup_lats, pickup_longs)
+        dropoff_coords: tuple of (dropoff_lats, dropoff_longs)
+        pickup_times: array of datetimes for beginning of taxicab trips
+        dropoff_times: array of datetimes for end of taxicab trips
+        passenger_counts: the number of passengers per taxicab trip
+        trip_distances: the distance in miles per taxicab trip
+        fare_amounts: the dollar cost per taxicab trip
+        hotel_coords: (latitude, longitude) of the hotel we are interested 
+            in as the starting point
+        distance: a float specifying the distance from the hotel which we 
+            consider to be "close enough"
+        unit: the unit of the distance parameter
+    
+    output:
+        A numpy array of shape (8, M) where M is equal to the number of 
+        taxicab trips which satisfy the distance criterion, and we have
+        chosen 8 fields of interest to save as relevant data.
+    '''
+    
+    start_time = timeit.default_timer()
+    
+    # branch based on distance measure
+    if unit == 'miles':
+        # get distances in miles
+        dists = np.array([ vincenty(hotel_coords, dropoff).miles for dropoff in log_progress(dropoff_coords, every=10000) ])
+        
+    elif unit == 'meters':
+        # get distances in meters
+        dists = np.array([ vincenty(hotel_coords, dropoff).meters for dropoff in log_progress(dropoff_coords, every=10000) ])
+        
+    elif unit == 'feet':
+        # get distances in feet
+        dists = np.array([ vincenty(hotel_coords, dropoff).feet for dropoff in log_progress(dropoff_coords, every=10000) ])
+        
+    else:
+        raise NotImplementedError
+        
+    # get indices of distances which satisfy the [unit] [distance] criterion
+    sat_indices = np.where(dists <= distance)
+    
+    # end timer and report results
+    end_time = timeit.default_timer() - start_time
+    
+    print '( time elapsed:', end_time, ')', '\n'
+    
+    # use the satisfying indices to return only the relevant trips
+    return np.array(dists[sat_indices], pickup_coords[sat_indices][0], pickup_coords[sat_indices][1], pickup_times[sat_indices], dropoff_times[sat_indices], passenger_counts[sat_indices], trip_distances[sat_indices], fare_amounts[sat_indices]).T
 
 
 def log_progress(sequence, every=None, size=None):
