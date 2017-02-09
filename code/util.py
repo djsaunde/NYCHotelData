@@ -258,7 +258,7 @@ def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times,
     inputs = zip(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts)
         
     # run 'get_destination()' in parallel for all taxicab trips
-    satisfying_trips = Parallel(n_jobs=2)(delayed(get_destination)(*inp, hotel_coords=hotel_coords, distance=distance) for inp in log_progress(inputs, every=10000))
+    satisfying_trips = Parallel(n_jobs=num_cores)(delayed(get_destination)(*inp, hotel_coords=hotel_coords, distance=distance) for inp in log_progress(inputs, every=10000))
         
     # end timer and report results
     end_time = timeit.default_timer() - start_time
