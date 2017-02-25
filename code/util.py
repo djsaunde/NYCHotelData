@@ -383,9 +383,9 @@ def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times,
             raise NotImplementedError
                         
         # check for satisfaction of criterion (and throw away big outliers for visualization)  
-        if cur_dist <= distance:
+        if cur_dist <= distance and vincenty(hotel_coords, pickup_coords[idx]).miles < 50.0:
             # add dropoff coordinates to list if it meets the [unit] [distance] criterion
-            destinations.append((round(cur_dist), pickup_coords[idx][0], pickup_coords[idx][1], pickup_times[idx], dropoff_times[idx], passenger_counts[idx], trip_distances[idx], fare_amounts[idx]))
+            destinations.append((round(cur_dist), dropoff_coords[idx][0], dropoff_coords[idx][1], pickup_times[idx], dropoff_times[idx], passenger_counts[idx], trip_distances[idx], fare_amounts[idx]))
             
     # end timer and report results
     end_time = timeit.default_timer() - start_time

@@ -90,3 +90,6 @@ ENV/
 
 # don't upload data files!
 *.csv
+
+# don't upload weird .~lock files
+*.~lock
