@@ -14,6 +14,7 @@ from joblib import Parallel, delayed
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 import math, itertools, timeit, multiprocessing
 
 
@@ -22,6 +23,78 @@ EPS = 0.000001
 
 # get number of CPU cores on this machine
 num_cores = multiprocessing.cpu_count()
+
+
+def pickups_arbitrary_times(nearby_pickups, distance, days=[0,1,2,3,4,5,6], start_hour=0, end_hour=24):
+    '''
+    Given the days of the week and the start and end times from which to look, return all satsifying
+    taxicab rides which begin nearby.
+    
+    nearby_pickups: a pandas DataFrame containing all fields of data from nearby pickups of a single hotel
+    distance: a new distance used to cut out even more trips based on distance from the given hotel
+    days: the days of the week for which to look (0 -> Monday, 1 -> Tuesday, ... as per pandas documentation).
+    start_hour: the hour of day to begin with for which to look.
+    end_time: the end hour of day to begin with for which to look.
+    '''
+    # cast date-time column to pandas Timestamp type
+    nearby_pickups['Pick-up Time'] = pd.to_datetime(nearby_pickups['Pick-up Time'])
+    
+    # get all satisfying nearby pickups based on time
+    satisfying_nearby_pickup_coords = {}
+    
+    # for each hotel in our data
+    for hotel_name in nearby_pickups['Hotel Name'].unique():
+        
+        # get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
+        hotel_matches = nearby_pickups.loc[nearby_pickups['Hotel Name'] == hotel_name].loc[nearby_pickups['Distance From Hotel'] <= distance]
+        
+        # get all time-constraint satisfying nearby pickup taxicab records for this hotel
+        for day in days:
+            satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.weekday_name == day]
+        satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.hour >= start_hour]
+        satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.hour <= end_hour]
+        
+        # add the satisfying locations for this hotel to our dictionary data structure
+        satisfying_nearby_pickup_coords[hotel_name] = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
+    
+    # return the satisfying nearby pick-up coordinates
+    return satisfying_nearby_pickup_coords
+
+
+def dropoffs_arbitrary_times(nearby_dropoffs, distance, days=[0,1,2,3,4,5,6], start_hour=0, end_hour=24):
+    '''
+    Given the days of the week and the start and end times from which to look, return all satsifying
+    taxicab rides which begin nearby.
+    
+    nearby_dropoffs: a pandas DataFrame containing all fields of data from nearby dropoffs of a single hotel
+    distance: a new distance used to cut out even more trips based on distance from the given hotel
+    days: the days of the week for which to look (0 -> Monday, 1 -> Tuesday, ... as per pandas documentation).
+    start_hour: the hour of day to begin with for which to look.
+    end_time: the end hour of day to begin with for which to look.
+    '''
+    # cast date-time column to pandas Timestamp type
+    nearby_dropoffs['Drop-off Time'] = pd.to_datetime(nearby_dropoffs['Drop-off Time'])
+    
+    # get all satisfying nearby dropoffs based on time
+    satisfying_nearby_dropoff_coords = {}
+    
+    # for each hotel in our data
+    for hotel_name in nearby_dropoffs['Hotel Name'].unique():
+        
+        # get the latitude, longitude coordinates of the corresponding drop-off locations for the trips
+        hotel_matches = nearby_dropoffs.loc[nearby_dropoffs['Hotel Name'] == hotel_name].loc[nearby_dropoffs['Distance From Hotel'] <= distance]
+        
+        # get all time-constraint satisfying nearby drop-off taxicab records for this hotel
+        for day in days:
+            satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.weekday_name == day]
+        satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.hour >= start_hour]
+        satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.hour <= end_hour]
+        
+        # add the satisfying locations for this hotel to our dictionary data structure
+        satisfying_nearby_dropoff_coords[hotel_name] = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
+    
+    # return the satisfying nearby drop-off coordinates
+    return satisfying_nearby_dropoff_coords
 
 
 def get_intersection_point(centers, radii):
