@@ -11,18 +11,44 @@ from geopy.distance import vincenty
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
 from joblib import Parallel, delayed
+from mpl_toolkits.basemap import Basemap
 
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import math, itertools, timeit, multiprocessing
+import matplotlib.colors as mcolors
 
+
+# print out entire numpy arrays
+np.set_printoptions(threshold=np.nan)
+
+# size of figures in inches
+plt.rcParams["figure.figsize"] = (18.5, 9.75)
 
 # tolerance level for intersection point
 EPS = 0.000001
 
 # get number of CPU cores on this machine
 num_cores = multiprocessing.cpu_count()
+
+
+def plot_arcgis_nyc_map(coords, service='World_Street_Map', xpixels=2000, dpi=200):
+    '''
+    Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
+    '''
+    m = Basemap(llcrnrlon=-74.025, llcrnrlat=40.63, urcrnrlon=-73.76, urcrnrlat=40.85, epsg=4269)
+    m.arcgisimage(service=service, xpixels=xpixels, dpi=dpi)
+
+    x, y = np.linspace(m.llcrnrlon, m.urcrnrlon, 250), np.linspace(m.llcrnrlat, m.urcrnrlat, 250)
+    bin_coords, xedges, yedges = np.histogram2d(coords[1], coords[0], bins=(x, y), normed=True)
+    x, y = np.meshgrid(xedges, yedges)
+    bin_coords = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.max(bin_coords)
+
+    m.pcolormesh(x, y, bin_coords.T, cmap='rainbow', vmin=0.001, vmax=1.0)
+    m.colorbar(norm=mcolors.NoNorm)
+
+    plt.show()
 
 
 def pickups_arbitrary_times(nearby_pickups, distance, days=[0,1,2,3,4,5,6], start_hour=0, end_hour=24):

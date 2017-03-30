@@ -93,3 +93,7 @@ ENV/
 
 # don't upload weird .~lock files
 *.~lock
+
+img/*
+html/*
+data/*
