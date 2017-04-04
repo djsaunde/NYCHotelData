@@ -12,6 +12,7 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
 from joblib import Parallel, delayed
 from mpl_toolkits.basemap import Basemap
+from scipy.stats import entropy
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -33,22 +34,30 @@ EPS = 0.000001
 num_cores = multiprocessing.cpu_count()
 
 
-def plot_arcgis_nyc_map(coords, service='World_Street_Map', xpixels=2000, dpi=200):
+def plot_arcgis_nyc_map(coords, hotel_name, filepath, service='World_Street_Map', xpixels=1500, dpi=100):
     '''
     Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
     '''
+
+    print '...plotting empirical distribution for', hotel_name
+
     m = Basemap(llcrnrlon=-74.025, llcrnrlat=40.63, urcrnrlon=-73.76, urcrnrlat=40.85, epsg=4269)
     m.arcgisimage(service=service, xpixels=xpixels, dpi=dpi)
 
     x, y = np.linspace(m.llcrnrlon, m.urcrnrlon, 250), np.linspace(m.llcrnrlat, m.urcrnrlat, 250)
     bin_coords, xedges, yedges = np.histogram2d(coords[1], coords[0], bins=(x, y), normed=True)
     x, y = np.meshgrid(xedges, yedges)
-    bin_coords = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.max(bin_coords)
+    to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.max(bin_coords)
 
-    m.pcolormesh(x, y, bin_coords.T, cmap='rainbow', vmin=0.001, vmax=1.0)
+    m.pcolormesh(x, y, to_draw.T, cmap='rainbow', vmin=0.001, vmax=1.0)
     m.colorbar(norm=mcolors.NoNorm)
 
+    plt.title(hotel_name)
+    plt.savefig(filepath)
     plt.show()
+
+    bin_coords[np.where(bin_coords == 0)] = 0.00001
+    return np.ravel(bin_coords / np.max(bin_coords))
 
 
 def pickups_arbitrary_times(nearby_pickups, distance, days=[0,1,2,3,4,5,6], start_hour=0, end_hour=24):
@@ -77,6 +86,7 @@ def pickups_arbitrary_times(nearby_pickups, distance, days=[0,1,2,3,4,5,6], star
         # get all time-constraint satisfying nearby pickup taxicab records for this hotel
         for day in days:
             satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.weekday_name == day]
+        
         satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.hour >= start_hour]
         satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.hour <= end_hour]
         
@@ -113,6 +123,7 @@ def dropoffs_arbitrary_times(nearby_dropoffs, distance, days=[0,1,2,3,4,5,6], st
         # get all time-constraint satisfying nearby drop-off taxicab records for this hotel
         for day in days:
             satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.weekday_name == day]
+        
         satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.hour >= start_hour]
         satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.hour <= end_hour]
         
