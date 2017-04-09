@@ -15,10 +15,12 @@ from mpl_toolkits.basemap import Basemap
 from scipy.stats import entropy
 
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
-import math, itertools, timeit, multiprocessing
+import cPickle as p
+import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import matplotlib.image as mpimg
+import math, itertools, timeit, multiprocessing, os
 
 
 # print out entire numpy arrays
@@ -34,7 +36,7 @@ EPS = 0.000001
 num_cores = multiprocessing.cpu_count()
 
 
-def plot_arcgis_nyc_map(coords, hotel_name, filepath, service='World_Street_Map', xpixels=1500, dpi=100):
+def plot_arcgis_nyc_map(coords, hotel_name, filepath, service='World_Street_Map', xpixels=800, dpi=200):
     '''
     Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
     '''
@@ -42,19 +44,36 @@ def plot_arcgis_nyc_map(coords, hotel_name, filepath, service='World_Street_Map'
     print '...plotting empirical distribution for', hotel_name
 
     m = Basemap(llcrnrlon=-74.025, llcrnrlat=40.63, urcrnrlon=-73.76, urcrnrlat=40.85, epsg=4269)
-    m.arcgisimage(service=service, xpixels=xpixels, dpi=dpi)
 
-    x, y = np.linspace(m.llcrnrlon, m.urcrnrlon, 250), np.linspace(m.llcrnrlat, m.urcrnrlat, 250)
-    bin_coords, xedges, yedges = np.histogram2d(coords[1], coords[0], bins=(x, y), normed=True)
-    x, y = np.meshgrid(xedges, yedges)
-    to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.max(bin_coords)
+    if False: # not 'map.png' in os.listdir('../data/'):
+        m.arcgisimage(service=service, xpixels=xpixels, dpi=dpi)
+        plt.savefig('../data/map.png')
 
-    m.pcolormesh(x, y, to_draw.T, cmap='rainbow', vmin=0.001, vmax=1.0)
-    m.colorbar(norm=mcolors.NoNorm)
+        x, y = np.linspace(m.llcrnrlon, m.urcrnrlon, 250), np.linspace(m.llcrnrlat, m.urcrnrlat, 250)
+        bin_coords, xedges, yedges = np.histogram2d(coords[1], coords[0], bins=(x, y), normed=True)
+        x, y = np.meshgrid(xedges, yedges)
+        to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.max(bin_coords)
 
-    plt.title(hotel_name)
-    plt.savefig(filepath)
-    plt.show()
+        m.pcolormesh(x, y, to_draw.T, cmap='rainbow', vmin=0.001, vmax=1.0)
+        m.colorbar(norm=mcolors.NoNorm)
+
+        plt.title(hotel_name)
+        plt.savefig(filepath)
+        plt.show()
+    else:
+        m.imshow(mpimg.imread('../data/map.png'))
+
+        x, y = np.linspace(m.llcrnrlon, m.urcrnrlon, 250), np.linspace(m.llcrnrlat, m.urcrnrlat, 250)
+        bin_coords, xedges, yedges = np.histogram2d(coords[1], coords[0], bins=(x, y), normed=True)
+        x, y = np.meshgrid(xedges, yedges)
+        to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.max(bin_coords)
+
+        m.pcolormesh(x, y, to_draw.T, cmap='rainbow', vmin=0.001, vmax=1.0)
+        m.colorbar(norm=mcolors.NoNorm)
+
+        plt.title(hotel_name)
+        plt.savefig(filepath)
+        plt.show()
 
     bin_coords[np.where(bin_coords == 0)] = 0.00001
     return np.ravel(bin_coords / np.max(bin_coords))
@@ -477,7 +496,7 @@ def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times,
     destinations = []
     
     # loop through each pickup long, lat pair
-    for idx, pickup in log_progress(enumerate(pickup_coords), every=10000, size=len(pickup_coords)):
+    for idx, pickup in enumerate(pickup_coords):
         
         # branch based off of unit of distance
         if unit == 'miles':
