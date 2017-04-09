@@ -76,7 +76,7 @@ print 'Total satisfying nearby pick-up taxicab rides:', sum([single_hotel_coords
 print 'Satisfying nearby pick-up taxicab rides by hotel:'
 
 for name in nearby_pickup_coords:
-    print '-', name, ':', nearby_pickup_coords[name].shape[1], 'satisfying taxicab rides'
+	print '-', name, ':', nearby_pickup_coords[name].shape[1], 'satisfying taxicab rides'
 
 ##################################################
 # Drop-offs: Arbitrary Day of Week / Time of Day #
@@ -126,9 +126,9 @@ else:
 # hours of day criterion (end hour)
 end_hour = raw_input('Enter hour to end searching for taxicab trips (default 24 -> 11:59PM): ')
 if end_hour == '':
-    end_hour = 24
+	end_hour = 24
 else:
-    end_hour = int(end_hour)
+	end_hour = int(end_hour)
 
 # choose type of map to draw
 map_type = raw_input('Enter "gmap" or "static" to choose which to plot (default "static"): ')
@@ -144,7 +144,7 @@ print 'Total satisfying nearby drop-off taxicab rides:', sum([single_hotel_coord
 print 'Satisfying nearby drop-off taxicab rides by hotel:'
 
 for name in nearby_dropoff_coords:
-    print '-', name, ':', nearby_dropoff_coords[name].shape[1], 'satisfying taxicab rides'
+	print '-', name, ':', nearby_dropoff_coords[name].shape[1], 'satisfying taxicab rides'
 
 print '\n'
 
@@ -155,25 +155,28 @@ print '\n'
 coords_to_draw = nearby_pickup_coords.copy()
 coords_to_draw.update(nearby_dropoff_coords)
 
+basemap = None
 empirical_dists = []
 for hotel_name in coords_to_draw:
-    # some map parameters
-    map_name = hotel_name + '_Jan2016_' + str(distance) + 'ft_pickups_dropoffs_' + ','.join([ str(day) for day in days ]) + '_weekdays_' + str(start_hour) + '_' + str(end_hour) + '_start_end_hours_heatmap.html'
-    filepath = '../img/' + map_name[:-5] + '.png'
+	# some map parameters
+	map_name = hotel_name + '_Jan2016_' + str(distance) + 'ft_pickups_dropoffs_' + ','.join([ str(day) for day in days ]) + '_weekdays_' + str(start_hour) + '_' + str(end_hour) + '_start_end_hours_heatmap.html'
+	filepath = '../img/' + map_name[:-5] + '.png'
 
-    if map_type == 'static':
-        empirical_dists.append(plot_arcgis_nyc_map((coords_to_draw[hotel_name][0], coords_to_draw[hotel_name][1]), hotel_name, filepath))
-    else:
-        gmap = gmplot.GoogleMapPlotter(np.mean(coords_to_draw[hotel_name][0]), np.mean(coords_to_draw[hotel_name][1]), 13)
+	if map_type == 'static':
+		distribution, basemap = plot_arcgis_nyc_map((coords_to_draw[hotel_name][0], coords_to_draw[hotel_name][1]), hotel_name, filepath, basemap)
+		empirical_dists.append(distribution)
 
-        # plot the map
-        gmap.heatmap(coords_to_draw[hotel_name][0], coords_to_draw[hotel_name][1], threshold=10, radius=1, gradient=None, opacity=0.6, dissipating=False)
+	else:
+		gmap = gmplot.GoogleMapPlotter(np.mean(coords_to_draw[hotel_name][0]), np.mean(coords_to_draw[hotel_name][1]), 13)
 
-        # draw the map
-        gmap.draw('../img/' + map_name)
+		# plot the map
+		gmap.heatmap(coords_to_draw[hotel_name][0], coords_to_draw[hotel_name][1], threshold=10, radius=1, gradient=None, opacity=0.6, dissipating=False)
 
-        # display it in the web browser
-        webbrowser.open('../img/' + map_name)
+		# draw the map
+		gmap.draw('../img/' + map_name)
+
+		# display it in the web browser
+		webbrowser.open('../img/' + map_name)
 
 print '\n'
 
@@ -181,7 +184,7 @@ kl_diverges = []
 for dist1 in empirical_dists:
 	cur_diverges = []
 	for dist2 in empirical_dists:
-	    cur_diverges.append(entropy(dist1, dist2))
+		cur_diverges.append(entropy(dist1, dist2))
 	kl_diverges.append(cur_diverges)
 
 print kl_diverges
