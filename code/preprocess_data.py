@@ -97,8 +97,8 @@ def preprocess(taxi_files=[ filename for filename in os.listdir('../data/') if '
 	print '...getting hotel coordinates'
 
 	# get and store hotel coordinates
-	for hotel_address in hotel_addresses:
-		
+	for idx, hotel_address in enumerate(hotel_addresses):
+
 		# get the hotel's geolocation
 		location = geolocator.geocode(hotel_address)
 		if location == None:
@@ -122,7 +122,7 @@ def preprocess(taxi_files=[ filename for filename in os.listdir('../data/') if '
 	prev_len = 0
 
 	# loop through each hotel and find all satisfying taxicab rides
-	for idx, hotel_coord in log_progress(enumerate(hotel_coords), every=1, size=10):
+	for idx, hotel_coord in enumerate(hotel_coords):
 		
 		# print progress to console
 		print '...finding satisfying taxicab rides for', hotel_names[idx], '\n'
@@ -161,7 +161,7 @@ if __name__ == '__main__':
 	print '\n'
 
 	# taxi data files to preprocess
-	taxi_files = [ filename for filename in os.listdir('../data/') if 'yellow' in filename or 'green' in filename ]
+	taxi_files = [ 'green_tripdata_2016-01.csv' ] # [ filename for filename in os.listdir('../data/') if 'yellow' in filename or 'green' in filename ]
 
 	# get distance criterion for nearby pick-ups / drop-offs
 	distance = raw_input('Enter distance criterion (to detect nearby pick-ups / dropoffs; default 300): ')
