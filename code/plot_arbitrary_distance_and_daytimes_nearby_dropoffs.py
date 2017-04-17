@@ -10,6 +10,8 @@ from IPython.core.display import HTML
 
 from datetime import datetime
 from timeit import default_timer
+from scipy.stats import entropy
+from joblib import Parallel, delayed
 
 # importing helper methods
 from util import *

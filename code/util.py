@@ -25,9 +25,6 @@ import matplotlib.image as mpimg
 # print out entire numpy arrays
 np.set_printoptions(threshold=np.nan)
 
-# size of figures in inches
-plt.rcParams["figure.figsize"] = (18.5, 9.75)
-
 # tolerance level for intersection point
 EPS = 0.000001
 
@@ -35,52 +32,43 @@ EPS = 0.000001
 num_cores = multiprocessing.cpu_count()
 
 
-def get_arcgis_map(service='World_Street_Map', xpixels=500, dpi=500):
-	'''
-	Get a basemap using a map from the ARCGIS server. 
-	'''
-	basemap = Basemap(llcrnrlon=-74.025, llcrnrlat=40.63, urcrnrlon=-73.76, urcrnrlat=40.85, epsg=4269)
-	basemap.arcgisimage(service=service, xpixels=xpixels, dpi=dpi)
-
-	plt.savefig('../data/nyc_map.png')
-
-	return basemap
-
-
-def plot_arcgis_nyc_map(coords, hotel_name, filepath, basemap):
+def plot_arcgis_nyc_map(coords, hotel_name, filepath, service='World_Street_Map', xpixels=800, dpi=150):
 	'''
 	Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
 	'''
 
-	print '...plotting empirical distribution for', hotel_name
+	print '- plotting empirical distribution for', hotel_name
 
-	if basemap is None:
-		basemap = get_arcgis_map()
-		x, y = np.linspace(basemap.llcrnrlon, basemap.urcrnrlon, 250), np.linspace(basemap.llcrnrlat, basemap.urcrnrlat, 250)
-		bin_coords, xedges, yedges = np.histogram2d(coords[1], coords[0], bins=(x, y), normed=True)
-		x, y = np.meshgrid(xedges, yedges)
-		to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.sum(bin_coords)
-	else:
-		x, y = np.linspace(basemap.llcrnrlon, basemap.urcrnrlon, 250), np.linspace(basemap.llcrnrlat, basemap.urcrnrlat, 250)
-		bin_coords, xedges, yedges = np.histogram2d(coords[1], coords[0], bins=(x, y), normed=True)
-		x, y = np.meshgrid(xedges, yedges)
-		to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.sum(bin_coords)
+	# size of figures in inches
+	plt.rcParams["figure.figsize"] = (18.5, 9.75)
 
-		basemap.pcolormesh(x, y, np.ma.masked_array(np.zeros(to_draw.T.shape), True))
-		basemap.imshow(mpimg.imread('../data/nyc_map.png'))
+	# create Basemap object (bounds NYC) and draw high-resolution map of NYC on it
+	basemap = Basemap(llcrnrlon=-74.025, llcrnrlat=40.63, urcrnrlon=-73.76, urcrnrlat=40.85, epsg=4269)
+	basemap.arcgisimage(service=service, xpixels=xpixels, dpi=dpi)
 
+	# set up grid coordinates and get binned coordinates from taxicab data
+	x, y = np.linspace(basemap.llcrnrlon, basemap.urcrnrlon, 250), np.linspace(basemap.llcrnrlat, basemap.urcrnrlat, 250)
+	bin_coords, xedges, yedges = np.histogram2d(coords[1], coords[0], bins=(x, y), normed=True)
+	x, y = np.meshgrid(xedges, yedges)
+	to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.sum(bin_coords)
+
+	# plot binned coordinates onto the map, use colorbar
 	plt.pcolormesh(x, y, to_draw.T, cmap='rainbow', vmin=0.001, vmax=1.0)
 	plt.colorbar(norm=mcolors.NoNorm)
 
+	# title map and save it to disk
 	plt.title(hotel_name)
 	plt.savefig(filepath)
-	plt.show()
+	# plt.show()
 
+	# setting zero-valued bins to small non-zero values (for KL divergence)
 	bin_coords[np.where(bin_coords == 0)] = 0.00001
-	return np.ravel(bin_coords / np.sum(bin_coords)), basemap
+	
+	# return normalized, binned coordinates in one-dimensional vector
+	return np.ravel(bin_coords / np.sum(bin_coords))
 
 
-def pickups_arbitrary_times(nearby_pickups, distance, days=[0,1,2,3,4,5,6], start_hour=0, end_hour=24):
+def pickups_arbitrary_times(args):
 	'''
 	Given the days of the week and the start and end times from which to look, return all satsifying
 	taxicab rides which begin nearby.
@@ -91,30 +79,28 @@ def pickups_arbitrary_times(nearby_pickups, distance, days=[0,1,2,3,4,5,6], star
 	start_hour: the hour of day to begin with for which to look.
 	end_time: the end hour of day to begin with for which to look.
 	'''
+	nearby_pickups, distance, days, start_hour, end_hour = args
+
+	print nearby_pickups['Hotel Name'].unique()
+
 	# cast date-time column to pandas Timestamp type
 	nearby_pickups['Pick-up Time'] = pd.to_datetime(nearby_pickups['Pick-up Time'])
+		
+	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
+	hotel_matches = nearby_pickups.loc[nearby_pickups['Distance From Hotel'] <= distance]
 	
-	# get all satisfying nearby pickups based on time
-	satisfying_nearby_pickup_coords = {}
+	# get all time-constraint satisfying nearby pickup taxicab records for this hotel
+	for day in days:
+		satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.weekday_name == day]
 	
-	# for each hotel in our data
-	for hotel_name in nearby_pickups['Hotel Name'].unique():
-		
-		# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
-		hotel_matches = nearby_pickups.loc[nearby_pickups['Hotel Name'] == hotel_name].loc[nearby_pickups['Distance From Hotel'] <= distance]
-		
-		# get all time-constraint satisfying nearby pickup taxicab records for this hotel
-		for day in days:
-			satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.weekday_name == day]
-		
-		satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.hour >= start_hour]
-		satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.hour <= end_hour]
-		
-		# add the satisfying locations for this hotel to our dictionary data structure
-		satisfying_nearby_pickup_coords[hotel_name] = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
+	satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.hour >= start_hour]
+	satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt.hour <= end_hour]
+	
+	# add the satisfying locations for this hotel to our dictionary data structure
+	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
 	
 	# return the satisfying nearby pick-up coordinates
-	return satisfying_nearby_pickup_coords
+	return satisfying_coords
 
 
 def dropoffs_arbitrary_times(nearby_dropoffs, distance, days=[0,1,2,3,4,5,6], start_hour=0, end_hour=24):

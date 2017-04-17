@@ -6,7 +6,7 @@
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?libraries=visualization&sensor=true_or_false"></script>
 <script type="text/javascript">
 	function initialize() {
-		var centerlatlng = new google.maps.LatLng(40.621517, -73.732789);
+		var centerlatlng = new google.maps.LatLng(40.755394, -73.981083);
 		var myOptions = {
 			zoom: 13,
 			center: centerlatlng,
@@ -1305,9 +1305,9 @@ data: pointArray
 });
 heatmap.setMap(map);
 heatmap.set('threshold', 10);
-heatmap.set('radius', 25);
+heatmap.set('radius', 1);
 heatmap.set('opacity', 0.600000);
-heatmap.set('dissipating', true);
+heatmap.set('dissipating', false);
 	}
 </script>
 </head>
