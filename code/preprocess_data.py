@@ -4,11 +4,16 @@ Data ingestion and preprocessing script.
 @author: Dan Saunders (djsaunde.gthub.io)
 '''
 
-import csv, imp, os, numpy as np, pandas as pd, matplotlib.pyplot as plt
+import csv, imp, os, gmplot, webbrowser, timeit, multiprocess
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
 from geopy.geocoders import GoogleV3
-import gmplot, webbrowser, timeit
 from IPython.display import Image, display
 from IPython.core.display import HTML
+from joblib import Parallel, delayed
+from multiprocessing import cpu_count
 
 # importing helper methods
 from util import *
@@ -20,10 +25,12 @@ def preprocess(taxi_files=[ filename for filename in os.listdir('../data/') if '
 	'''
 
 	# variables to store pick-up and drop-off coordinates and other relevant fields
-	pickup_coords, dropoff_coords, pickup_times, dropoff_times = [], [], [], []
-	passenger_counts, trip_distances, fare_amounts = [], [], []
+	pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances, \
+		fare_amounts = [], [], [], [], [], [], []
 
 	print '\n'
+
+	start_time = timeit.default_timer()
 
 	# load all taxi data files from disk
 	for taxi_file in taxi_files:
@@ -73,7 +80,9 @@ def preprocess(taxi_files=[ filename for filename in os.listdir('../data/') if '
 		fare_amounts.extend(fare_amount)
 
 		# report stats about taxi data as we go
-		print 'loaded', len(pickup_coords), 'taxicab trips so far'
+		print '\n...loaded', len(pickup_coords), 'taxicab trips so far'
+
+	print '\nIt took', timeit.default_timer() - start_time, 'seconds to load above taxi data files'
 
 	# store data as numpy arrays (transposing to have in a more work-friendly shape)    
 	pickup_coords, dropoff_coords = np.array(pickup_coords).T, np.array(dropoff_coords).T
@@ -94,23 +103,15 @@ def preprocess(taxi_files=[ filename for filename in os.listdir('../data/') if '
 	# storing the geocode of the above addresses
 	hotel_coords = []
 
-	print '...getting hotel coordinates'
+	print '\n...getting hotel coordinates'
 
-	# get and store hotel coordinates
-	for idx, hotel_address in enumerate(hotel_addresses):
+	start_time = timeit.default_timer()
 
-		# get the hotel's geolocation
-		location = geolocator.geocode(hotel_address)
-		if location == None:
-			continue
-		
-		# get the coordinates of the hotel from the geolocation
-		hotel_coord = (location.latitude, location.longitude)
-		
-		# add it to our list
-		hotel_coords.append(hotel_coord)
+	hotel_locations = multiprocess.Pool(cpu_count()).map_async(geolocator.geocode, [ hotel_address for hotel_address in hotel_addresses ])
+	hotel_coords = [ (location.latitude, location.longitude) for location in hotel_locations.get() ]
 
-	print '...finding distance criterion-satisfying taxicab pick-ups', '\n'
+	print '\nIt took', timeit.default_timer() - start_time, 'seconds to geolocate all hotels'
+	print '\n...finding distance criterion-satisfying taxicab pick-ups'
 
 	# create and open spreadsheet for nearby pick-ups and drop-offs for each hotel
 	writer = pd.ExcelWriter('../data/Nearby Pickups and Dropoffs.xlsx')
@@ -125,7 +126,7 @@ def preprocess(taxi_files=[ filename for filename in os.listdir('../data/') if '
 	for idx, hotel_coord in enumerate(hotel_coords):
 		
 		# print progress to console
-		print '...finding satisfying taxicab rides for', hotel_names[idx], '\n'
+		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
 		
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
 		destinations = get_destinations(pickup_coords.T, dropoff_coords.T, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coord, distance, unit='feet').T
@@ -145,8 +146,7 @@ def preprocess(taxi_files=[ filename for filename in os.listdir('../data/') if '
 		# write sheet to Excel file
 		if idx == 0:
 			to_write.to_excel(writer, 'Nearby Pick-ups', index=False)
-		
-		if idx != 0:
+		elif idx != 0:
 			to_write.to_excel(writer, 'Nearby Pick-ups', startrow=prev_len + 1, header=None, index=False)
 		
 		# keep track of where we left off in the previous workbook

@@ -2,6 +2,7 @@
 import numpy as np
 import cPickle as p
 import pandas as pd
+import multiprocessing as mp
 import matplotlib.pyplot as plt
 import csv, imp, os, gmplot, webbrowser, os
 
@@ -13,7 +14,6 @@ from timeit import default_timer
 
 # importing helper methods
 from util import *
-
 
 #################################################
 # Pick-ups: Arbitrary Day of Week / Time of Day #
@@ -70,7 +70,9 @@ else:
 print '\n'
 
 # get coordinates of new distance and time-constraint satisfying taxicab trips with nearby pick-ups
-nearby_pickup_coords = pickups_arbitrary_times(nearby_pickups, distance, days, start_hour, end_hour - 1)
+pool = mp.Pool(len(nearby_pickups['Hotel Name'].unique()))
+nearby_pickup_coords = pool.map(pickups_arbitrary_times, [ (nearby_pickups.loc[nearby_pickups['Hotel Name'] == hotel_name], distance, days, start_hour, end_hour - 1) for hotel_name in nearby_pickups['Hotel Name'].unique() ])
+nearby_pickup_coords = dict([ (hotel_name, args) for (hotel_name, args) in zip(nearby_pickups['Hotel Name'].unique(), nearby_pickup_coords) ])
 
 print 'Total satisfying nearby pick-up taxicab rides:', sum([single_hotel_coords.shape[1] for single_hotel_coords in nearby_pickup_coords.values()]), '/', len(nearby_pickups), '\n'
 print 'Satisfying nearby pick-up taxicab rides by hotel:'
@@ -130,6 +132,8 @@ if end_hour == '':
 else:
 	end_hour = int(end_hour)
 
+print '\n'
+
 # choose type of map to draw
 map_type = raw_input('Enter "gmap" or "static" to choose which to plot (default "static"): ')
 if map_type == '':
@@ -138,7 +142,9 @@ if map_type == '':
 print '\n'
 
 # get coordinates of new distance and time-constraint satisfying taxicab trips with nearby drop-offs
-nearby_dropoff_coords = dropoffs_arbitrary_times(nearby_dropoffs, distance, days, start_hour, end_hour - 1)
+pool = mp.Pool(len(nearby_dropoffs['Hotel Name'].unique()))
+nearby_dropoff_coords = pool.map(dropoffs_arbitrary_times, [ (nearby_dropoffs.loc[nearby_dropoffs['Hotel Name'] == hotel_name], distance, days, start_hour, end_hour - 1) for hotel_name in nearby_dropoffs['Hotel Name'].unique() ])
+nearby_dropoff_coords = dict([ (hotel_name, args) for (hotel_name, args) in zip(nearby_dropoffs['Hotel Name'].unique(), nearby_dropoff_coords) ])
 
 print 'Total satisfying nearby drop-off taxicab rides:', sum([single_hotel_coords.shape[1] for single_hotel_coords in nearby_dropoff_coords.values()]), '/', len(nearby_dropoffs), '\n'
 print 'Satisfying nearby drop-off taxicab rides by hotel:'
@@ -152,25 +158,25 @@ print '\n'
 # Drawing Plots of Both Nearby Pickups and Dropoffs #
 #####################################################
 
-coords_to_draw = nearby_pickup_coords.copy()
-coords_to_draw.update(nearby_dropoff_coords)
+coords = nearby_pickup_coords.copy()
+coords.update(nearby_dropoff_coords)
 
-basemap = None
-empirical_dists = []
-for hotel_name in coords_to_draw:
-	# some map parameters
-	map_name = hotel_name + '_Jan2016_' + str(distance) + 'ft_pickups_dropoffs_' + ','.join([ str(day) for day in days ]) + '_weekdays_' + str(start_hour) + '_' + str(end_hour) + '_start_end_hours_heatmap.html'
-	filepath = '../img/' + map_name[:-5] + '.png'
+start_time = default_timer()
 
-	if map_type == 'static':
-		distribution, basemap = plot_arcgis_nyc_map((coords_to_draw[hotel_name][0], coords_to_draw[hotel_name][1]), hotel_name, filepath, basemap)
-		empirical_dists.append(distribution)
+if map_type == 'static':
+	# a one-liner to get all the ARCGIS maps plotted
+	empirical_dists = Parallel(n_jobs=len(coords.keys())) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]), hotel_name, '../img/' + hotel_name + '_Jan2016_' + str(distance) + 'ft_pickups_' + ','.join([ str(day) for day in days ]) + '_weekdays_' + str(start_hour) + '_' + str(end_hour) + '_start_end_hours_heatmap.png') for hotel_name in coords.keys())
+else:
+	for hotel_name in coords.keys():
+		# some map parameters
+		map_name = hotel_name + '_Jan2016_' + str(distance) + 'ft_pickups_and_dropoffs_' + ','.join([ str(day) for day in days ]) + '_weekdays_' + str(start_hour) + '_' + str(end_hour) + '_start_end_hours_heatmap.html'
+		filepath = '../img/' + map_name[:-5] + '.png'
 
-	else:
-		gmap = gmplot.GoogleMapPlotter(np.mean(coords_to_draw[hotel_name][0]), np.mean(coords_to_draw[hotel_name][1]), 13)
+		# get the Google maps area we wish to plot at
+		gmap = gmplot.GoogleMapPlotter(np.median(coords[hotel_name][0]), np.median(coords[hotel_name][1]), 13)
 
 		# plot the map
-		gmap.heatmap(coords_to_draw[hotel_name][0], coords_to_draw[hotel_name][1], threshold=10, radius=1, gradient=None, opacity=0.6, dissipating=False)
+		gmap.heatmap(coords[hotel_name][0], coords[hotel_name][1], threshold=10, radius=1, gradient=None, opacity=0.6, dissipating=False)
 
 		# draw the map
 		gmap.draw('../img/' + map_name)
@@ -178,8 +184,9 @@ for hotel_name in coords_to_draw:
 		# display it in the web browser
 		webbrowser.open('../img/' + map_name)
 
-print '\n'
+print 'It took', default_timer() - start_time, 'seconds to plot the heatmaps'
 
+print '\n'
 kl_diverges = []
 for dist1 in empirical_dists:
 	cur_diverges = []
@@ -187,4 +194,19 @@ for dist1 in empirical_dists:
 		cur_diverges.append(entropy(dist1, dist2))
 	kl_diverges.append(cur_diverges)
 
-print kl_diverges
+# print kl_diverges, '\n'
+
+kl_diverges = np.array(kl_diverges)
+
+width = 0.9 / float(len(coords.keys()))
+idxs = np.arange(len(coords.keys()))
+
+plt.figure(figsize=(18, 9.5))
+
+for idx in xrange(len(coords.keys())):
+	plt.bar(idxs + width * idx, kl_diverges[idx, :], width)
+
+plt.title('Kullbeck-Liebler divergence between empirical distributions of hotel taxicab pickups (dropoffs) from nearby dropoffs (pickups)')
+plt.xticks(idxs + width / float(len(coords.keys())), coords.keys(), rotation=15)
+plt.legend(coords.keys(), loc=1, fontsize='xx-small')
+plt.show()
