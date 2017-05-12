@@ -1,12 +1,5 @@
 from __future__ import division
 
-'''
-Helper methods for the .ipynb notebook(s) which contain the experiments done with the NYC hotel and taxicab trip data.
-
-author: Dan Saunders (djsaunde@umass.edu)
-'''
-
-# imports...
 from geopy.distance import vincenty
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
@@ -69,24 +62,24 @@ def plot_arcgis_nyc_map(coords, hotel_name, filepath, service='World_Street_Map'
 	return np.ravel(bin_coords / np.sum(bin_coords))
 
 
-def pickups_arbitrary_times(args):
+def get_nearby_pickups(args):
 	'''
-	Given the days of the week and the start and end times from which to look, return all satsifying
+	Given the days of the week and the start and end times from which to look, return all satisfying
 	taxicab rides which begin nearby.
 	
-	nearby_pickups: a pandas DataFrame containing all fields of data from nearby pickups of a single hotel
+	pickups: a pandas DataFrame containing all fields of data from pickups of a single hotel
 	distance: a new distance used to cut out even more trips based on distance from the given hotel
 	days: the days of the week for which to look (0 -> Monday, 1 -> Tuesday, ... as per pandas documentation).
 	start_hour: the hour of day to begin with for which to look.
 	end_time: the end hour of day to begin with for which to look.
 	'''
-	nearby_pickups, distance, days, start_hour, end_hour = args
+	pickups, distance, days, start_hour, end_hour = args
 
 	# cast date-time column to pandas Timestamp type
-	nearby_pickups['Pick-up Time'] = pd.to_datetime(nearby_pickups['Pick-up Time'])
+	pickups['Pick-up Time'] = pd.to_datetime(pickups['Pick-up Time'])
 		
 	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
-	hotel_matches = nearby_pickups.loc[nearby_pickups['Distance From Hotel'] <= distance]
+	hotel_matches = pickups.loc[pickups['Distance From Hotel'] <= distance]
 	
 	# get all time-constraint satisfying nearby pickup taxicab records for this hotel
 	for day in days:
@@ -102,24 +95,24 @@ def pickups_arbitrary_times(args):
 	return satisfying_coords
 
 
-def dropoffs_arbitrary_times(args):
+def get_nearby_dropoffs(args):
 	'''
-	Given the days of the week and the start and end times from which to look, return all satsifying
+	Given the days of the week and the start and end times from which to look, return all satisfying
 	taxicab rides which begin nearby.
 	
-	nearby_dropoffs: a pandas DataFrame containing all fields of data from nearby dropoffs of a single hotel
+	dropoffs: a pandas DataFrame containing all fields of data from dropoffs of a single hotel
 	distance: a new distance used to cut out even more trips based on distance from the given hotel
 	days: the days of the week for which to look (0 -> Monday, 1 -> Tuesday, ... as per pandas documentation).
 	start_hour: the hour of day to begin with for which to look.
 	end_time: the end hour of day to begin with for which to look.
 	'''
-	nearby_dropoffs, distance, days, start_hour, end_hour = args
+	dropoffs, distance, days, start_hour, end_hour = args
 
 	# cast date-time column to pandas Timestamp type
-	nearby_dropoffs['Drop-off Time'] = pd.to_datetime(nearby_dropoffs['Drop-off Time'])
+	dropoffs['Drop-off Time'] = pd.to_datetime(dropoffs['Drop-off Time'])
 		
 	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
-	hotel_matches = nearby_dropoffs.loc[nearby_dropoffs['Distance From Hotel'] <= distance]
+	hotel_matches = dropoffs.loc[dropoffs['Distance From Hotel'] <= distance]
 	
 	# get all time-constraint satisfying nearby pickup taxicab records for this hotel
 	for day in days:
