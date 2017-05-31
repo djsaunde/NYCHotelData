@@ -1,6 +1,6 @@
 #!/bin/bash
 
-createdb nyc-taxi-data
+createdb -U postgres nyc-taxi-data
 
 psql nyc-taxi-data -f create_nyc_taxi_schema.sql
 

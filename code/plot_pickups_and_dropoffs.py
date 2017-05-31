@@ -130,7 +130,7 @@ if __name__ == '__main__':
 	if 'nearby_pickups.p' not in os.listdir(data_path):
 		print '- loading data from disk'
 		taxicab_data = pd.read_excel(data_path + 'Nearby Pickups and Dropoffs.xlsx', sheetname='Nearby Pick-ups')
-		p.dump(nearby_pickups, open(data_path + 'nearby_pickups.p', 'wb'))
+		p.dump(taxicab_data, open(data_path + 'nearby_pickups.p', 'wb'))
 	else:
 		print '- loading data from pickled object file'
 		taxicab_data = p.load(open(data_path + 'nearby_pickups.p', 'rb'))
