@@ -94,7 +94,13 @@ ENV/
 # don't upload weird .~lock files
 *.~lock
 
+# ignore vairous data folders
 img/*
 html/*
 data/*
 plots/*
+analysis/*
+tlc_statistics/*
+
+# ignore slurm output files
+*.out

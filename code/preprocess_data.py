@@ -161,7 +161,7 @@ if __name__ == '__main__':
 	print '\n'
 
 	# taxi data files to preprocess
-	taxi_files = [ 'green_tripdata_2016-01.csv' ] # [ filename for filename in os.listdir('../data/') if 'yellow' in filename or 'green' in filename ]
+	taxi_files = [ filename for filename in os.listdir('../data/') if 'yellow' in filename or 'green' in filename ]
 
 	# get distance criterion for nearby pick-ups / drop-offs
 	distance = raw_input('Enter distance criterion (to detect nearby pick-ups / dropoffs; default 300): ')
