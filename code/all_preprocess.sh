@@ -1,12 +1,8 @@
-#!/bin/bash
-#
-#SBATCH --partition=longq
-#SBATCH --time=02-00:00:00
-#SBATCH --mem-per-cpu=4000
-#SBATCH --account=rkozma
-#SBATCH --nodes=16
-#SBATCH --ntasks-per-node=8
+distance=${1:-300}
 
+mkdir ../data/preprocessed
 
-mpiexec -np 50 python 2preprocess_data.py
-exit
+for i in {0..126}
+do
+	sbatch one_preprocess.sh $distance $i
+done

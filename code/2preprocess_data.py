@@ -47,7 +47,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	try:
 		if 'green' in taxi_file:
 			if taxi_file in ['green_tripdata_2016-11.csv', 'green_tripdata_2016-12.csv', 'green_tripdata_2016-07.csv', 'green_tripdata_2016-08.csv', 'green_tripdata_2016-09.csv']:
-				sys.exit()
+				return
 			else:
 				# let's load a single .csv file of taxicab records (say, January 2016)
 				taxi_data = pd.read_csv(fpath, usecols=['Pickup_latitude', 'Pickup_longitude', 'Dropoff_latitude', 'Dropoff_longitude', 'lpep_pickup_datetime', 'Lpep_dropoff_datetime', 'Passenger_count', 'Trip_distance', 'Fare_amount'])
@@ -63,7 +63,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 
 			
 		elif 'yellow' in taxi_file:
-			if '2014-09' in taxi_file or '2014-01' in taxi_file or '2014-07' in taxi_file or '2014-06' in taxi_file:
+			if '2014-09' in taxi_file or '2014-01' in taxi_file or '2014-07' in taxi_file or '2014-06' in taxi_file or '2014-11' in taxi_file or '2014-12' in taxi_file or '2014-02' in taxi_file or '2014-10' in taxi_file or '2014-05' in taxi_file or '2014-03' in taxi_file or '2014-04' in taxi_file or '2014-05' in taxi_file:
 				# let's load a single .csv file of taxicab records (say, January 2016)
 				taxi_data = pd.read_csv(fpath, usecols=[' pickup_latitude', ' pickup_longitude', ' dropoff_latitude', ' dropoff_longitude', ' pickup_datetime', ' dropoff_datetime', ' passenger_count', ' trip_distance', ' fare_amount'])
 				
@@ -76,7 +76,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				trip_distance = np.array(taxi_data[' trip_distance'])
 				fare_amount = np.array(taxi_data[' fare_amount'])
 
-			elif '2009-11' in taxi_file or '2009-10' in taxi_file or '2009-01' in taxi_file:
+			elif '2009-11' in taxi_file or '2009-10' in taxi_file or '2009-01' in taxi_file or '2009-08' in taxi_file or '2009-06' in taxi_file or '2009-04' in taxi_file or '2009-09' in taxi_file or '2009-03' in taxi_file or '2009-07' in taxi_file or '2009-05' in taxi_file or '2009-02' in taxi_file or '2009-12' in taxi_file:
 				# let's load a single .csv file of taxicab records (say, January 2016)
 				taxi_data = pd.read_csv(fpath, usecols=['Start_Lat', 'Start_Lon', 'End_Lat', 'End_Lon', 'Trip_Pickup_DateTime', 'Trip_Dropoff_DateTime', 'Passenger_Count', 'Trip_Distance', 'Fare_Amt'])
 				
@@ -88,6 +88,18 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				passenger_count = np.array(taxi_data['Passenger_Count'])
 				trip_distance = np.array(taxi_data['Trip_Distance'])
 				fare_amount = np.array(taxi_data['Fare_Amt'])
+
+			elif '2015-12' in taxi_file or '2015-04' in taxi_file or '2015-03' in taxi_file or '2015-08' in taxi_file or '2016-06' in taxi_file or '2016-01' in taxi_file or '2016-03' in taxi_file or '2015-06' in taxi_file or '2016-05' in taxi_file or '2015-11' in taxi_file or '2015-01' in taxi_file or '2015-02' in taxi_file or '2015-09' in taxi_file or '2015-03' in taxi_file or '2015-10' in taxi_file or '2016-02' in taxi_file or '2016-04' in taxi_file or '2015-07' in taxi_file:
+				# let's load a single .csv file of taxicab records (say, January 2016)	
+				taxi_data = pd.read_csv(fpath, usecols=['pickup_latitude', 'pickup_longitude', 'dropoff_latitude', 'dropoff_longitude', 'tpep_pickup_datetime', 'tpep_dropoff_datetime', 'passenger_count', 'trip_distance', 'fare_amount'])
+				# get relevant rows of the data and store them as numpy arrays
+				pickup_lats, pickup_longs = np.array(taxi_data['pickup_latitude']), np.array(taxi_data['pickup_longitude'])
+				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude']),
+				pickup_time = np.array(taxi_data['tpep_pickup_datetime'])
+				dropoff_time = np.array(taxi_data['tpep_dropoff_datetime'])
+				passenger_count = np.array(taxi_data['passenger_count'])
+				trip_distance = np.array(taxi_data['trip_distance'])
+				fare_amount = np.array(taxi_data['fare_amount'])
 
 			else:
 				# let's load a single .csv file of taxicab records (say, January 2016)
@@ -105,14 +117,14 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		else:
 			# this shouldn't happen
 			raise NotImplementedError
+
 	except ValueError:
 		taxi_data = pd.read_csv(fpath, error_bad_lines=False)
-		print taxi_file, taxi_data.columns.values
+		print '\n', year, '-', 'pickup / dropoff ID rather than (lat, long) coordinates'
+		return
 
 	# remove the taxicab data from memory
 	del taxi_data
-
-	sys.exit()
 
 	# zip together lats, longs for coordinates and append them to the lists
 	pickup_coords = zip(pickup_lats, pickup_longs)
@@ -125,8 +137,8 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 
 	# store data as numpy arrays (transposing to have in a more work-friendly shape)    
 	pickup_coords, dropoff_coords = np.array(pickup_coords).T, np.array(dropoff_coords).T
-	pickup_times, dropoff_times = np.array(pickup_times).T, np.array(dropoff_times).T
-	passenger_counts, trip_distances, fare_amounts = np.array(passenger_counts), np.array(trip_distances), np.array(fare_amounts)
+	pickup_times, dropoff_times = np.array(pickup_time).T, np.array(dropoff_time).T
+	passenger_counts, trip_distances, fare_amounts = np.array(passenger_count), np.array(trip_distance), np.array(fare_amount)
 
 	# get file containing hotel names and addresses
 	hotel_file = pd.read_excel('../data/Pilot Set of Hotels.xlsx', sheetname='set 2')
@@ -172,8 +184,11 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + destinations.shape[0] + 1) ]
-		destinations = pd.DataFrame(destinations, index=index, columns=['Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time', 'Drop-off Time', 'Passenger Count', 'Trip Distance', 'Fare Amount'])
-			
+		try:
+			destinations = pd.DataFrame(destinations, index=index, columns=['Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time', 'Drop-off Time', 'Passenger Count', 'Trip Distance', 'Fare Amount'])
+		except ValueError:
+			continue			
+
 		# add column for hotel name
 		name_frame = pd.DataFrame([hotel_names[idx]] * destinations.shape[0], index=destinations.index, columns=['Hotel Name'])
 		to_write = pd.concat([name_frame, destinations], axis=1)
@@ -184,9 +199,9 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		
 		# write sheet to Excel file
 		if idx == 0:
-			to_write.to_excel(writer, 'Nearby Pick-ups (rank ' + str(rank) + ')', index=False)
+			to_write.to_excel(writer, taxi_file, index=False)
 		elif idx != 0:
-			to_write.to_excel(writer, 'Nearby Pick-ups (rank ' + str(rank) + ')', startrow=prev_len + 1, header=None, index=False)
+			to_write.to_excel(writer, taxi_file, startrow=prev_len + 1, header=None, index=False)
 		
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
@@ -210,5 +225,6 @@ if __name__ == '__main__':
 	taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data')) if 'yellow' in filename or 'green' in filename ]
 
 	# preprocess each taxi data file
-	for idx in xrange(rank, num_ranks, len(taxi_files)):
+	for idx in xrange(rank, len(taxi_files), num_ranks):
+		print idx
 		preprocess(taxi_files[idx], distance)
