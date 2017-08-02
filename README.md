@@ -10,7 +10,7 @@ After discovering those trips which begin or end _close_ to each hotel of intere
 
 ![NYC Bounding Box](https://github.com/djsaunde/NYCHotelData/blob/master/nyc_box.png)
 
-and then divide the box into regularly-sized "bins" of, say, 500 square feet. To estimate the distribution of pick-up locations for a particular hotel, we assign a count to each bin, incrementing it for each pick-up coordinate which lies inside. To obtain a proper probability distribution, we divide each bin's count by the total number of trips in our dataset, ensuring that the bins' values sum to 1. 
+and then divide the box into regularly-sized "bins" of, say, 500 square feet. To estimate the distribution of pick-up locations for a particular hotel, we assign a count to each bin, incrementing it for each pick-up coordinate which lies within. To obtain a proper probability distribution, we divide each bin's count by the total number of trips in our dataset, ensuring that the bins' values sum to 1. 
 
 We can then graft this empiricial probability distribution onto the map of NYC for viewing purposes.
 
@@ -62,13 +62,3 @@ Now, ```basemap``` should be installed. To verify this, enter a Python interacti
 ```
 from mpl_toolkits.basemap import Basemap
 ```
-
-
-This repository contains code for projects associated with hotel data from New York City over the
-course of the past several years, in the form of (latitude, longitude) coordinates of pickups and dropoffs
-of taxicab rides and auxiliary taxicab ride data. The various notebooks and scripts in this repository
-are designed to explore these datasets and there relation to hotels and tourist or business attractions
-in the city. One major goal of this project is to make advertisement recommendations to hotels based on the
-distribution of destinations of taxicab rides which originate near a given hotel. We are interested in
-the global (24/7) distribution of such rides, and finer-grained distributions at the level of per-day and
-per-hour / time period.
