@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import cPickle as p
 import pandas as pd
@@ -18,8 +19,8 @@ warnings.filterwarnings('ignore')
 
 from util import *
 
-data_path = '../data/'
-plots_path = '../plots/'
+data_path = os.path.join('..', 'data', 'preprocessed_data')
+plots_path = os.path.join('..', 'plots')
 
 
 def plot_pickups(distance, days, times, year, month, day, map_type):
