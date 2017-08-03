@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #SBATCH --partition=longq
-#SBATCH --time=10:00:00
+#SBATCH --time=24:00:00
 #SBATCH --mem=100000
 #SBATCH --account=rkozma
 #SBATCH --ntasks-per-node=1
