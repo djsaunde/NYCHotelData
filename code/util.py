@@ -1,18 +1,19 @@
 from __future__ import division
 
+from scipy.stats import entropy
 from geopy.distance import vincenty
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.metrics import silhouette_score
 from joblib import Parallel, delayed
 from mpl_toolkits.basemap import Basemap
-from scipy.stats import entropy
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.metrics import silhouette_score
 
+import sys
 import numpy as np
 import pandas as pd
 import cPickle as p
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 import matplotlib.image as mpimg
+import matplotlib.colors as mcolors
 import math, itertools, timeit, multiprocessing, os, multiprocess
 
 
@@ -26,7 +27,7 @@ EPS = 0.000001
 num_cores = multiprocessing.cpu_count()
 
 
-def plot_arcgis_nyc_map(coords, hotel_name, filepath, service='World_Street_Map', xpixels=800, dpi=150):
+def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150):
 	'''
 	Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
 	'''
@@ -52,14 +53,19 @@ def plot_arcgis_nyc_map(coords, hotel_name, filepath, service='World_Street_Map'
 
 	# title map and save it to disk
 	plt.title(hotel_name)
-	plt.savefig(filepath)
-	# plt.show()
+
+	if not os.path.isdir(directory):
+		os.makedirs(directory)
+
+	plt.savefig(os.path.join(directory, hotel_name + '.png'))
 
 	# setting zero-valued bins to small non-zero values (for KL divergence)
-	bin_coords[np.where(bin_coords == 0)] = 0.00001
-	
+	bin_coords[np.where(bin_coords == 0)] = 1e-32
+
+	normed_distro = bin_coords / np.sum(bin_coords)
+
 	# return normalized, binned coordinates in one-dimensional vector
-	return np.ravel(bin_coords / np.sum(bin_coords))
+	return np.ravel(normed_distro)
 
 
 def get_nearby_pickups(args):

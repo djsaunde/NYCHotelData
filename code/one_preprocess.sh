@@ -10,6 +10,6 @@
 distance=${1:-300}
 file_idx=${2:-0}
 
-python 3preprocess_data.py --distance $distance --file_idx $file_idx
+python preprocess_data.py --distance $distance --file_idx $file_idx
 
 exit

@@ -1,4 +1,0 @@
-geopy
-gmplot
-joblib
-multiprocess
