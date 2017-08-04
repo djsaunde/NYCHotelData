@@ -51,7 +51,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['Pickup_latitude']), np.array(taxi_data['Pickup_longitude'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data['Dropoff_latitude']), np.array(taxi_data['Dropoff_longitude']),
+				dropoff_lats, dropoff_longs = np.array(taxi_data['Dropoff_latitude']), np.array(taxi_data['Dropoff_longitude'])
 				pickup_time = np.array(taxi_data['lpep_pickup_datetime'])
 				dropoff_time = np.array(taxi_data['Lpep_dropoff_datetime'])
 				passenger_count = np.array(taxi_data['Passenger_count'])
@@ -66,7 +66,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data[' pickup_latitude']), np.array(taxi_data[' pickup_longitude'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data[' dropoff_latitude']), np.array(taxi_data[' dropoff_longitude']),
+				dropoff_lats, dropoff_longs = np.array(taxi_data[' dropoff_latitude']), np.array(taxi_data[' dropoff_longitude'])
 				pickup_time = np.array(taxi_data[' pickup_datetime'])
 				dropoff_time = np.array(taxi_data[' dropoff_datetime'])
 				passenger_count = np.array(taxi_data[' passenger_count'])
@@ -79,7 +79,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['Start_Lat']), np.array(taxi_data['Start_Lon'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data['End_Lat']), np.array(taxi_data['End_Lon']),
+				dropoff_lats, dropoff_longs = np.array(taxi_data['End_Lat']), np.array(taxi_data['End_Lon'])
 				pickup_time = np.array(taxi_data['Trip_Pickup_DateTime'])
 				dropoff_time = np.array(taxi_data['Trip_Dropoff_DateTime'])
 				passenger_count = np.array(taxi_data['Passenger_Count'])
@@ -91,7 +91,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				taxi_data = pd.read_csv(fpath, usecols=['pickup_latitude', 'pickup_longitude', 'dropoff_latitude', 'dropoff_longitude', 'tpep_pickup_datetime', 'tpep_dropoff_datetime', 'passenger_count', 'trip_distance', 'fare_amount'])
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['pickup_latitude']), np.array(taxi_data['pickup_longitude'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude']),
+				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude'])
 				pickup_time = np.array(taxi_data['tpep_pickup_datetime'])
 				dropoff_time = np.array(taxi_data['tpep_dropoff_datetime'])
 				passenger_count = np.array(taxi_data['passenger_count'])
@@ -104,7 +104,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['pickup_latitude']), np.array(taxi_data['pickup_longitude'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude']),
+				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude'])
 				pickup_time = np.array(taxi_data['pickup_datetime'])
 				dropoff_time = np.array(taxi_data['dropoff_datetime'])
 				passenger_count = np.array(taxi_data['passenger_count'])
@@ -179,13 +179,18 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
 		destinations = get_destinations(pickup_coords.T, dropoff_coords.T, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coord, distance, unit='feet').T
-		
+	
+		print destinations
+		print has_written
+	
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + destinations.shape[0] + 1) ]
 		try:
 			destinations = pd.DataFrame(destinations, index=index, columns=['Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time', 'Drop-off Time', 'Passenger Count', 'Trip Distance', 'Fare Amount'])
 		except ValueError:
 			continue			
+
+		print destinations
 
 		# add column for hotel name
 		name_frame = pd.DataFrame([hotel_names[idx]] * destinations.shape[0], index=destinations.index, columns=['Hotel Name'])
@@ -205,7 +210,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
 
-		print to_write
+		print len(to_write)
 
 	# get and report total elapsed time for all hotels
 	end_time = timeit.default_timer() - start_time
