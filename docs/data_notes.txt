@@ -1,4 +1,4 @@
-Much of the NYC yellow and green taxicab data has year-to-year quirks that adds some nuance to data preprocessing. Here, I'll try to compile an exhaustive list of the quirks that I'm accounting for, for planning to fix, in my preprocessing code.
+Much of the NYC yellow and green taxicab data has year-to-year quirks that adds some nuance to data preprocessing. Here, I'll try to compile an exhaustive list of the quirks that I'm accounting for, or planning to fix, in my preprocessing code.
 
 - The following list of green taxicab data files, when preprocessed, returns an Excel file with no column headers:
 
