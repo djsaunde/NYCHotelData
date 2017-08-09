@@ -29,7 +29,7 @@ from util import *
 
 def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9ayZ_qGz-Y'):
 	'''
-    	Main logic for parsing taxi datafiles.
+    Main logic for parsing taxi datafiles.
 	'''
 	print '\n'
 
@@ -180,17 +180,12 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
 		destinations = get_destinations(pickup_coords.T, dropoff_coords.T, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coord, distance, unit='feet').T
 	
-		print destinations
-		print has_written
-	
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + destinations.shape[0] + 1) ]
 		try:
 			destinations = pd.DataFrame(destinations, index=index, columns=['Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time', 'Drop-off Time', 'Passenger Count', 'Trip Distance', 'Fare Amount'])
 		except ValueError:
 			continue			
-
-		print destinations
 
 		# add column for hotel name
 		name_frame = pd.DataFrame([hotel_names[idx]] * destinations.shape[0], index=destinations.index, columns=['Hotel Name'])
@@ -209,8 +204,6 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
-
-		print len(to_write)
 
 	# get and report total elapsed time for all hotels
 	end_time = timeit.default_timer() - start_time
@@ -264,7 +257,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--distance', type=int, default=300, help='Distance criterion (in feet) from hotels considered.')
 	parser.add_argument('--file_idx', type=int, default=0, help='Index of taxi file in ordered file list to preprocess.')
-	parser.add_argument('--file_name', type=str, default='', help='Name of taxe file to preprocess.')
+	parser.add_argument('--file_name', type=str, default='', help='Name of taxi file to preprocess.')
 	args = parser.parse_args()
 
 	# get requested distance criterion
