@@ -43,9 +43,9 @@ for idx, fname in enumerate(files):
 
 	print ' '.join(['... It took', str(timeit.default_timer() - start), 'seconds to merge the last dataframe in.'])
 
-# Write the composite dataframe out to a new Excel file
-writer = pd.ExcelWriter(os.path.join('..', 'data', 'preprocessed', 'Nearby Pickups and Dropoffs.xlsx'))
-destinations.to_excel(writer, 'Destinations', index=False)
-starting_points.to_excel(writer, 'Starting Points', index=False)
-writer.save()
+# Write the two dataframes out to CSV files
+destinations.to_csv(os.path.join('..', 'data', 'preprocessed', 'destinations.csv'), index=False)
+starting_points.to_csv(os.path.join('..', 'data', 'preprocessed', 'starting_points.csv'), index=False)
+
+print '\nDone!\n'
 
