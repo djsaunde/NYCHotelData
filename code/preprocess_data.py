@@ -29,7 +29,7 @@ from util import *
 
 def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9ayZ_qGz-Y'):
 	'''
-    	Main logic for parsing taxi datafiles.
+    Main logic for parsing taxi datafiles.
 	'''
 	print '\n'
 
@@ -257,7 +257,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--distance', type=int, default=300, help='Distance criterion (in feet) from hotels considered.')
 	parser.add_argument('--file_idx', type=int, default=0, help='Index of taxi file in ordered file list to preprocess.')
-	parser.add_argument('--file_name', type=str, default='', help='Name of taxe file to preprocess.')
+	parser.add_argument('--file_name', type=str, default='', help='Name of taxi file to preprocess.')
 	args = parser.parse_args()
 
 	# get requested distance criterion

@@ -68,7 +68,7 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	return np.ravel(normed_distro)
 
 
-def get_nearby_pickups(args):
+def get_nearby_pickups_times(args):
 	'''
 	Given the days of the week and the start and end times from which to look, return all satisfying
 	taxicab rides which begin nearby.
@@ -101,7 +101,7 @@ def get_nearby_pickups(args):
 	return satisfying_coords
 
 
-def get_nearby_dropoffs(args):
+def get_nearby_dropoffs_times(args):
 	'''
 	Given the days of the week and the start and end times from which to look, return all satisfying
 	taxicab rides which begin nearby.
@@ -126,6 +126,62 @@ def get_nearby_dropoffs(args):
 	
 	satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.hour >= start_hour]
 	satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.hour <= end_hour]
+	
+	# add the satisfying locations for this hotel to our dictionary data structure
+	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
+	
+	# return the satisfying nearby pick-up coordinates
+	return satisfying_coords
+
+
+def get_nearby_pickups_window(args):
+	'''
+	Given the days of the week and the start and end times from which to look, return all satisfying
+	taxicab rides which begin nearby.
+	
+	pickups: A pandas DataFrame containing all fields of data from pickups of a single hotel.
+	distance: A new distance used to cut out even more trips based on distance from the given hotel.
+	start_datetime: The date at which to start looking for data.
+	end_datetime: The date at which to stop looking for data.
+	'''
+	pickups, distance, start_datetime, end_datetime = args
+
+	# cast date-time column to pandas Timestamp type
+	pickups['Pick-up Time'] = pd.to_datetime(pickups['Pick-up Time'])
+		
+	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
+	hotel_matches = pickups.loc[pickups['Distance From Hotel'] <= distance]
+	
+	satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt >= start_datetime]
+	satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt <= end_datetime]
+	
+	# add the satisfying locations for this hotel to our dictionary data structure
+	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
+	
+	# return the satisfying nearby pick-up coordinates
+	return satisfying_coords
+
+
+def get_nearby_dropoffs_window(args):
+	'''
+	Given the days of the week and the start and end times from which to look, return all satisfying
+	taxicab rides which begin nearby.
+	
+	dropoffs: A pandas DataFrame containing all fields of data from dropoffs of a single hotel.
+	distance: A new distance used to cut out even more trips based on distance from the given hotel.
+	start_datetime: The date at which to start looking for data.
+	end_datetime: The date at which to stop looking for data.
+	'''
+	dropoffs, distance, state_datetime, end_datetime = args
+
+	# cast date-time column to pandas Timestamp type
+	dropoffs['Drop-off Time'] = pd.to_datetime(dropoffs['Drop-off Time'])
+		
+	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
+	hotel_matches = dropoffs.loc[dropoffs['Distance From Hotel'] <= distance]
+	
+	satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt >= start_datetime]
+	satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt <= end_datetime]
 	
 	# add the satisfying locations for this hotel to our dictionary data structure
 	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
@@ -257,6 +313,7 @@ def other_vars_same(prop_row, manhattan_row, capacity):
 	# the rows match on all constraints; therefore, return True
 	return True
 
+
 def euclidean_miles(point1, point2):
 	'''
 	A function which, given two coordinates in UTM, returns the Euclidean distance between the
@@ -270,6 +327,7 @@ def euclidean_miles(point1, point2):
 		The Euclidean distance between point1 and point2.
 	'''
 	return math.sqrt(((point1[0] - point2[0]) ** 2) + ((point1[1] - point2[1]) ** 2)) * 0.000621371
+
 
 def get_hotel_coords(attr_coords, distances):
 	'''
