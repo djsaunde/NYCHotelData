@@ -152,8 +152,8 @@ def get_nearby_pickups_window(args):
 	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
 	hotel_matches = pickups.loc[pickups['Distance From Hotel'] <= distance]
 	
-	satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt >= start_datetime]
-	satisfying_locations = hotel_matches[hotel_matches['Pick-up Time'].dt <= end_datetime]
+	satisfying_locations = hotel_matches[pd.to_datetime(hotel_matches['Pick-up Time']) >= start_datetime]
+	satisfying_locations = hotel_matches[pd.to_datetime(hotel_matches['Pick-up Time']) <= end_datetime]
 	
 	# add the satisfying locations for this hotel to our dictionary data structure
 	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
@@ -180,8 +180,8 @@ def get_nearby_dropoffs_window(args):
 	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
 	hotel_matches = dropoffs.loc[dropoffs['Distance From Hotel'] <= distance]
 	
-	satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt >= start_datetime]
-	satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt <= end_datetime]
+	satisfying_locations = hotel_matches[pd.to_datetime(hotel_matches['Drop-off Time']) >= start_datetime]
+	satisfying_locations = hotel_matches[pd.to_datetime(hotel_matches['Drop-off Time']) <= end_datetime]
 	
 	# add the satisfying locations for this hotel to our dictionary data structure
 	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T

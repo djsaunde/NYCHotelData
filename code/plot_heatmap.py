@@ -23,8 +23,8 @@ warnings.filterwarnings('ignore')
 
 from util import *
 
-data_path = os.path.join('..', 'data', 'preprocessed')
 plots_path = os.path.join('..', 'plots')
+data_path = os.path.join('..', 'data', 'preprocessed_100')
 
 
 def plot_heatmap_times(taxi_data, distance, days, times, map_type):
@@ -69,14 +69,13 @@ def plot_heatmap_times(taxi_data, distance, days, times, map_type):
 	start_time = default_timer()
 
 	if map_type == 'static':
-		# a one-liner to get all the ARCGIS maps plotted
+		# Plot all ARCGIS maps.
 		directory = str(distance) + 'ft_' + '_'.join([ key for key in taxi_data.keys() ]) + '_'.join([ str(day) for day in days ]) \
 				+ '_weekdays_' + str(times[0]) + '_' + str(times[1]) + '_start_end_hours_heatmap.png'
 		empirical_dists = Parallel(n_jobs=len(coords.keys())) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]),
 							hotel_name, os.path.join(plots_path, directory)) for hotel_name in coords.keys())
 	elif map_type == 'gmap':
 		for hotel_name in coords.keys():
-			# some map parameters
 			map_name = hotel_name + '_Jan2016_' + str(distance) + 'ft_pickups_' + ','.join([ str(day) for day in days ]) + \
 														'_weekdays_' + str(times[0]) + '_' + str(times[1]) + '_start_end_hours_heatmap.html'
 			filepath = plots_path + map_name[:-5] + '.png'
@@ -101,12 +100,12 @@ def plot_heatmap_times(taxi_data, distance, days, times, map_type):
 	return empirical_dists, coords.keys()
 
 
-def plot_heatmap_window(taxi_data, distance, start_date, end_date, map_type):
+def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_type):
 	'''
 	taxi_data: Dictionary of (data type, pandas DataFrame of taxicab coordinates and metadata)
 	distance: Distance in feet from hotel criterion.
-	start_date: Date at which to begin looking for data.
-	end_date: Date at which to end looking for data.
+	start_datetime: Date at which to begin looking for data.
+	end_datetime: Date at which to end looking for data.
 	map_type: 'static' or 'gmap', for either ARCGIS NYC map queried from their website or Google Maps overlay.
 	'''
 	# get coordinates of new distance and time-constraint satisfying taxicab trips with nearby pick-ups
@@ -120,10 +119,10 @@ def plot_heatmap_window(taxi_data, distance, start_date, end_date, map_type):
 		# Get the pick-up (drop-off) coordinates of the trip which ended (began) near this each hotel
 		if key == 'pickups':
 			coords = pool.map(get_nearby_pickups_window, [ (data.loc[data['Hotel Name'] == hotel_name], \
-							distance, days, start_date, end_date) for hotel_name in data['Hotel Name'].unique() ])
+							distance, start_datetime, end_datetime) for hotel_name in data['Hotel Name'].unique() ])
 		elif key == 'dropoffs':
 			coords = pool.map(get_nearby_dropoffs_window, [ (data.loc[data['Hotel Name'] == hotel_name], \
-							distance, start_date, end_date) for hotel_name in data['Hotel Name'].unique() ])
+							distance, start_datetime, end_datetime) for hotel_name in data['Hotel Name'].unique() ])
 		
 		coords = { hotel_name : args for (hotel_name, args) in zip(data['Hotel Name'].unique(), coords) }
 
@@ -140,19 +139,18 @@ def plot_heatmap_window(taxi_data, distance, start_date, end_date, map_type):
 
 	coords = all_coords
 
+	print coords
+
 	start_time = default_timer()
 
 	if map_type == 'static':
-		# a one-liner to get all the ARCGIS maps plotted
-		directory = str(distance) + 'ft_' + '_'.join([ key for key in taxi_data.keys() ]) + '_'.join([ str(day) for day in days ]) \
-				+ '_weekdays_' + str(times[0]) + '_' + str(times[1]) + '_start_end_hours_heatmap.png'
+		# Plot all ARCGIS maps.
+		directory = '_'.join([ '_'.join(taxi_data.keys()), str(distance), to_plot, str(start_datetime), str(end_datetime) ])
 		empirical_dists = Parallel(n_jobs=len(coords.keys())) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]),
 							hotel_name, os.path.join(plots_path, directory)) for hotel_name in coords.keys())
 	elif map_type == 'gmap':
 		for hotel_name in coords.keys():
-			# some map parameters
-			map_name = hotel_name + '_Jan2016_' + str(distance) + 'ft_pickups_' + ','.join([ str(day) for day in days ]) + \
-														'_weekdays_' + str(times[0]) + '_' + str(times[1]) + '_start_end_hours_heatmap.html'
+			map_name = '_'.join([ hotel_name, str(distance), to_plot, ','.join([ str(day) for day in days ]), str(times[0]), str(times[1]) ]) + '.html'
 			filepath = plots_path + map_name[:-5] + '.png'
 
 			# get the Google maps area we wish to plot at
@@ -175,9 +173,13 @@ def plot_heatmap_window(taxi_data, distance, start_date, end_date, map_type):
 	return empirical_dists, coords.keys()
 
 
-def plot_KL_divergences(empirical_distributions, keys):
+def plot_KL_divergences(empirical_distributions, hotel_names):
 	'''
-	To Do.
+	Given the empirical distributions of pick-up / drop-off points on the discretized map of NYC, calculate their
+	pairwise Kullbeck-Liebler divergences and arrange them in a bar plot.
+
+	empirical_distributions: A list of empirical distributions of pick-up / drop-off points on a discretized map of NYC.
+	hotel_names: The ordered list of the names of the hotels whose empirical distributions we've calculated.
 	'''
 	kl_diverges = []
 	for dist1 in empirical_dists:
@@ -193,12 +195,12 @@ def plot_KL_divergences(empirical_distributions, keys):
 
 	plt.figure(figsize=(18, 9.5))
 
-	for idx in xrange(len(coords.keys())):
+	for idx in xrange(len(hotel_names)):
 		plt.bar(idxs + width * idx, kl_diverges[idx, :], width)
 
 	plt.title('Kullbeck-Liebler divergence between empirical distributions of hotel trips')
-	plt.xticks(idxs + width / float(len(coords.keys())), coords.keys(), rotation=15)
-	plt.legend(coords.keys(), loc=1, fontsize='xx-small')
+	plt.xticks(idxs + width / float(len(hotel_names)), hotel_names, rotation=15)
+	plt.legend(hotel_names, loc=1, fontsize='xx-small')
 	plt.show()
 
 	return kl_diverges
@@ -206,7 +208,7 @@ def plot_KL_divergences(empirical_distributions, keys):
 
 def load_data(to_plot, data_files):
 	'''
-	Load the pre-processed taxi data file(s) needed for 
+	Load the pre-processed taxi data file(s) needed for plotting empirical pick-up / drop-off point distributions as heatmaps.
 	'''
 	if to_plot == 'pickups':
 		picklenames = [ 'nearby_pickups.p' ]
