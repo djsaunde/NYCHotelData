@@ -16,6 +16,7 @@ from scipy.stats import entropy
 from timeit import default_timer
 from joblib import Parallel, delayed
 from IPython.core.display import HTML
+from mpl_toolkits.mplot3d import Axes3D
 from IPython.display import Image, display
 
 import warnings
@@ -124,7 +125,7 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 			coords = pool.map(get_nearby_dropoffs_window, [ (data.loc[data['Hotel Name'] == hotel_name], \
 							distance, start_datetime, end_datetime) for hotel_name in data['Hotel Name'].unique() ])
 		
-		coords = { hotel_name : args for (hotel_name, args) in zip(data['Hotel Name'].unique(), coords) }
+		coords = { hotel_name : coord for (hotel_name, coord) in zip(data['Hotel Name'].unique(), coords) } 
 
 		print 'Total satisfying nearby', key, ':', sum([single_hotel_coords.shape[1] \
 											for single_hotel_coords in coords.values()]), '/', len(data), '\n'
@@ -133,36 +134,34 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 		for name in coords:
 			print '-', name, ':', coords[name].shape[1], 'satisfying taxicab rides'
 
-		all_coords = all_coords.update(coords)
+		all_coords.update(coords)
 
 		print '\n'
 
 	coords = all_coords
-
-	print coords
 
 	start_time = default_timer()
 
 	if map_type == 'static':
 		# Plot all ARCGIS maps.
 		directory = '_'.join([ '_'.join(taxi_data.keys()), str(distance), to_plot, str(start_datetime), str(end_datetime) ])
-		empirical_dists = Parallel(n_jobs=len(coords.keys())) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]),
+		empirical_dists = Parallel(n_jobs=mp.cpu_count()) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]),
 							hotel_name, os.path.join(plots_path, directory)) for hotel_name in coords.keys())
 	elif map_type == 'gmap':
 		for hotel_name in coords.keys():
 			map_name = '_'.join([ hotel_name, str(distance), to_plot, ','.join([ str(day) for day in days ]), str(times[0]), str(times[1]) ]) + '.html'
 			filepath = plots_path + map_name[:-5] + '.png'
 
-			# get the Google maps area we wish to plot at
+			# Get the Google maps area we wish to plot on.
 			gmap = gmplot.GoogleMapPlotter(np.median(coords[hotel_name][0]), np.median(coords[hotel_name][1]), 13)
 
-			# plot the map
+			# Plot the map.
 			gmap.heatmap(coords[hotel_name][0], coords[hotel_name][1], threshold=10, radius=1, gradient=None, opacity=0.6, dissipating=False)
 
-			# draw the map
+			# Draw the map.
 			gmap.draw(plots_path + map_name)
 
-			# display it in the web browser
+			# Display it in a web browser
 			webbrowser.open(plots_path + map_name)
 
 	else:
@@ -182,9 +181,9 @@ def plot_KL_divergences(empirical_distributions, hotel_names):
 	hotel_names: The ordered list of the names of the hotels whose empirical distributions we've calculated.
 	'''
 	kl_diverges = []
-	for dist1 in empirical_dists:
+	for dist1 in empirical_distributions:
 		cur_diverges = []
-		for dist2 in empirical_dists:
+		for dist2 in empirical_distributions:
 			cur_diverges.append(entropy(dist1, dist2))
 		kl_diverges.append(cur_diverges)
 
@@ -193,14 +192,21 @@ def plot_KL_divergences(empirical_distributions, hotel_names):
 	width = 0.9 / float(kl_diverges.shape[0])
 	idxs = np.arange(kl_diverges.shape[0])
 
-	plt.figure(figsize=(18, 9.5))
+	fig = plt.figure(figsize=(18, 9.5))
+	ax = fig.add_subplot(111, projection='3d')
 
-	for idx in xrange(len(hotel_names)):
-		plt.bar(idxs + width * idx, kl_diverges[idx, :], width)
+	for hotel_name, klds in zip(hotel_names, kl_diverges):
+		print klds
+		print len(klds)
+		ax.bar(xrange(len(klds)), klds, zs=xrange(len(klds)), zdir='y', alpha=0.8)
 
-	plt.title('Kullbeck-Liebler divergence between empirical distributions of hotel trips')
-	plt.xticks(idxs + width / float(len(hotel_names)), hotel_names, rotation=15)
-	plt.legend(hotel_names, loc=1, fontsize='xx-small')
+	# for idx in xrange(len(hotel_names)):
+	# 	plt.bar(idxs + width * idx, kl_diverges[idx, :], width)
+
+	# plt.title('Kullbeck-Liebler divergence between empirical distributions of hotel trips')
+	# plt.xticks(idxs + width / float(len(hotel_names)), hotel_names, rotation=90)
+	# plt.legend(hotel_names, loc=1, fontsize='xx-small')
+	# plt.tight_layout()
 	plt.show()
 
 	return kl_diverges
@@ -261,10 +267,10 @@ if __name__ == '__main__':
 	window_subparser = subparsers.add_parser('window', help='Parser for heatmap plotting a specific window of time.')
 
 	window_subparser.add_argument('--start_datetime', type=int,
-					nargs=4, default=[2012, 6, 26, 9], metavar=('YEAR', 'MONTH', 'DAY', 'HOUR'), 
+					nargs=4, default=[2010, 6, 26, 0], metavar=('YEAR', 'MONTH', 'DAY', 'HOUR'), 
 					help='Tuple giving year, month, day, and hour of the time from which to start looking for data.')
 	window_subparser.add_argument('--end_datetime', type=int,
-					nargs=4, default=[2012, 6, 26, 17], metavar=('YEAR', 'MONTH', 'DAY', 'HOUR'), 
+					nargs=4, default=[2016, 6, 26, 23], metavar=('YEAR', 'MONTH', 'DAY', 'HOUR'), 
 					help='Tuple giving year, month, day, and hour of the time from which to stop looking for data.')
 
 	args = parser.parse_args()

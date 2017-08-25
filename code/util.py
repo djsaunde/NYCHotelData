@@ -154,7 +154,7 @@ def get_nearby_pickups_window(args):
 	
 	satisfying_locations = hotel_matches[pd.to_datetime(hotel_matches['Pick-up Time']) >= start_datetime]
 	satisfying_locations = hotel_matches[pd.to_datetime(hotel_matches['Pick-up Time']) <= end_datetime]
-	
+
 	# add the satisfying locations for this hotel to our dictionary data structure
 	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
 	
