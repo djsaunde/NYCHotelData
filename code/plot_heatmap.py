@@ -42,7 +42,7 @@ def plot_heatmap_times(taxi_data, distance, days, times, map_type):
 		data = taxi_data[key]
 
 		# Create a number of CPU workers equal to the number of hotels in the data
-		pool = mp.Pool(len(data['Hotel Name'].unique()))
+		pool = mp.Pool(mp.cpu_count() / 2)
 
 		# Get the pick-up (drop-off) coordinates of the trip which ended (began) near this each hotel
 		if key == 'pickups':
@@ -110,12 +110,13 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 	map_type: 'static' or 'gmap', for either ARCGIS NYC map queried from their website or Google Maps overlay.
 	'''
 	# get coordinates of new distance and time-constraint satisfying taxicab trips with nearby pick-ups
+
 	all_coords = {}
 	for key in taxi_data.keys():
 		data = taxi_data[key]
 
 		# Create a number of CPU workers equal to the number of hotels in the data
-		pool = mp.Pool(len(data['Hotel Name'].unique()))
+		pool = mp.Pool(mp.cpu_count() / 2)
 
 		# Get the pick-up (drop-off) coordinates of the trip which ended (began) near this each hotel
 		if key == 'pickups':
@@ -145,7 +146,7 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 	if map_type == 'static':
 		# Plot all ARCGIS maps.
 		directory = '_'.join([ '_'.join(taxi_data.keys()), str(distance), to_plot, str(start_datetime), str(end_datetime) ])
-		empirical_dists = Parallel(n_jobs=mp.cpu_count()) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]),
+		empirical_dists = Parallel(n_jobs=mp.cpu_count() / 2) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]),
 							hotel_name, os.path.join(plots_path, directory)) for hotel_name in coords.keys())
 	elif map_type == 'gmap':
 		for hotel_name in coords.keys():

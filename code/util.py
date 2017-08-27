@@ -23,9 +23,6 @@ np.set_printoptions(threshold=np.nan)
 # tolerance level for intersection point
 EPS = 0.000001
 
-# get number of CPU cores on this machine
-num_cores = multiprocessing.cpu_count()
-
 
 def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150):
 	'''
@@ -172,7 +169,7 @@ def get_nearby_dropoffs_window(args):
 	start_datetime: The date at which to start looking for data.
 	end_datetime: The date at which to stop looking for data.
 	'''
-	dropoffs, distance, state_datetime, end_datetime = args
+	dropoffs, distance, start_datetime, end_datetime = args
 
 	# cast date-time column to pandas Timestamp type
 	dropoffs['Drop-off Time'] = pd.to_datetime(dropoffs['Drop-off Time'])
