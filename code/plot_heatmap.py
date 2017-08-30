@@ -36,6 +36,8 @@ def plot_heatmap_times(taxi_data, distance, days, times, map_type):
 	times: Times of days to include.
 	map_type: 'static' or 'gmap', for either ARCGIS NYC map queried from their website or Google Maps overlay.
 	'''
+	start_time = default_timer()
+
 	# get coordinates of new distance and time-constraint satisfying taxicab trips with nearby pick-ups
 	all_coords = {}
 	for key in taxi_data.keys():
@@ -44,20 +46,23 @@ def plot_heatmap_times(taxi_data, distance, days, times, map_type):
 		# Create a number of CPU workers equal to the number of hotels in the data
 		pool = mp.Pool(mp.cpu_count() / 2)
 
+		# Get a list of the names of the hotels we aim to plot distributions for (removing NaNs)
+		hotel_names = [ hotel_name for hotel_name in data['Hotel Name'].unique() if not pd.isnull(hotel_name) ]
+
 		# Get the pick-up (drop-off) coordinates of the trip which ended (began) near this each hotel
 		if key == 'pickups':
 			coords = pool.map(get_nearby_pickups_times, [ (data.loc[data['Hotel Name'] == hotel_name], \
-							distance, days, times[0], times[1] - 1) for hotel_name in data['Hotel Name'].unique() ])
+							distance, days, times[0], times[1] - 1) for hotel_name in hotel_names ])
 		elif key == 'dropoffs':
 			coords = pool.map(get_nearby_dropoffs_times, [ (data.loc[data['Hotel Name'] == hotel_name], \
-							distance, days, times[0], times[1] - 1) for hotel_name in data['Hotel Name'].unique() ])
+							distance, days, times[0], times[1] - 1) for hotel_name in hotel_names ])
 		
-		coords = { hotel_name : args for (hotel_name, args) in zip(data['Hotel Name'].unique(), coords) }
+		coords = { hotel_name : args for (hotel_name, args) in zip(hotel_names, coords) }
 
 		print 'Total satisfying nearby', key, ':', sum([single_hotel_coords.shape[1] \
 											for single_hotel_coords in coords.values()]), '/', len(data), '\n'
 		
-		print 'Satisfying nearby', key, 'by hotel :'
+		print 'Satisfying nearby', key, 'by hotel:'
 		for name in coords:
 			print '-', name, ':', coords[name].shape[1], 'satisfying taxicab rides'
 
@@ -66,6 +71,8 @@ def plot_heatmap_times(taxi_data, distance, days, times, map_type):
 		print '\n'
 
 	coords = all_coords
+
+	print '\nIt took', default_timer() - start_time, 'seconds to find all criteria-satifying taxicab trips.\n'
 
 	start_time = default_timer()
 
@@ -109,8 +116,10 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 	end_datetime: Date at which to end looking for data.
 	map_type: 'static' or 'gmap', for either ARCGIS NYC map queried from their website or Google Maps overlay.
 	'''
-	# get coordinates of new distance and time-constraint satisfying taxicab trips with nearby pick-ups
 
+	start_time = default_timer()
+
+	# get coordinates of new distance and time-constraint satisfying taxicab trips with nearby pick-ups
 	all_coords = {}
 	for key in taxi_data.keys():
 		data = taxi_data[key]
@@ -118,28 +127,31 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 		# Create a number of CPU workers equal to the number of hotels in the data
 		pool = mp.Pool(mp.cpu_count() / 2)
 
+		# Get a list of the names of the hotels we aim to plot distributions for (removing NaNs)
+		hotel_names = [ hotel_name for hotel_name in data['Hotel Name'].unique() if not pd.isnull(hotel_name) ]
+
 		# Get the pick-up (drop-off) coordinates of the trip which ended (began) near this each hotel
 		if key == 'pickups':
 			coords = pool.map(get_nearby_pickups_window, [ (data.loc[data['Hotel Name'] == hotel_name], \
-							distance, start_datetime, end_datetime) for hotel_name in data['Hotel Name'].unique() ])
+								distance, start_datetime, end_datetime) for hotel_name in hotel_names ])
 		elif key == 'dropoffs':
 			coords = pool.map(get_nearby_dropoffs_window, [ (data.loc[data['Hotel Name'] == hotel_name], \
-							distance, start_datetime, end_datetime) for hotel_name in data['Hotel Name'].unique() ])
+								distance, start_datetime, end_datetime) for hotel_name in hotel_names ])
 		
-		coords = { hotel_name : coord for (hotel_name, coord) in zip(data['Hotel Name'].unique(), coords) } 
+		coords = { hotel_name : coord for (hotel_name, coord) in zip(hotel_names, coords) }
 
 		print 'Total satisfying nearby', key, ':', sum([single_hotel_coords.shape[1] \
 											for single_hotel_coords in coords.values()]), '/', len(data), '\n'
 		
-		print 'Satisfying nearby', key, 'by hotel :'
+		print 'Satisfying nearby', key, 'by hotel:'
 		for name in coords:
 			print '-', name, ':', coords[name].shape[1], 'satisfying taxicab rides'
 
 		all_coords.update(coords)
 
-		print '\n'
-
 	coords = all_coords
+
+	print '\nIt took', default_timer() - start_time, 'seconds to find all criteria-satifying taxicab trips.\n'
 
 	start_time = default_timer()
 
@@ -168,7 +180,7 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 	else:
 		raise Exception('Expecting map type of "static" or "gmap".')
 
-	print '\nIt took', default_timer() - start_time, 'seconds to plot the heatmaps\n'
+	print '\nIt took', default_timer() - start_time, 'seconds to plot the heatmaps.\n'
 
 	return empirical_dists, coords.keys()
 
@@ -207,7 +219,7 @@ def plot_KL_divergences(empirical_distributions, hotel_names):
 	ax.set_xticklabels([ 'H' + str(idx + 1) for idx in xrange(len(hotel_names))])
 
 
-	fig.suptitle('pairwise Kullbeck-Liebler divergence per hotel')
+	fig.suptitle('pairwise Kullbeck-Liebler divergence per hotel distribution')
 
 	plt.show()
 
@@ -217,18 +229,19 @@ def plot_KL_divergences(empirical_distributions, hotel_names):
 	return kl_diverges
 
 
-def load_data(to_plot, data_files):
+def load_data(to_plot, data_files, chunksize=5000000):
 	'''
 	Load the pre-processed taxi data file(s) needed for plotting empirical pick-up / drop-off point distributions as heatmaps.
+
+	to_plot: Whether to plot the distribution of pick-up coordinates of trips which end near the hotel of interest, the distribution of 
+	drop-off coordinates of trips which begin near the hotel of interest, or both.
+	data_files: The .csv files in which the pre-processed geospatial coordinate data is stored.
 	'''
 	if to_plot == 'pickups':
-		picklenames = [ 'nearby_pickups.p' ]
 		dictnames = [ 'pickups' ]
 	elif to_plot == 'dropoffs':
-		picklenames = [ 'nearby_dropoffs.p' ]
 		dictnames = [ 'dropoffs' ]
 	elif to_plot == 'both':
-		picklenames = [ 'nearby_pickups.p', 'nearby_dropoffs.p' ]
 		dictnames = [ 'pickups', 'dropoffs' ]
 
 	print '\n... Loading taxicab trip data (pilot set of 24 hotels)'
@@ -236,14 +249,13 @@ def load_data(to_plot, data_files):
 	start_time = timeit.default_timer()
 
 	taxi_data = {}
-	for pname, dname, data_file in zip(picklenames, dictnames, data_files):
-		if pname not in os.listdir(data_path):
-			print '... Loading data from disk.'
-			taxi_data[dname] = pd.read_csv(os.path.join(data_path, data_file))
-			p.dump(taxi_data[dname], open(os.path.join(data_path, pname), 'wb'))
-		else:
-			print '... Loading data from pickled object file.'
-			taxi_data[dname] = p.load(open(os.path.join(data_path, pname), 'rb'))
+	for dname, data_file in zip(dictnames, data_files):
+		print '... Loading data from disk.'
+		for idx, chunk in enumerate(pd.read_csv(os.path.join(data_path, data_file), chunksize=chunksize)):
+			if idx == 0:
+				taxi_data[dname] = chunk
+			else:
+				taxi_data[dname] = pd.concat((taxi_data[dname], chunk))
 
 	print '... It took', default_timer() - start_time, 'seconds to load the taxicab trip data\n'
 
@@ -272,10 +284,10 @@ if __name__ == '__main__':
 	window_subparser = subparsers.add_parser('window', help='Parser for heatmap plotting a specific window of time.')
 
 	window_subparser.add_argument('--start_datetime', type=int,
-					nargs=4, default=[2010, 6, 26, 0], metavar=('YEAR', 'MONTH', 'DAY', 'HOUR'), 
+					nargs=4, default=[2016, 6, 20, 0], metavar=('YEAR', 'MONTH', 'DAY', 'HOUR'), 
 					help='Tuple giving year, month, day, and hour of the time from which to start looking for data.')
 	window_subparser.add_argument('--end_datetime', type=int,
-					nargs=4, default=[2016, 6, 26, 23], metavar=('YEAR', 'MONTH', 'DAY', 'HOUR'), 
+					nargs=4, default=[2016, 6, 27, 0], metavar=('YEAR', 'MONTH', 'DAY', 'HOUR'), 
 					help='Tuple giving year, month, day, and hour of the time from which to stop looking for data.')
 
 	args = parser.parse_args()
