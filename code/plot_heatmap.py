@@ -44,7 +44,7 @@ def plot_heatmap_times(taxi_data, distance, days, times, map_type):
 		data = taxi_data[key]
 
 		# Create a number of CPU workers equal to the number of hotels in the data
-		pool = mp.Pool(mp.cpu_count() / 2)
+		pool = mp.Pool(n_jobs)
 
 		# Get a list of the names of the hotels we aim to plot distributions for (removing NaNs)
 		hotel_names = [ hotel_name for hotel_name in data['Hotel Name'].unique() if not pd.isnull(hotel_name) ]
@@ -125,7 +125,7 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 		data = taxi_data[key]
 
 		# Create a number of CPU workers equal to the number of hotels in the data
-		pool = mp.Pool(mp.cpu_count() / 2)
+		pool = mp.Pool(n_jobs)
 
 		# Get a list of the names of the hotels we aim to plot distributions for (removing NaNs)
 		hotel_names = [ hotel_name for hotel_name in data['Hotel Name'].unique() if not pd.isnull(hotel_name) ]
@@ -139,6 +139,9 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 								distance, start_datetime, end_datetime) for hotel_name in hotel_names ])
 		
 		coords = { hotel_name : coord for (hotel_name, coord) in zip(hotel_names, coords) }
+
+		print [ hotel_name for hotel_name in hotel_names ]
+		print [ single_hotel_coords.shape for single_hotel_coords in coords.values() ]
 
 		print 'Total satisfying nearby', key, ':', sum([single_hotel_coords.shape[1] \
 											for single_hotel_coords in coords.values()]), '/', len(data), '\n'
@@ -158,7 +161,7 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 	if map_type == 'static':
 		# Plot all ARCGIS maps.
 		directory = '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(start_datetime), str(end_datetime) ])
-		empirical_dists = Parallel(n_jobs=mp.cpu_count() / 2) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]),
+		empirical_dists = Parallel(n_jobs=n_jobs) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]),
 							hotel_name, os.path.join(plots_path, directory)) for hotel_name in coords.keys())
 	elif map_type == 'gmap':
 		for hotel_name in coords.keys():
@@ -250,7 +253,7 @@ def load_data(to_plot, data_files, chunksize=5000000):
 
 	taxi_data = {}
 	for dname, data_file in zip(dictnames, data_files):
-		print '... Loading data from disk.'
+		print '... Loading', dname, 'data from disk.'
 		for idx, chunk in enumerate(pd.read_csv(os.path.join(data_path, data_file), chunksize=chunksize)):
 			if idx == 0:
 				taxi_data[dname] = chunk
@@ -270,6 +273,7 @@ if __name__ == '__main__':
 	parser.add_argument('--distance', type=int, default=100, help='Distance from hotel criterion (in feet).')
 	parser.add_argument('--map_type', type=str, default='static', \
 						help='Plot a heatmap in Google Maps or using an ARCGIS map of NYC.')
+	parser.add_argument('--n_jobs', type=int, default=2, help='The number of parallel processes to run for all parallel processing routines.')
 
 	subparsers = parser.add_subparsers(title='subcommands', dest='subcommand')
 
