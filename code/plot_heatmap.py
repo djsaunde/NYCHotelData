@@ -145,7 +145,7 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 
 	if map_type == 'static':
 		# Plot all ARCGIS maps.
-		directory = '_'.join([ '_'.join(taxi_data.keys()), str(distance), to_plot, str(start_datetime), str(end_datetime) ])
+		directory = '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(start_datetime), str(end_datetime) ])
 		empirical_dists = Parallel(n_jobs=mp.cpu_count() / 2) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]),
 							hotel_name, os.path.join(plots_path, directory)) for hotel_name in coords.keys())
 	elif map_type == 'gmap':
@@ -193,22 +193,26 @@ def plot_KL_divergences(empirical_distributions, hotel_names):
 	width = 0.9 / float(kl_diverges.shape[0])
 	idxs = np.arange(kl_diverges.shape[0])
 
+	cm = plt.get_cmap('gist_rainbow')
+
 	fig = plt.figure(figsize=(18, 9.5))
 	ax = fig.add_subplot(111, projection='3d')
 
-	for hotel_name, klds in zip(hotel_names, kl_diverges):
-		print klds
-		print len(klds)
-		ax.bar(xrange(len(klds)), klds, zs=xrange(len(klds)), zdir='y', alpha=0.8)
+	for idx, hotel_name, klds in zip(range(len(kl_diverges)), hotel_names, kl_diverges):
+		ax.bar(np.arange(len(klds)), klds, zs=[ idx ] * len(klds), zdir='y', alpha=0.8, color=cm(1.0 * idx / len(hotel_names)))
 
-	# for idx in xrange(len(hotel_names)):
-	# 	plt.bar(idxs + width * idx, kl_diverges[idx, :], width)
+	ax.set_yticks(xrange(len(hotel_names)))
+	ax.set_yticklabels([ 'H' + str(idx + 1) for idx in xrange(len(hotel_names))])
+	ax.set_xticks(xrange(len(hotel_names)))
+	ax.set_xticklabels([ 'H' + str(idx + 1) for idx in xrange(len(hotel_names))])
 
-	# plt.title('Kullbeck-Liebler divergence between empirical distributions of hotel trips')
-	# plt.xticks(idxs + width / float(len(hotel_names)), hotel_names, rotation=90)
-	# plt.legend(hotel_names, loc=1, fontsize='xx-small')
-	# plt.tight_layout()
+
+	fig.suptitle('pairwise Kullbeck-Liebler divergence per hotel')
+
 	plt.show()
+
+	plt.clf()
+	plt.close()
 
 	return kl_diverges
 
@@ -249,7 +253,7 @@ def load_data(to_plot, data_files):
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 
-	parser.add_argument('--to_plot', type=str, default='both', \
+	parser.add_argument('--to_plot', type=str, default='pickups', \
 						help='Whether to plot data from nearby "pickups", "dropoffs", or "both"')
 	parser.add_argument('--distance', type=int, default=100, help='Distance from hotel criterion (in feet).')
 	parser.add_argument('--map_type', type=str, default='static', \

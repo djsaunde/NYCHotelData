@@ -54,7 +54,12 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	if not os.path.isdir(directory):
 		os.makedirs(directory)
 
+	# save ARCGIS plot out to disk to inspect later
 	plt.savefig(os.path.join(directory, hotel_name + '.png'))
+
+	# close out the plot to avoid multiple colorbar bug
+	plt.clf()
+	plt.close()
 
 	# setting zero-valued bins to small non-zero values (for KL divergence)
 	bin_coords[np.where(bin_coords == 0)] = 1e-32
@@ -121,8 +126,7 @@ def get_nearby_dropoffs_times(args):
 	for day in days:
 		satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.weekday_name == day]
 	
-	satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.hour >= start_hour]
-	satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.hour <= end_hour]
+	satisfying_locations = hotel_matches[(hotel_matches['Drop-off Time'].dt.hour >= start_hour) & (hotel_matches['Drop-off Time'].dt.hour <= end_hour)]
 	
 	# add the satisfying locations for this hotel to our dictionary data structure
 	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
@@ -149,9 +153,9 @@ def get_nearby_pickups_window(args):
 	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
 	hotel_matches = pickups.loc[pickups['Distance From Hotel'] <= distance]
 	
-	satisfying_locations = hotel_matches[pd.to_datetime(hotel_matches['Pick-up Time']) >= start_datetime]
-	satisfying_locations = hotel_matches[pd.to_datetime(hotel_matches['Pick-up Time']) <= end_datetime]
-
+	satisfying_locations = hotel_matches[(pd.to_datetime(hotel_matches['Pick-up Time']) >= start_datetime) & \
+														(pd.to_datetime(hotel_matches['Pick-up Time']) <= end_datetime)]
+														
 	# add the satisfying locations for this hotel to our dictionary data structure
 	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
 	
