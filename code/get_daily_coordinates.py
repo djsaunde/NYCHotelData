@@ -8,10 +8,12 @@ from util import *
 from datetime import timedelta, date, datetime
 
 data_path = os.path.join('..', 'data', 'preprocessed_100')
+output_path = os.path.join('..', 'data', 'daily_distributions')
 plots_path = os.path.join('..', 'plots', 'daily')
 
-if not os.path.isdir(plots_path):
-	os.makedirs(plots_path)
+for directory in [ output_path, plots_path ]:
+	if not os.path.isdir(directory):
+		os.makedirs(directory)
 
 
 def daterange(start_date, end_date):
@@ -72,14 +74,16 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 
 		daily_coords.append(combined_coords)
 
-
+	with open(os.path.join(output_path, '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(start_date), str(end_date) ])), 'wb') as f:
+		writer = csv.writer(f)
+		writer.writerows(daily_coords)
 
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Making scatterplots and recording satisfying coordinates in a .csv file for a given window of time.')
 
 	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1], help='The day on which to start looking for satisfying coordinates.')
-	parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 12, 31], help='The day on which to stop looking for satisfying coordinates.')
+	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 1, 31], help='The day on which to stop looking for satisfying coordinates.')
 	parser.add_argument('--coord_type', type=str, default='pickups', help='The type of coordinates to look for (one of "pickups", "dropoffs", or "both").')
 	parser.add_argument('--distance', type=int, default=100, help='The distance (in feet) from hotels for which to look for satisfying taxicab trips.')
 	parser.add_argument('--n_jobs', type=int, default=4, help='THe number of CPU cores to use in processing the taxicab data.')
@@ -104,3 +108,5 @@ if __name__ == '__main__':
 
 	# create scatterplots and record coordinates for each day (from start_date to end_date) for all hotels combined
 	plot_and_record_daily(taxi_data, start_date, end_date)
+
+	print '\n'
