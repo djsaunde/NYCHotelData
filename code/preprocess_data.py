@@ -272,5 +272,5 @@ if __name__ == '__main__':
 		# preprocess our particular taxi data file
 		preprocess(taxi_files[file_idx], distance)
 	else:
-		# preprocess passed0in taxi data file
+		# preprocess passed in taxi data file
 		preprocess(file_name, distance)
