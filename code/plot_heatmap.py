@@ -238,39 +238,6 @@ def plot_KL_divergences(empirical_distributions, hotel_names):
 	return kl_diverges
 
 
-def load_data(to_plot, data_files, chunksize=5000000):
-	'''
-	Load the pre-processed taxi data file(s) needed for plotting empirical pick-up / drop-off point distributions as heatmaps.
-
-	to_plot: Whether to plot the distribution of pick-up coordinates of trips which end near the hotel of interest, the distribution of 
-	drop-off coordinates of trips which begin near the hotel of interest, or both.
-	data_files: The .csv files in which the pre-processed geospatial coordinate data is stored.
-	'''
-	if to_plot == 'pickups':
-		dictnames = [ 'pickups' ]
-	elif to_plot == 'dropoffs':
-		dictnames = [ 'dropoffs' ]
-	elif to_plot == 'both':
-		dictnames = [ 'pickups', 'dropoffs' ]
-
-	print '\n... Loading taxicab trip data (pilot set of 24 hotels)'
-
-	start_time = timeit.default_timer()
-
-	taxi_data = {}
-	for dname, data_file in zip(dictnames, data_files):
-		print '... Loading', dname, 'data from disk.'
-		for idx, chunk in enumerate(pd.read_csv(os.path.join(data_path, data_file), chunksize=chunksize)):
-			if idx == 0:
-				taxi_data[dname] = chunk
-			else:
-				taxi_data[dname] = pd.concat((taxi_data[dname], chunk))
-
-	print '... It took', default_timer() - start_time, 'seconds to load the taxicab trip data\n'
-
-	return taxi_data
-
-
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 
@@ -329,7 +296,7 @@ if __name__ == '__main__':
 		raise Exception('Expecting one of "True" or "False" for command-line argument "scatter".')
 
 	# get dictionary of taxicab trip data based on `to_plot` argument
-	taxi_data = load_data(to_plot, data_files)
+	taxi_data = load_data(to_plot, data_files, data_path)
 
 	if subcommand == 'times':
 		empirical_distributions, keys = plot_heatmap_times(taxi_data, distance, days, times, map_type)

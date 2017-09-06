@@ -24,6 +24,39 @@ np.set_printoptions(threshold=np.nan)
 EPS = 0.000001
 
 
+def load_data(to_plot, data_files, data_path, chunksize=5000000):
+	'''
+	Load the pre-processed taxi data file(s) needed for plotting empirical pick-up / drop-off point distributions as heatmaps.
+
+	to_plot: Whether to plot the distribution of pick-up coordinates of trips which end near the hotel of interest, the distribution of 
+	drop-off coordinates of trips which begin near the hotel of interest, or both.
+	data_files: The .csv files in which the pre-processed geospatial coordinate data is stored.
+	'''
+	if to_plot == 'pickups':
+		dictnames = [ 'pickups' ]
+	elif to_plot == 'dropoffs':
+		dictnames = [ 'dropoffs' ]
+	elif to_plot == 'both':
+		dictnames = [ 'pickups', 'dropoffs' ]
+
+	print '\n... Loading taxicab trip data (pilot set of 24 hotels)'
+
+	start_time = timeit.default_timer()
+
+	taxi_data = {}
+	for dname, data_file in zip(dictnames, data_files):
+		print '... Loading', dname, 'data from disk.'
+		for idx, chunk in enumerate(pd.read_csv(os.path.join(data_path, data_file), chunksize=chunksize)):
+			if idx == 0:
+				taxi_data[dname] = chunk
+			else:
+				taxi_data[dname] = pd.concat((taxi_data[dname], chunk))
+
+	print '... It took', timeit.default_timer() - start_time, 'seconds to load the taxicab trip data\n'
+
+	return taxi_data
+
+
 def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150):
 	'''
 	Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
