@@ -162,7 +162,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	print '\n...finding distance criterion-satisfying taxicab pick-ups'
 
 	# create and open spreadsheet for nearby pick-ups and drop-offs for each hotel
-	writer = pd.ExcelWriter('../data/preprocessed/NPD_' + taxi_file.split('.')[0] + '.xlsx')
+	writer = pd.ExcelWriter('../data/preprocessed_' + str(distance) + '/NPD_' + taxi_file.split('.')[0] + '.xlsx')
 
 	# keep track of total time elapsed for all hotels
 	start_time = timeit.default_timer()
@@ -267,8 +267,7 @@ if __name__ == '__main__':
 
 	if file_name == '':
 		# taxi data files to preprocess
-		# taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', 'taxi_data')) if 'yellow' in filename or 'green' in filename ]
-		taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', 'taxi_data')) if 'green' in filename ]
+		taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', 'taxi_data')) if 'yellow' in filename or 'green' in filename ]
 		
 		# preprocess our particular taxi data file
 		preprocess(taxi_files[file_idx], distance)

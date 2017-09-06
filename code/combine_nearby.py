@@ -1,10 +1,18 @@
 import os
 import xlrd
 import timeit
+import argparse
 import pandas as pd
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--distance', type=int, default=300)
+args = parser.parse_args()
+
+distance = args.distance
+
 # Path to preprocessed data by month
-data_path = os.path.join('..', 'data', 'preprocessed')
+data_path = os.path.join('..', 'data', '_'.join(['preprocessed', str(distance)]))
 
 # Get names of preprocessed data files
 files = [ fname for fname in os.listdir(data_path) if '.xlsx' in fname and 'Nearby Pickups and Dropoffs.xlsx' != fname ]
@@ -44,8 +52,8 @@ for idx, fname in enumerate(files):
 	print ' '.join(['... It took', str(timeit.default_timer() - start), 'seconds to merge the last dataframe in.'])
 
 # Write the two dataframes out to CSV files
-destinations.to_csv(os.path.join('..', 'data', 'preprocessed', 'destinations.csv'), index=False)
-starting_points.to_csv(os.path.join('..', 'data', 'preprocessed', 'starting_points.csv'), index=False)
+destinations.to_csv(os.path.join(data_path, 'destinations.csv'), index=False)
+starting_points.to_csv(os.path.join(data_path, 'starting_points.csv'), index=False)
 
 print '\nDone!\n'
 
