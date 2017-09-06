@@ -49,7 +49,52 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	plt.colorbar(norm=mcolors.NoNorm)
 
 	# title map and save it to disk
-	plt.title(hotel_name)
+	plt.title(hotel_name + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+
+	if not os.path.isdir(directory):
+		os.makedirs(directory)
+
+	# save ARCGIS plot out to disk to inspect later
+	plt.savefig(os.path.join(directory, hotel_name + '.png'))
+
+	# close out the plot to avoid multiple colorbar bug
+	plt.clf()
+	plt.close()
+
+	# setting zero-valued bins to small non-zero values (for KL divergence)
+	bin_coords[np.where(bin_coords == 0)] = 1e-32
+
+	normed_distro = bin_coords / np.sum(bin_coords)
+
+	# return normalized, binned coordinates in one-dimensional vector
+	return np.ravel(normed_distro)
+
+
+def plot_arcgis_nyc_scatter_plot(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150):
+	'''
+	Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
+	'''
+
+	print '- plotting scatter plot for', hotel_name
+
+	# size of figures in inches
+	plt.rcParams["figure.figsize"] = (18.5, 9.75)
+
+	# create Basemap object (bounds NYC) and draw high-resolution map of NYC on it
+	basemap = Basemap(llcrnrlon=-74.025, llcrnrlat=40.63, urcrnrlon=-73.76, urcrnrlat=40.85, epsg=4269)
+	basemap.arcgisimage(service=service, xpixels=xpixels, dpi=dpi)
+
+	# set up grid coordinates and get binned coordinates from taxicab data
+	x, y = np.linspace(basemap.llcrnrlon, basemap.urcrnrlon, 250), np.linspace(basemap.llcrnrlat, basemap.urcrnrlat, 250)
+	bin_coords, xedges, yedges = np.histogram2d(coords[1], coords[0], bins=(x, y), normed=True)
+	x, y = np.meshgrid(xedges, yedges)
+	to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.sum(bin_coords)
+
+	# plot binned coordinates onto the map, use colorbar
+	plt.scatter(coords[1], coords[0], s=5)
+
+	# title map and save it to disk
+	plt.title(hotel_name + ' (satisfying trips: ' + str(len(coords[1])) + ')')
 
 	if not os.path.isdir(directory):
 		os.makedirs(directory)

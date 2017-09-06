@@ -140,9 +140,6 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 		
 		coords = { hotel_name : coord for (hotel_name, coord) in zip(hotel_names, coords) }
 
-		print [ hotel_name for hotel_name in hotel_names ]
-		print [ single_hotel_coords.shape for single_hotel_coords in coords.values() ]
-
 		print 'Total satisfying nearby', key, ':', sum([single_hotel_coords.shape[1] \
 											for single_hotel_coords in coords.values()]), '/', len(data), '\n'
 		
@@ -161,8 +158,20 @@ def plot_heatmap_window(taxi_data, distance, start_datetime, end_datetime, map_t
 	if map_type == 'static':
 		# Plot all ARCGIS maps.
 		directory = '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(start_datetime), str(end_datetime) ])
-		empirical_dists = Parallel(n_jobs=n_jobs) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], coords[hotel_name][1]),
-							hotel_name, os.path.join(plots_path, directory)) for hotel_name in coords.keys())
+
+		if scatter:
+			empirical_dists = Parallel(n_jobs=n_jobs) (delayed(plot_arcgis_nyc_scatter_plot)((coords[hotel_name][0], 
+								coords[hotel_name][1]), hotel_name, os.path.join(plots_path, directory)) for hotel_name in coords.keys())
+
+			empirical_dists.append(plot_arcgis_nyc_scatter_plot((np.concatenate([ coords[hotel_name][0] for hotel_name in coords.keys() ]),
+								np.concatenate([ coords[hotel_name][1] for hotel_name in coords.keys() ])), 'All Hotels', os.path.join(plots_path, directory)))
+		else:
+			empirical_dists = Parallel(n_jobs=n_jobs) (delayed(plot_arcgis_nyc_map)((coords[hotel_name][0], 
+								coords[hotel_name][1]), hotel_name, os.path.join(plots_path, directory)) for hotel_name in coords.keys())
+
+			empirical_dists.append(plot_arcgis_nyc_map((np.concatenate([ coords[hotel_name][0] for hotel_name in coords.keys() ]),
+								np.concatenate([ coords[hotel_name][1] for hotel_name in coords.keys() ])), 'All Hotels', os.path.join(plots_path, directory)))
+
 	elif map_type == 'gmap':
 		for hotel_name in coords.keys():
 			map_name = '_'.join([ hotel_name, str(distance), to_plot, ','.join([ str(day) for day in days ]), str(times[0]), str(times[1]) ]) + '.html'
@@ -221,10 +230,7 @@ def plot_KL_divergences(empirical_distributions, hotel_names):
 	ax.set_xticks(xrange(len(hotel_names)))
 	ax.set_xticklabels([ 'H' + str(idx + 1) for idx in xrange(len(hotel_names))])
 
-
 	fig.suptitle('pairwise Kullbeck-Liebler divergence per hotel distribution')
-
-	plt.show()
 
 	plt.clf()
 	plt.close()
@@ -274,6 +280,7 @@ if __name__ == '__main__':
 	parser.add_argument('--map_type', type=str, default='static', \
 						help='Plot a heatmap in Google Maps or using an ARCGIS map of NYC.')
 	parser.add_argument('--n_jobs', type=int, default=2, help='The number of parallel processes to run for all parallel processing routines.')
+	parser.add_argument('--scatter', type=str, default='True', help='Whether to create a scatterplot or a heatmap.')
 
 	subparsers = parser.add_subparsers(title='subcommands', dest='subcommand')
 
@@ -313,6 +320,13 @@ if __name__ == '__main__':
 		data_files = [ 'starting_points.csv' ]
 	elif to_plot == 'both':
 		data_files = [ 'destinations.csv', 'starting_points.csv' ]		
+
+	if scatter == 'True':
+		scatter = True
+	elif scatter == 'False':
+		scatter = False
+	else:
+		raise Exception('Expecting one of "True" or "False" for command-line argument "scatter".')
 
 	# get dictionary of taxicab trip data based on `to_plot` argument
 	taxi_data = load_data(to_plot, data_files)
