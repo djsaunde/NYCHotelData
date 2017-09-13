@@ -16,11 +16,6 @@ for directory in [ output_path, plots_path ]:
 		os.makedirs(directory)
 
 
-def daterange(start_date, end_date):
-    for n in xrange(int((end_date - start_date).days) + 1):
-        yield start_date + timedelta(n)
-
-
 def plot_and_record_daily(taxi_data, start_date, end_date):
 	# set up main loop: loop through each day from start_date to end_date
 	with open(os.path.join(output_path, '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(start_date), str(end_date) ])) + '.csv', 'w') as f:

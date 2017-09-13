@@ -1,5 +1,6 @@
 from __future__ import division
 
+from datetime import timedelta	
 from scipy.stats import entropy
 from geopy.distance import vincenty
 from joblib import Parallel, delayed
@@ -22,6 +23,11 @@ np.set_printoptions(threshold=np.nan)
 
 # tolerance level for intersection point
 EPS = 0.000001
+
+
+def daterange(start_date, end_date):
+    for n in xrange(int((end_date - start_date).days) + 1):
+        yield start_date + timedelta(n)
 
 
 def load_data(to_plot, data_files, data_path, chunksize=5000000):
