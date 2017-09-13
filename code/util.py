@@ -57,12 +57,15 @@ def load_data(to_plot, data_files, data_path, chunksize=5000000):
 	return taxi_data
 
 
-def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150):
+def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150, title=None):
 	'''
 	Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
 	'''
 
-	print '- plotting empirical distribution for', hotel_name
+	if title == None:
+		print '- plotting scatter plot for', hotel_name
+	else:
+		print '- plotting scatter plot for', title
 
 	# size of figures in inches
 	plt.rcParams["figure.figsize"] = (18.5, 9.75)
@@ -82,7 +85,10 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	plt.colorbar(norm=mcolors.NoNorm)
 
 	# title map and save it to disk
-	plt.title(hotel_name + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+	if title == None:
+		plt.title(hotel_name + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+	else:
+		plt.title(title + ' (satisfying trips: ' + str(len(coords[1])) + ')')
 
 	if not os.path.isdir(directory):
 		os.makedirs(directory)
@@ -103,12 +109,15 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	return np.ravel(normed_distro)
 
 
-def plot_arcgis_nyc_scatter_plot(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150):
+def plot_arcgis_nyc_scatter_plot(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150, title=None):
 	'''
 	Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
 	'''
 
-	print '- plotting scatter plot for', hotel_name
+	if title == None:
+		print '- plotting scatter plot for', hotel_name
+	else:
+		print '- plotting scatter plot for', title
 
 	# size of figures in inches
 	plt.rcParams["figure.figsize"] = (18.5, 9.75)
@@ -127,7 +136,10 @@ def plot_arcgis_nyc_scatter_plot(coords, hotel_name, directory, service='World_S
 	plt.scatter(coords[1], coords[0], s=5)
 
 	# title map and save it to disk
-	plt.title(hotel_name + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+	if title == None:
+		plt.title(hotel_name + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+	else:
+		plt.title(title + ' (satisfying trips: ' + str(len(coords[1])) + ')')
 
 	if not os.path.isdir(directory):
 		os.makedirs(directory)
