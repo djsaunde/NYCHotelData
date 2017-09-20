@@ -1,5 +1,6 @@
 from __future__ import division
 
+from datetime import timedelta	
 from scipy.stats import entropy
 from geopy.distance import vincenty
 from joblib import Parallel, delayed
@@ -23,16 +24,54 @@ np.set_printoptions(threshold=np.nan)
 # tolerance level for intersection point
 EPS = 0.000001
 
-# get number of CPU cores on this machine
-num_cores = multiprocessing.cpu_count()
+
+def daterange(start_date, end_date):
+    for n in xrange(int((end_date - start_date).days) + 1):
+        yield start_date + timedelta(n)
 
 
-def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150):
+def load_data(to_plot, data_files, data_path, chunksize=5000000):
+	'''
+	Load the pre-processed taxi data file(s) needed for plotting empirical pick-up / drop-off point distributions as heatmaps.
+
+	to_plot: Whether to plot the distribution of pick-up coordinates of trips which end near the hotel of interest, the distribution of 
+	drop-off coordinates of trips which begin near the hotel of interest, or both.
+	data_files: The .csv files in which the pre-processed geospatial coordinate data is stored.
+	'''
+	if to_plot == 'pickups':
+		dictnames = [ 'pickups' ]
+	elif to_plot == 'dropoffs':
+		dictnames = [ 'dropoffs' ]
+	elif to_plot == 'both':
+		dictnames = [ 'pickups', 'dropoffs' ]
+
+	print '\n... Loading taxicab trip data (pilot set of 24 hotels)'
+
+	start_time = timeit.default_timer()
+
+	taxi_data = {}
+	for dname, data_file in zip(dictnames, data_files):
+		print '... Loading', dname, 'data from disk.'
+		for idx, chunk in enumerate(pd.read_csv(os.path.join(data_path, data_file), chunksize=chunksize)):
+			if idx == 0:
+				taxi_data[dname] = chunk
+			else:
+				taxi_data[dname] = pd.concat((taxi_data[dname], chunk))
+
+	print '... It took', timeit.default_timer() - start_time, 'seconds to load the taxicab trip data\n'
+
+	return taxi_data
+
+
+def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150, title=None):
 	'''
 	Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
 	'''
 
-	print '- plotting empirical distribution for', hotel_name
+	if title == None:
+		print '- plotting scatter plot for', hotel_name
+	else:
+		print '- plotting scatter plot for', title
 
 	# size of figures in inches
 	plt.rcParams["figure.figsize"] = (18.5, 9.75)
@@ -52,12 +91,20 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	plt.colorbar(norm=mcolors.NoNorm)
 
 	# title map and save it to disk
-	plt.title(hotel_name)
+	if title == None:
+		plt.title(hotel_name + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+	else:
+		plt.title(title + ' (satisfying trips: ' + str(len(coords[1])) + ')')
 
 	if not os.path.isdir(directory):
 		os.makedirs(directory)
 
+	# save ARCGIS plot out to disk to inspect later
 	plt.savefig(os.path.join(directory, hotel_name + '.png'))
+
+	# close out the plot to avoid multiple colorbar bug
+	plt.clf()
+	plt.close()
 
 	# setting zero-valued bins to small non-zero values (for KL divergence)
 	bin_coords[np.where(bin_coords == 0)] = 1e-32
@@ -68,7 +115,58 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	return np.ravel(normed_distro)
 
 
-def get_nearby_pickups(args):
+def plot_arcgis_nyc_scatter_plot(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150, title=None):
+	'''
+	Given a set of (longitude, latitude) coordinates, plot a heatmap of them onto an ARCGIS basemap of NYC.
+	'''
+
+	if title == None:
+		print '- plotting scatter plot for', hotel_name
+	else:
+		print '- plotting scatter plot for', title
+
+	# size of figures in inches
+	plt.rcParams["figure.figsize"] = (18.5, 9.75)
+
+	# create Basemap object (bounds NYC) and draw high-resolution map of NYC on it
+	basemap = Basemap(llcrnrlon=-74.025, llcrnrlat=40.63, urcrnrlon=-73.76, urcrnrlat=40.85, epsg=4269)
+	basemap.arcgisimage(service=service, xpixels=xpixels, dpi=dpi)
+
+	# set up grid coordinates and get binned coordinates from taxicab data
+	x, y = np.linspace(basemap.llcrnrlon, basemap.urcrnrlon, 250), np.linspace(basemap.llcrnrlat, basemap.urcrnrlat, 250)
+	bin_coords, xedges, yedges = np.histogram2d(coords[1], coords[0], bins=(x, y), normed=True)
+	x, y = np.meshgrid(xedges, yedges)
+	to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.sum(bin_coords)
+
+	# plot binned coordinates onto the map, use colorbar
+	plt.scatter(coords[1], coords[0], s=5)
+
+	# title map and save it to disk
+	if title == None:
+		plt.title(hotel_name + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+	else:
+		plt.title(title + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+
+	if not os.path.isdir(directory):
+		os.makedirs(directory)
+
+	# save ARCGIS plot out to disk to inspect later
+	plt.savefig(os.path.join(directory, hotel_name + '.png'))
+
+	# close out the plot to avoid multiple colorbar bug
+	plt.clf()
+	plt.close()
+
+	# setting zero-valued bins to small non-zero values (for KL divergence)
+	bin_coords[np.where(bin_coords == 0)] = 1e-32
+
+	normed_distro = bin_coords / np.sum(bin_coords)
+
+	# return normalized, binned coordinates in one-dimensional vector
+	return np.ravel(normed_distro)
+
+
+def get_nearby_pickups_times(args):
 	'''
 	Given the days of the week and the start and end times from which to look, return all satisfying
 	taxicab rides which begin nearby.
@@ -101,7 +199,7 @@ def get_nearby_pickups(args):
 	return satisfying_coords
 
 
-def get_nearby_dropoffs(args):
+def get_nearby_dropoffs_times(args):
 	'''
 	Given the days of the week and the start and end times from which to look, return all satisfying
 	taxicab rides which begin nearby.
@@ -124,8 +222,65 @@ def get_nearby_dropoffs(args):
 	for day in days:
 		satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.weekday_name == day]
 	
-	satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.hour >= start_hour]
-	satisfying_locations = hotel_matches[hotel_matches['Drop-off Time'].dt.hour <= end_hour]
+	satisfying_locations = hotel_matches[(hotel_matches['Drop-off Time'].dt.hour >= start_hour) & (hotel_matches['Drop-off Time'].dt.hour <= end_hour)]
+	
+	# add the satisfying locations for this hotel to our dictionary data structure
+	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
+	
+	# return the satisfying nearby pick-up coordinates
+	return satisfying_coords
+
+
+def get_nearby_pickups_window(args):
+	'''
+	Given the days of the week and the start and end times from which to look, return all satisfying
+	taxicab rides which begin nearby.
+	
+	pickups: A pandas DataFrame containing all fields of data from pickups of a single hotel.
+	distance: A new distance used to cut out even more trips based on distance from the given hotel.
+	start_datetime: The date at which to start looking for data.
+	end_datetime: The date at which to stop looking for data.
+	'''
+	pickups, distance, start_datetime, end_datetime = args
+
+	# cast date-time column to pandas Timestamp type
+	pickups['Pick-up Time'] = pd.to_datetime(pickups['Pick-up Time'])
+		
+	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
+	hotel_matches = pickups.loc[pickups['Distance From Hotel'] <= distance]
+	
+	# find the coordinates which satisfy the given distance and time criterias
+	satisfying_locations = hotel_matches[(pd.to_datetime(hotel_matches['Pick-up Time']) >= start_datetime) & \
+														(pd.to_datetime(hotel_matches['Pick-up Time']) <= end_datetime)]
+														
+	# add the satisfying locations for this hotel to our dictionary data structure
+	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
+	
+	# return the satisfying nearby pick-up coordinates
+	return satisfying_coords
+
+
+def get_nearby_dropoffs_window(args):
+	'''
+	Given the days of the week and the start and end times from which to look, return all satisfying
+	taxicab rides which begin nearby.
+	
+	dropoffs: A pandas DataFrame containing all fields of data from dropoffs of a single hotel.
+	distance: A new distance used to cut out even more trips based on distance from the given hotel.
+	start_datetime: The date at which to start looking for data.
+	end_datetime: The date at which to stop looking for data.
+	'''
+	dropoffs, distance, start_datetime, end_datetime = args
+
+	# cast date-time column to pandas Timestamp type
+	dropoffs['Drop-off Time'] = pd.to_datetime(dropoffs['Drop-off Time'])
+		
+	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
+	hotel_matches = dropoffs.loc[dropoffs['Distance From Hotel'] <= distance]
+	
+	# find the coordinates which satisfy the given distance and time criterias
+	satisfying_locations = hotel_matches[(pd.to_datetime(hotel_matches['Drop-off Time']) >= start_datetime) & \
+														(pd.to_datetime(hotel_matches['Drop-off Time']) <= end_datetime)]
 	
 	# add the satisfying locations for this hotel to our dictionary data structure
 	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
@@ -257,6 +412,7 @@ def other_vars_same(prop_row, manhattan_row, capacity):
 	# the rows match on all constraints; therefore, return True
 	return True
 
+
 def euclidean_miles(point1, point2):
 	'''
 	A function which, given two coordinates in UTM, returns the Euclidean distance between the
@@ -270,6 +426,7 @@ def euclidean_miles(point1, point2):
 		The Euclidean distance between point1 and point2.
 	'''
 	return math.sqrt(((point1[0] - point2[0]) ** 2) + ((point1[1] - point2[1]) ** 2)) * 0.000621371
+
 
 def get_hotel_coords(attr_coords, distances):
 	'''

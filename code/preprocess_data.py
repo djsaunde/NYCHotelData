@@ -29,7 +29,7 @@ from util import *
 
 def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9ayZ_qGz-Y'):
 	'''
-    	Main logic for parsing taxi datafiles.
+    Main logic for parsing taxi datafiles.
 	'''
 	print '\n'
 
@@ -51,7 +51,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['Pickup_latitude']), np.array(taxi_data['Pickup_longitude'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data['Dropoff_latitude']), np.array(taxi_data['Dropoff_longitude']),
+				dropoff_lats, dropoff_longs = np.array(taxi_data['Dropoff_latitude']), np.array(taxi_data['Dropoff_longitude'])
 				pickup_time = np.array(taxi_data['lpep_pickup_datetime'])
 				dropoff_time = np.array(taxi_data['Lpep_dropoff_datetime'])
 				passenger_count = np.array(taxi_data['Passenger_count'])
@@ -66,7 +66,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data[' pickup_latitude']), np.array(taxi_data[' pickup_longitude'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data[' dropoff_latitude']), np.array(taxi_data[' dropoff_longitude']),
+				dropoff_lats, dropoff_longs = np.array(taxi_data[' dropoff_latitude']), np.array(taxi_data[' dropoff_longitude'])
 				pickup_time = np.array(taxi_data[' pickup_datetime'])
 				dropoff_time = np.array(taxi_data[' dropoff_datetime'])
 				passenger_count = np.array(taxi_data[' passenger_count'])
@@ -79,7 +79,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['Start_Lat']), np.array(taxi_data['Start_Lon'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data['End_Lat']), np.array(taxi_data['End_Lon']),
+				dropoff_lats, dropoff_longs = np.array(taxi_data['End_Lat']), np.array(taxi_data['End_Lon'])
 				pickup_time = np.array(taxi_data['Trip_Pickup_DateTime'])
 				dropoff_time = np.array(taxi_data['Trip_Dropoff_DateTime'])
 				passenger_count = np.array(taxi_data['Passenger_Count'])
@@ -91,7 +91,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				taxi_data = pd.read_csv(fpath, usecols=['pickup_latitude', 'pickup_longitude', 'dropoff_latitude', 'dropoff_longitude', 'tpep_pickup_datetime', 'tpep_dropoff_datetime', 'passenger_count', 'trip_distance', 'fare_amount'])
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['pickup_latitude']), np.array(taxi_data['pickup_longitude'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude']),
+				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude'])
 				pickup_time = np.array(taxi_data['tpep_pickup_datetime'])
 				dropoff_time = np.array(taxi_data['tpep_dropoff_datetime'])
 				passenger_count = np.array(taxi_data['passenger_count'])
@@ -104,7 +104,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['pickup_latitude']), np.array(taxi_data['pickup_longitude'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude']),
+				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude'])
 				pickup_time = np.array(taxi_data['pickup_datetime'])
 				dropoff_time = np.array(taxi_data['dropoff_datetime'])
 				passenger_count = np.array(taxi_data['passenger_count'])
@@ -162,7 +162,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	print '\n...finding distance criterion-satisfying taxicab pick-ups'
 
 	# create and open spreadsheet for nearby pick-ups and drop-offs for each hotel
-	writer = pd.ExcelWriter('../data/preprocessed/NPD_' + taxi_file.split('.')[0] + '.xlsx')
+	writer = pd.ExcelWriter('../data/preprocessed_' + str(distance) + '/NPD_' + taxi_file.split('.')[0] + '.xlsx')
 
 	# keep track of total time elapsed for all hotels
 	start_time = timeit.default_timer()
@@ -179,7 +179,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
 		destinations = get_destinations(pickup_coords.T, dropoff_coords.T, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coord, distance, unit='feet').T
-		
+	
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + destinations.shape[0] + 1) ]
 		try:
@@ -204,8 +204,6 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
-
-		print to_write
 
 	# get and report total elapsed time for all hotels
 	end_time = timeit.default_timer() - start_time
@@ -259,7 +257,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--distance', type=int, default=300, help='Distance criterion (in feet) from hotels considered.')
 	parser.add_argument('--file_idx', type=int, default=0, help='Index of taxi file in ordered file list to preprocess.')
-	parser.add_argument('--file_name', type=str, default='', help='Name of taxe file to preprocess.')
+	parser.add_argument('--file_name', type=str, default='', help='Name of taxi file to preprocess.')
 	args = parser.parse_args()
 
 	# get requested distance criterion
@@ -269,11 +267,10 @@ if __name__ == '__main__':
 
 	if file_name == '':
 		# taxi data files to preprocess
-		# taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', 'taxi_data')) if 'yellow' in filename or 'green' in filename ]
-		taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', 'taxi_data')) if 'green' in filename ]
+		taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', 'taxi_data')) if 'yellow' in filename or 'green' in filename ]
 		
 		# preprocess our particular taxi data file
 		preprocess(taxi_files[file_idx], distance)
 	else:
-		# preprocess passed0in taxi data file
+		# preprocess passed in taxi data file
 		preprocess(file_name, distance)

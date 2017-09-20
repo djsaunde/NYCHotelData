@@ -1,6 +1,6 @@
 distance=${1:-300}
 
-mkdir ../data/preprocessed
+mkdir "../data/preprocessed_$distance"
 
 for i in {0..126}
 do

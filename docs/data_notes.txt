@@ -1,0 +1,22 @@
+Much of the NYC yellow and green taxicab data has year-to-year quirks that adds some nuance to data preprocessing. Here, I'll try to compile an exhaustive list of the quirks that I'm accounting for, or planning to fix, in my preprocessing code.
+
+- The following list of green taxicab data files, when preprocessed, returns an Excel file with no column headers:
+
+green_tripdata_2015-04.csv
+green_tripdata_2014-11.csv
+green_tripdata_2015-08.csv
+green_tripdata_2014-09.csv
+green_tripdata_2014-08.csv
+green_tripdata_2015-01.csv
+green_tripdata_2014-12.csv
+green_tripdata_2014-02.csv
+green_tripdata_2014-07.csv
+green_tripdata_2015-12.csv
+
+This issue is still unresolved!
+
+- Some (latitude, longitude) coordinates in various files are (0, 0), which does not make sense given that these taxicabs are situated in NYC.
+
+- Column headers for green and yellow taxicab data files vary from year to year.
+
+- From July 2016 onward (as far as I know), green taxicab data files no longer record (latitude, longitude) pick-up and drop-off coordinates. Instead, they include "taxi zones", which do not seem useful for our precise geolocation approach, and are currently passed over.
