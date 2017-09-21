@@ -69,9 +69,9 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	'''
 
 	if title == None:
-		print '- plotting scatter plot for', hotel_name
+		print '- plotting scatter plot for', hotel_name, '\n'
 	else:
-		print '- plotting scatter plot for', title
+		print '- plotting scatter plot for', title, '\n'
 
 	# size of figures in inches
 	plt.rcParams["figure.figsize"] = (18.5, 9.75)

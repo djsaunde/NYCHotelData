@@ -20,7 +20,8 @@ for directory in [ output_path, plots_path ]:
 
 
 def plot_and_record_daily(taxi_data, start_date, end_date):
-	workbook = xlsxwriter.Workbook(os.path.join(output_path, '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(start_date), str(end_date) ])), {'constant_memory': True})
+	workbook = xlsxwriter.Workbook(os.path.join(output_path, '_'.join([ '_'.join(taxi_data.keys()), \
+						str(distance), str(start_date), str(end_date) ]) + '.xlsx'), {'constant_memory': True})
 	worksheet = workbook.add_worksheet()
 
 	# set up main loop: loop through each day from start_date to end_date
@@ -66,9 +67,10 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 
 		# Plot a scatterplot for the satisfying coordinates of all hotels combined.
 		plot_arcgis_nyc_scatter_plot(combined_coords, '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(datetime.combine(date, datetime.min.time())), 
-				str(datetime.combine(date, datetime.max.time())) ]), os.path.join(plots_path, directory), title='All Hotels on ' + str(datetime))
+				str(datetime.combine(date, datetime.max.time())) ]), os.path.join(plots_path, directory), title='All Hotels on ' + str(date))
 
-		combined_coords = [ ' '.join([str(lat), str(lon)]) for (lat, lon) in zip(list(combined_coords[0]), list(combined_coords[1])) ]
+		combined_coords = [ (' '.join([str(lat), str(lon)])) for (lat, lon) in \
+				zip(list(combined_coords[0]), list(combined_coords[1])) if (lat, lon) != (0.0, 0.0) ]
 
 		# Writing this day's satisfying coordinates to a .csv file
 		worksheet.write(day_idx, 0, str(date))
@@ -85,7 +87,7 @@ if __name__ == '__main__':
 	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 1, 7], help='The day on which to stop looking for satisfying coordinates.')
 	parser.add_argument('--coord_type', type=str, default='pickups', help='The type of coordinates to look for (one of "pickups", "dropoffs", or "both").')
 	parser.add_argument('--distance', type=int, default=100, help='The distance (in feet) from hotels for which to look for satisfying taxicab trips.')
-	parser.add_argument('--n_jobs', type=int, default=1, help='The number of CPU cores to use in processing the taxicab data.')
+	parser.add_argument('--n_jobs', type=int, default=4, help='The number of CPU cores to use in processing the taxicab data.')
 
 	args = parser.parse_args()
 	args = vars(args)
