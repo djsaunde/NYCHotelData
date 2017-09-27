@@ -66,8 +66,9 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 									np.concatenate([ coords[hotel_name][1] for hotel_name in coords.keys() ]))
 
 		# Plot a scatterplot for the satisfying coordinates of all hotels combined.
-		plot_arcgis_nyc_scatter_plot(combined_coords, '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(datetime.combine(date, datetime.min.time())), 
-				str(datetime.combine(date, datetime.max.time())) ]), os.path.join(plots_path, directory), title='All Hotels on ' + str(date))
+		if plot:
+			plot_arcgis_nyc_scatter_plot(combined_coords, '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(datetime.combine(date, datetime.min.time())), 
+					str(datetime.combine(date, datetime.max.time())) ]), os.path.join(plots_path, directory), title='All Hotels on ' + str(date))
 
 		combined_coords = [ (' '.join([str(lat), str(lon)])) for (lat, lon) in \
 				zip(list(combined_coords[0]), list(combined_coords[1])) if (lat, lon) != (0.0, 0.0) ]
@@ -88,6 +89,9 @@ if __name__ == '__main__':
 	parser.add_argument('--coord_type', type=str, default='pickups', help='The type of coordinates to look for (one of "pickups", "dropoffs", or "both").')
 	parser.add_argument('--distance', type=int, default=100, help='The distance (in feet) from hotels for which to look for satisfying taxicab trips.')
 	parser.add_argument('--n_jobs', type=int, default=4, help='The number of CPU cores to use in processing the taxicab data.')
+	parser.add_argument('--make_scatter_plots', dest='plot', action='store_true')
+	parser.add_argument('--no_make_scatter_plots', dest='plot', action='store_false')
+	parser.set_defaults(plot=False)
 
 	args = parser.parse_args()
 	args = vars(args)
