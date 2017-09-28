@@ -6,7 +6,6 @@ import pandas as pd
 import multiprocessing as mp
 
 from util import *
-from tqdm import tqdm
 from contextlib import closing
 from datetime import timedelta, date, datetime
 
