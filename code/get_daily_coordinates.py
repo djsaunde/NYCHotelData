@@ -26,6 +26,8 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 	# set up main loop: loop through each day from start_date to end_date
 	for day_idx, date in enumerate(daterange(start_date, end_date)):
 
+		print date
+
 		# get coordinates of new distance and time-constraint satisfying taxicab trips with nearby pick-ups
 		all_coords = {}
 		for key in taxi_data.keys():

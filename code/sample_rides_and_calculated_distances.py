@@ -11,10 +11,14 @@ from geopy.geocoders import GoogleV3
 from joblib import Parallel, delayed
 from datetime import date, timedelta, datetime
 
-output_path = os.path.join('..', 'data', 'daily_distributions')
+input_path = os.path.join('..', 'data', 'daily_distributions')
+output_path = os.path.join('..', 'data', 'daily_sampled_pairwise_distances')
 hotel_list_path = os.path.join('..', 'data', 'Pilot Set of Hotels.xlsx')
 
 api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9ayZ_qGz-Y'
+
+if not os.path.isdir(output_path):
+	os.makedirs(output_path)
 
 
 def sample_data(distro_mapping, n_samples=100):
@@ -38,12 +42,19 @@ def get_hotel_coordinates():
 
 
 def get_pairwise_differences(sampled_taxi_data, hotel_coordinates):
-	for day, taxi_coord in sampled_taxi_data.items():
-		for hotel, hotel_coord in hotel_coordinates.items():
-			print day, taxi_coord, hotel, hotel_coord
+	pairwise_differences = pd.DataFrame()
 
-	return { day : { hotel : vincenty(hotel_coord, taxi_coord).feet for hotel, hotel_coord \
-				in hotel_coordinates.items() } for day, taxi_coord in sampled_taxi_data.items() }
+	for day, taxi_coords in sorted(sampled_taxi_data.items()):
+		for hotel, hotel_coord in sorted(hotel_coordinates.items()):
+			pairwise_differences = pairwise_differences.append(pd.Series([ vincenty(hotel_coord, taxi_coord).feet \
+															for taxi_coord in taxi_coords ]), ignore_index=True)
+
+	tuples = list(zip(sorted(sampled_taxi_data.keys() * len(hotel_coordinates.keys())), sorted(hotel_coordinates.keys()) * len(sampled_taxi_data.keys())))
+
+	pairwise_differences.index = pd.MultiIndex.from_tuples(tuples, names=['Day', 'Hotel Name'])
+	pairwise_differences.columns = xrange(1, 101, 1)
+
+	return pairwise_differences
 
 
 if __name__ == '__main__':
@@ -67,14 +78,14 @@ if __name__ == '__main__':
 
 	start_date, end_date = date(*start_date), date(*end_date)
 
-	filename = os.path.join(output_path, '_'.join([ coord_type, str(distance), str(start_date), str(end_date) ]) + '.xlsx')
+	filename = os.path.join(input_path, '_'.join([ coord_type, str(distance), str(start_date), str(end_date) ]) + '.xlsx')
 
 	try:
-		daily_distributions = pd.read_excel(filename)
-	except Exception as e:
-		print 'This combination of time window, coordinate type, and distance has not yet been preprocesseed into daily distributions. \n'
+		daily_distributions = pd.read_excel(filename, header=None)
+	except Exception:
+		raise Exception('Reading in the daily distributions workbook caused an error.')
 
-	distro_mapping = { datetime(*[ int(item) for item in row[0].encode('ascii', 'ignore').split('-') ]) : [ datum for datum in row[1:][~row[1:].isnull()] ] for idx, row in daily_distributions.iterrows() }
+	distro_mapping = { date(*[ int(item) for item in row[0].encode('ascii', 'ignore').split('-') ]) : [ datum for datum in row[1:][~row[1:].isnull()] ] for idx, row in daily_distributions.iterrows() }
 	distro_mapping = { key : [ item.encode('ascii', 'ignore') for item in value ] for key, value in distro_mapping.items() }
 	distro_mapping = { key : np.array([ (float(item.split()[0]), float(item.split()[1])) for item in value ]) for key, value in distro_mapping.items() }
 
@@ -84,4 +95,14 @@ if __name__ == '__main__':
 
 	pairwise_differences = get_pairwise_differences(sampled_data, hotel_coordinates)
 
-	print pairwise_differences
+	writer = pd.ExcelWriter(os.path.join(output_path, '_'.join([coord_type, str(distance), str(start_date), \
+				str(end_date), str(n_samples)]) + '.xlsx'), engine='xlsxwriter', date_format='mmmm dd yyyy')
+
+	pairwise_differences.to_excel(writer, float_format='%02d')
+
+	workbook  = writer.book
+	worksheet = writer.sheets['Sheet1']
+	worksheet.set_column('A:A', 20)
+	worksheet.set_column('B:B', 45)
+
+	writer.save()
