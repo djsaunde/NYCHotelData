@@ -8,8 +8,8 @@
 #SBATCH --output=/mnt/nfs/work1/rkozma/djsaunde/NYCHotelData/code/job_reports/%j.out
 
 distance=${1:-100}
-file_name=${2:-''}
+coord_type=${2:-pickups}
 
-python preprocess_data.py --distance $distance --file_name $file_name
+python get_daily_coordinates.py --start_date 2013 1 1 --end_date 2013 1 31 --distance $distance --coord_type $coord_type --n_jobs 8
 
 exit

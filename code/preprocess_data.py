@@ -25,7 +25,6 @@ from IPython.display import Image, display
 
 from util import *
 
-
 def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9ayZ_qGz-Y'):
 	'''
     Main logic for parsing taxi datafiles.
@@ -271,7 +270,7 @@ if __name__ == '__main__':
 	# get requested distance criterion
 	distance = args.distance
 	file_idx = args.file_idx
-	file_name = args.file_name
+	file_name = args.file_name.replace(',', '')
 
 	if file_name == '':
 		# taxi data files to preprocess
