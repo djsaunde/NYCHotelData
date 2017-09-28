@@ -25,9 +25,6 @@ from IPython.display import Image, display
 
 from util import *
 
-import os
-cwd = os.getcwd()
-
 def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9ayZ_qGz-Y'):
 	'''
     Main logic for parsing taxi datafiles.
