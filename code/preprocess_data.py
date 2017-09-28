@@ -59,7 +59,10 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 
 			
 		elif 'yellow' in taxi_file:
-			if '2014-09' in taxi_file or '2014-01' in taxi_file or '2014-07' in taxi_file or '2014-06' in taxi_file or '2014-11' in taxi_file or '2014-12' in taxi_file or '2014-02' in taxi_file or '2014-10' in taxi_file or '2014-05' in taxi_file or '2014-03' in taxi_file or '2014-04' in taxi_file or '2014-05' in taxi_file:
+			if '2014-08' in taxi_file or '2014-09' in taxi_file or '2014-01' in taxi_file or '2014-07' in taxi_file \
+					or '2014-06' in taxi_file or '2014-11' in taxi_file or '2014-12' in taxi_file or '2014-02' in taxi_file \
+					or '2014-10' in taxi_file or '2014-05' in taxi_file or '2014-03' in taxi_file or '2014-04' in taxi_file \
+					or '2014-05' in taxi_file:
 				# let's load a single .csv file of taxicab records (say, January 2016)
 				taxi_data = pd.read_csv(fpath, usecols=[' pickup_latitude', ' pickup_longitude', ' dropoff_latitude', ' dropoff_longitude', ' pickup_datetime', ' dropoff_datetime', ' passenger_count', ' trip_distance', ' fare_amount'])
 				
@@ -72,7 +75,9 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				trip_distance = np.array(taxi_data[' trip_distance'])
 				fare_amount = np.array(taxi_data[' fare_amount'])
 
-			elif '2009-11' in taxi_file or '2009-10' in taxi_file or '2009-01' in taxi_file or '2009-08' in taxi_file or '2009-06' in taxi_file or '2009-04' in taxi_file or '2009-09' in taxi_file or '2009-03' in taxi_file or '2009-07' in taxi_file or '2009-05' in taxi_file or '2009-02' in taxi_file or '2009-12' in taxi_file:
+			elif '2009-11' in taxi_file or '2009-10' in taxi_file or '2009-01' in taxi_file or '2009-08' in taxi_file \
+					or '2009-06' in taxi_file or '2009-04' in taxi_file or '2009-09' in taxi_file or '2009-03' in taxi_file \
+					or '2009-07' in taxi_file or '2009-05' in taxi_file or '2009-02' in taxi_file or '2009-12' in taxi_file:
 				# let's load a single .csv file of taxicab records (say, January 2016)
 				taxi_data = pd.read_csv(fpath, usecols=['Start_Lat', 'Start_Lon', 'End_Lat', 'End_Lon', 'Trip_Pickup_DateTime', 'Trip_Dropoff_DateTime', 'Passenger_Count', 'Trip_Distance', 'Fare_Amt'])
 				
@@ -85,7 +90,11 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 				trip_distance = np.array(taxi_data['Trip_Distance'])
 				fare_amount = np.array(taxi_data['Fare_Amt'])
 
-			elif '2015-12' in taxi_file or '2015-04' in taxi_file or '2015-03' in taxi_file or '2015-08' in taxi_file or '2016-06' in taxi_file or '2016-01' in taxi_file or '2016-03' in taxi_file or '2015-06' in taxi_file or '2016-05' in taxi_file or '2015-11' in taxi_file or '2015-01' in taxi_file or '2015-02' in taxi_file or '2015-09' in taxi_file or '2015-03' in taxi_file or '2015-10' in taxi_file or '2016-02' in taxi_file or '2016-04' in taxi_file or '2015-07' in taxi_file:
+			elif '2015-05' in taxi_file or '2015-12' in taxi_file or '2015-04' in taxi_file or '2015-03' in taxi_file \
+					or '2015-08' in taxi_file or '2016-06' in taxi_file or '2016-01' in taxi_file or '2016-03' in taxi_file \
+					or '2015-06' in taxi_file or '2016-05' in taxi_file or '2015-11' in taxi_file or '2015-01' in taxi_file \
+					or '2015-02' in taxi_file or '2015-09' in taxi_file or '2015-03' in taxi_file or '2015-10' in taxi_file \
+					or '2016-02' in taxi_file or '2016-04' in taxi_file or '2015-07' in taxi_file:
 				# let's load a single .csv file of taxicab records (say, January 2016)	
 				taxi_data = pd.read_csv(fpath, usecols=['pickup_latitude', 'pickup_longitude', 'dropoff_latitude', 'dropoff_longitude', 'tpep_pickup_datetime', 'tpep_dropoff_datetime', 'passenger_count', 'trip_distance', 'fare_amount'])
 				# get relevant rows of the data and store them as numpy arrays

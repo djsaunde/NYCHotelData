@@ -89,6 +89,8 @@ if __name__ == '__main__':
 	distro_mapping = { key : [ item.encode('ascii', 'ignore') for item in value ] for key, value in distro_mapping.items() }
 	distro_mapping = { key : np.array([ (float(item.split()[0]), float(item.split()[1])) for item in value ]) for key, value in distro_mapping.items() }
 
+	print distro_mapping.keys()
+
 	sampled_data = sample_data(distro_mapping, n_samples=n_samples)
 
 	hotel_coordinates = get_hotel_coordinates()
