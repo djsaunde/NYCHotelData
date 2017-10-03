@@ -48,11 +48,12 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 			coords = { hotel_name : coord for (hotel_name, coord) in zip(hotel_names, coords) }
 
 			print 'Total satisfying nearby', key, ':', sum([single_hotel_coords.shape[1] \
-												for single_hotel_coords in coords.values()]), '/', len(data), '\n'
+												for single_hotel_coords in coords.values() if len(single_hotel_coords) > 0]), '/', len(data), '\n'
 			
 			print 'Satisfying nearby', key, 'by hotel:'
 			for name in coords:
-				print '-', name, ':', coords[name].shape[1], 'satisfying taxicab rides'
+				if len(coords[name]) > 0:
+					print '-', name, ':', coords[name].shape[1], 'satisfying taxicab rides'
 
 			print '\n'
 
@@ -62,8 +63,12 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 
 		directory = '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(datetime.combine(date, datetime.min.time())), str(datetime.combine(date, datetime.max.time())) ])
 
-		combined_coords = (np.concatenate([ coords[hotel_name][0] for hotel_name in coords.keys() ]), \
-									np.concatenate([ coords[hotel_name][1] for hotel_name in coords.keys() ]))
+		try:
+			combined_coords = (np.concatenate([ coords[hotel_name][0] for hotel_name in coords.keys() if len(coords[hotel_name]) > 0 ]), \
+									np.concatenate([ coords[hotel_name][1] for hotel_name in coords.keys() if len(coords[hotel_name]) > 0  ]))
+		except ValueError:
+			worksheet.write(day_idx, 0, str(date))
+			continue
 
 		# Plot a scatterplot for the satisfying coordinates of all hotels combined.
 		plot_arcgis_nyc_scatter_plot(combined_coords, '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(datetime.combine(date, datetime.min.time())), 
