@@ -26,8 +26,8 @@ EPS = 0.000001
 
 
 def daterange(start_date, end_date):
-    for n in xrange(int((end_date - start_date).days) + 1):
-        yield start_date + timedelta(n)
+	for n in xrange(int((end_date - start_date).days) + 1):
+		yield start_date + timedelta(n)
 
 
 def load_data(to_plot, data_files, data_path, chunksize=5000000):
@@ -506,37 +506,36 @@ def get_destination(args):
 
 def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances,
 							fare_amounts, hotel_coords, distance, unit):
-    '''
-    A function which, given (latitude, longitude) coordinates, returns an 
-    numpy array of (latitude, longitude) pairs such that each pair corresponds 
-    to the destination of a taxicab ride which began within the distance
-    specified in the units specified.
-    
-    input:
-        pickup_coords: tuple of (pickup_lats, pickup_longs)
-        dropoff_coords: typle of (dropoff_lats, dropoff_longs)
-        hotel_coords: (latitude, longitude) of the hotel we are interested 
-            in as the ending point
-        distance: a float specifying the distance from the hotel which we 
-            consider to be "close enough"
-        unit: the unit of the distance parameter
-    
-    output:
-        A numpy array of shape (2, M), where M is equal to the number of 
-        taxicab trips which satisfy the distance criterion.
-    '''
-    start_time = timeit.default_timer()
+	'''
+	A function which, given (latitude, longitude) coordinates, returns an 
+	numpy array of (latitude, longitude) pairs such that each pair corresponds 
+	to the destination of a taxicab ride which began within the distance
+	specified in the units specified.
+	
+	input:
+		pickup_coords: tuple of (pickup_lats, pickup_longs)
+		dropoff_coords: typle of (dropoff_lats, dropoff_longs)
+		hotel_coords: (latitude, longitude) of the hotel we are interested 
+			in as the ending point
+		distance: a float specifying the distance from the hotel which we 
+			consider to be "close enough"
+		unit: the unit of the distance parameter
+	
+	output:
+		A numpy array of shape (2, M), where M is equal to the number of 
+		taxicab trips which satisfy the distance criterion.
+	'''
+	start_time = timeit.default_timer()
    
-    destinations = []
+	destinations = []
  
-    # loop through each pickup long, lat pair
-    for idx, pickup in enumerate(pickup_coords):
-        
+	# loop through each pickup long, lat pair
+	for idx, pickup in enumerate(pickup_coords):
 		try:
-        	# branch based off of unit of distance
-        		if unit == 'miles':
-            			# get distance in miles
-            			cur_dist = vincenty(hotel_coords, pickup).miles
+			# branch based off of unit of distance
+			if unit == 'miles':
+				# get distance in miles
+				cur_dist = vincenty(hotel_coords, pickup).miles
 			elif unit == 'meters':
 				# get distance in meters
 				cur_dist = vincenty(hotel_coords, pickup).meters
@@ -553,45 +552,45 @@ def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times,
 		except UnboundLocalError:
 			continue           
  
-    # end timer and report results
-    end_time = timeit.default_timer() - start_time
-    
-    print '( time elapsed:', end_time, ')', '\n'
-    
-    return np.array(destinations).T
+	# end timer and report results
+	end_time = timeit.default_timer() - start_time
+	
+	print '( time elapsed:', end_time, ')', '\n'
+	
+	return np.array(destinations).T
 
 
 def get_starting_points(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances,
 									fare_amounts, hotel_coords, distance, unit):
-    '''
-    A function which, given (latitude, longitude) coordinates, returns an 
-    numpy array of (latitude, longitude) pairs such that each pair corresponds 
-    to the starting point of a taxicab ride ending within the distance
-    specified in the units specified.
-    
-    input:
-	    pickup_coords: tuple of (pickup_lats, pickup_longs)
-	    dropoff_coords: typle of (dropoff_lats, dropoff_longs)
-	    hotel_coords: (latitude, longitude) of the hotel we are interested 
-		    in as the ending point
-	    distance: a float specifying the distance from the hotel which we 
-		    consider to be "close enough"
-	    unit: the unit of the distance parameter
-    
-    output:
-	    A numpy array of shape (2, M), where M is equal to the number of 
-	    taxicab trips which satisfy the distance criterion.
-    '''
-    
-    # begin timer
-    start_time = timeit.default_timer()
-    
-    # define variable to hold taxicab destinations starting from hotel
-    starting_points = []
-    
-    # loop through each pickup long, lat pair
-    for idx, dropoff in enumerate(dropoff_coords):
-	    
+	'''
+	A function which, given (latitude, longitude) coordinates, returns an 
+	numpy array of (latitude, longitude) pairs such that each pair corresponds 
+	to the starting point of a taxicab ride ending within the distance
+	specified in the units specified.
+	
+	input:
+		pickup_coords: tuple of (pickup_lats, pickup_longs)
+		dropoff_coords: typle of (dropoff_lats, dropoff_longs)
+		hotel_coords: (latitude, longitude) of the hotel we are interested 
+			in as the ending point
+		distance: a float specifying the distance from the hotel which we 
+			consider to be "close enough"
+		unit: the unit of the distance parameter
+	
+	output:
+		A numpy array of shape (2, M), where M is equal to the number of 
+		taxicab trips which satisfy the distance criterion.
+	'''
+	
+	# begin timer
+	start_time = timeit.default_timer()
+	
+	# define variable to hold taxicab destinations starting from hotel
+	starting_points = []
+	
+	# loop through each pickup long, lat pair
+	for idx, dropoff in enumerate(dropoff_coords):
+		
 		try:
 			# branch based off of unit of distance
 			if unit == 'miles':
@@ -613,12 +612,12 @@ def get_starting_points(pickup_coords, dropoff_coords, pickup_times, dropoff_tim
 		except UnboundLocalError:
 			continue
 	
-    # end timer and report results
-    end_time = timeit.default_timer() - start_time
-    
-    print '( time elapsed:', end_time, ')', '\n'
-    
-    return np.array(starting_points).T
+	# end timer and report results
+	end_time = timeit.default_timer() - start_time
+	
+	print '( time elapsed:', end_time, ')', '\n'
+	
+	return np.array(starting_points).T
 
 
 def get_starting_points2(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coords, distance, unit):
