@@ -1,5 +1,6 @@
 import os
 import datetime
+import numpy as np
 import pandas as pd
 
 print '... Loading hotel identification Excel worksheet.'
@@ -17,4 +18,4 @@ daily_capacity_data['Share ID'] = pd.Series([ hotel_id_mapping[int(datum)] for d
 print '... Converting string dates to Python datetime objects.'
 daily_capacity_data['Date'] = pd.Series([ datetime.datetime(int(str(datum)[0:4]), int(str(datum)[4:6]), int(str(datum)[6:8])) for datum in daily_capacity_data['Date'] ])
 
-daily_capacity_data.to_excel(os.path.join('..', 'data', 'Unmasked Daily Capacity.xlsx'))
+daily_capacity_data.to_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'))
