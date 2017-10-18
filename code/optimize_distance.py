@@ -46,10 +46,15 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance):
 		for idx, taxi_distribution in enumerate(taxi_distributions):
 			objective_evaluations[idx] = objective(capacity_distribution, taxi_distribution)
 
-		plt.plot(distances, objective_evaluations)
-		plt.axhline(np.min(objective_evaluations), color='r', linestyle='--')
-		plt.show()
+		fig1 = plt.figure(figsize=(18, 9.5))
+		ax1 = fig1.add_subplot(111)
 
+		ax1.plot(distances, objective_evaluations, label='Entropy as a function of distance')
+		ax1.axhline(np.min(objective_evaluations), color='r', linestyle='--')
+
+		fig1.suptitle('KL Divergence (relative entropy) between occupancy\n' + \
+					'proportions and empirical taxicab distribution', fontsize=20)
+		
 		absolute_differences = np.zeros([len(distances), len(hotel_names)])
 		for distance_idx, distance in enumerate(distances):
 			for hotel_idx, hotel_name in enumerate(sorted(hotel_names)):
@@ -58,41 +63,52 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance):
 
 		cm = plt.get_cmap('gist_rainbow')
 
-		fig = plt.figure(figsize=(18, 9.5))
-		ax = fig.add_subplot(111, projection='3d')
+		fig2 = plt.figure(figsize=(18, 9.5))
+		ax2 = fig2.add_subplot(111, projection='3d')
+
+		fig2.suptitle('Absolute value of occupancy, taxicab distribution\n' + \
+				'differences per distance, per distance criterion', fontsize=20)
 
 		for distance_idx, distance in enumerate(distances):
-			ax.bar(np.arange(np.shape(absolute_differences)[1]), absolute_differences[distance_idx, :], 
+			ax2.bar(np.arange(np.shape(absolute_differences)[1]), absolute_differences[distance_idx, :], 
 										zs=[ distance_idx ] * np.shape(absolute_differences)[0], zdir='y',
 														alpha=0.8, color=cm(1.0 * idx / len(hotel_names)))
 
-		ax.set_yticks(xrange(0, len(distances), 10))
-		ax.set_yticklabels([ distances[idx] for idx in xrange(0, len(distances), 10) ])
-		ax.set_xticks(xrange(len(hotel_names)))
-		ax.set_xticklabels(sorted(hotel_names))
+		ax2.set_yticks(xrange(0, len(distances), 10))
+		ax2.set_yticklabels([ distances[idx] for idx in xrange(0, len(distances), 10) ])
+		ax2.set_xticks(xrange(len(hotel_names)))
+		ax2.set_xticklabels(sorted(hotel_names))
 
-		plt.show()
+		fig3, [ax3, ax4] = plt.subplots(1, 2, sharey=True, figsize=(18, 9.5))
 
-		fig, [ax1, ax2] = plt.subplots(1, 2, sharey=True)
-
-		ax1.bar(xrange(len(hotel_names)), absolute_differences\
+		ax3.bar(xrange(len(hotel_names)), absolute_differences\
 			[np.argmin(objective_evaluations), :], label='Absolute differences')
-		plt.title('Absolute differences - capacity distribution, best taxi rides distribution')
+		ax3.set_title('Absolute differences between distributions')
+		ax3.set_xticks(xrange(len(hotel_names)))
+		ax3.set_yticks(np.linspace(0, 1, 11))
 
 		width = 0.25
 		
-		rects1 = ax2.bar(np.arange(len(hotel_names)), capacity_distribution.values(), 
-										width, color='r', label='Capacity distribution')
-		rects2 = ax2.bar(np.arange(len(hotel_names)) + width, taxi_distributions[np.argmin\
-			(objective_evaluations)].values(), width, color='y', label='Best taxi rides distribution')
+		rects1 = ax4.bar(np.arange(len(hotel_names)), [ capacity_distribution[key] \
+											for key in sorted(capacity_distribution) ], 
+											width, color='r', label='Capacity distribution')
+		rects2 = ax4.bar(np.arange(len(hotel_names)) + width, \
+			[ taxi_distributions[np.argmin(objective_evaluations)][key] for key in \
+				sorted(taxi_distributions[np.argmin(objective_evaluations)]) ], \
+				width, color='y', label='Best taxi rides distribution ' + \
+			'(distance =' + str(distances[np.argmin(objective_evaluations)]) + ')')
+
+		ax4.set_title('Capacity distribution, best taxi rides distribution')
+		ax4.set_xticks(xrange(len(hotel_names)))
 
 		plt.ylim([0, 1])
 		plt.legend()
-
 		plt.show()
 
 		to_remove = sorted(hotel_names)[np.argmax(absolute_differences[np.argmin(objective_evaluations), :])]
+		
 		print '\nRemoving hotel', to_remove
+		
 		hotel_names.remove(sorted(hotel_names)[np.argmax(absolute_differences[np.argmin(objective_evaluations), :])])
 
 	return distances[np.argmax(objective_evaluations)]
@@ -114,7 +130,7 @@ if __name__ == '__main__':
 	parser.add_argument('--coord_type', default='dropoffs', type=str)
 	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1], \
 				help='The day on which to start looking for satisfying coordinates.')
-	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 1, 7], \
+	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 2, 1], \
 				help='The day on which to stop looking for satisfying coordinates.')
 
 	args = parser.parse_args()
