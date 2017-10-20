@@ -11,7 +11,7 @@ from scipy.stats import entropy
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def optimize_distance(capacity_data, taxi_data, min_distance, max_distance):
+def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, minimizee):
 	'''
 	Sweep a range of distance values and calculate the differences between the proportion
 	of nearby pickups / dropoffs / both (depending on command-line argument). We want the
@@ -36,7 +36,7 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance):
 				(hotel_name, data) in sorted(taxi_data.items()) if hotel_name in hotel_names }
 			taxi_sum = sum([ value for value in taxi_subset.values()])
 
-			if taxi_sum != 0: 
+			if taxi_sum != 0:
 				taxi_distributions.append({ hotel_name : n_trips / float(taxi_sum) \
 					for (hotel_name, n_trips) in sorted(taxi_subset.items()) if hotel_name in hotel_names })
 			else:
@@ -44,16 +44,29 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance):
 						sorted(taxi_subset.keys()) if hotel_name in hotel_names })
 
 		for idx, taxi_distribution in enumerate(taxi_distributions):
-			objective_evaluations[idx] = objective(capacity_distribution, taxi_distribution)
+			objective_evaluations[idx] = objective(capacity_distribution, taxi_distribution, minimizee)
 
 		fig1 = plt.figure(figsize=(18, 9.5))
 		ax1 = fig1.add_subplot(111)
 
 		ax1.plot(distances, objective_evaluations, label='Entropy as a function of distance')
+		ax1.set_xlim([0, max(distances)]); ax1.set_ylim([0, max(objective_evaluations)])
 		ax1.axhline(np.min(objective_evaluations), color='r', linestyle='--')
 
-		fig1.suptitle('KL Divergence (relative entropy) between occupancy\n' + \
+		if minimizee == 'relative_entropy':
+			fig1.suptitle('KL Divergence (relative entropy) between occupancy\n' + \
 					'proportions and empirical taxicab distribution', fontsize=20)
+		elif minimizee == 'abs_diffs':
+			fig1.suptitle('Sum of absolute differences between occupancy\n' + \
+					'proportions and empirical taxicab distribution', fontsize=20)
+		elif minimizee == 'weighted_abs_diffs':
+			fig1.suptitle('Weighted (by magnitude) sum of absolute differences between\n' + \
+						'occupancy proportions and empirical taxicab distribution', fontsize=20)
+		elif minimizee == 'inverse_weighted_abs_diffs':
+			fig1.suptitle('Inversely weighted (by magnitude) sum of absolute differences between\n' + \
+						'occupancy proportions and empirical taxicab distribution', fontsize=20)
+
+		fig1.savefig(os.path.join(plots_path, '_'.join(['relative_entropy', str(backwards_stepwise_idx)]) + '.png'))
 		
 		absolute_differences = np.zeros([len(distances), len(hotel_names)])
 		for distance_idx, distance in enumerate(distances):
@@ -67,7 +80,7 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance):
 		ax2 = fig2.add_subplot(111, projection='3d')
 
 		fig2.suptitle('Absolute value of occupancy, taxicab distribution\n' + \
-				'differences per distance, per distance criterion', fontsize=20)
+				'differences per hotel, per distance criterion', fontsize=20)
 
 		for distance_idx, distance in enumerate(distances):
 			ax2.bar(np.arange(np.shape(absolute_differences)[1]), absolute_differences[distance_idx, :], 
@@ -78,6 +91,10 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance):
 		ax2.set_yticklabels([ distances[idx] for idx in xrange(0, len(distances), 10) ])
 		ax2.set_xticks(xrange(len(hotel_names)))
 		ax2.set_xticklabels(sorted(hotel_names))
+		ax2.set_zlim([0, 1])
+		ax2.set_zticks(np.linspace(0, 1, 11))
+
+		fig2.savefig(os.path.join(plots_path, '_'.join(['abs_diffs', str(backwards_stepwise_idx)]) + '.png'))
 
 		fig3, [ax3, ax4] = plt.subplots(1, 2, sharey=True, figsize=(18, 9.5))
 
@@ -86,6 +103,7 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance):
 		ax3.set_title('Absolute differences between distributions')
 		ax3.set_xticks(xrange(len(hotel_names)))
 		ax3.set_yticks(np.linspace(0, 1, 11))
+		ax3.set_ylim([0, 1])
 
 		width = 0.25
 		
@@ -101,9 +119,13 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance):
 		ax4.set_title('Capacity distribution, best taxi rides distribution')
 		ax4.set_xticks(xrange(len(hotel_names)))
 
+		fig3.savefig(os.path.join(plots_path, '_'.join(['distro_diffs', str(backwards_stepwise_idx)]) + '.png'))
+
 		plt.ylim([0, 1])
 		plt.legend()
-		plt.show()
+
+		if plot:
+			plt.show()
 
 		to_remove = sorted(hotel_names)[np.argmax(absolute_differences[np.argmin(objective_evaluations), :])]
 		
@@ -114,13 +136,25 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance):
 	return distances[np.argmax(objective_evaluations)]
 
 
-def objective(capacity_distribution, taxi_distribution):
+def objective(capacity_distribution, taxi_distribution, minimizee):
 	'''
 	The objective function captures how "close" we are to a perfect match between the
 	distribution of hotel capacities (occupancies?) and the distribution of taxicab
 	coordinates (nearby pickups / dropoffs / both).
 	'''
-	return entropy(np.array(capacity_distribution.values()), np.array(taxi_distribution.values()))
+	if minimizee == 'relative_entropy':
+		return entropy(np.array(capacity_distribution.values()), np.array(taxi_distribution.values()))
+	elif minimizee == 'abs_diffs':
+		return np.sum(np.abs(np.array(capacity_distribution.values()) - \
+								np.array(taxi_distribution.values())))
+	elif minimizee == 'inverse_weighted_abs_diffs':
+		return np.sum(np.abs(np.array(capacity_distribution.values()) - \
+								np.array(taxi_distribution.values())) / \
+								np.array(capacity_distribution.values()))
+	elif minimizee == 'weighted_abs_diffs':
+		return np.sum(np.abs(np.array(capacity_distribution.values()) - \
+								np.array(taxi_distribution.values())) * \
+								np.array(capacity_distribution.values()))
 
 
 if __name__ == '__main__':
@@ -132,11 +166,23 @@ if __name__ == '__main__':
 				help='The day on which to start looking for satisfying coordinates.')
 	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 2, 1], \
 				help='The day on which to stop looking for satisfying coordinates.')
+	parser.add_argument('--minimizee', type=str, default='weighted_abs_diffs', help='One of \
+		"abs_diffs", "weighted_abs_diffs", "inverse_weighted_abs_diffs", or "relative_entropy".')
+	parser.add_argument('--plot', dest='plot', action='store_true')
+	parser.add_argument('--no_plot', dest='plot', action='store_false')
+	parser.set_defaults(feature=False)
 
 	args = parser.parse_args()
 	args = vars(args)
 
 	locals().update(args)
+
+	plots_path = os.path.join('..', 'plots', 'distance_optimization', '_'.join(map(str, [ min_distance, \
+												max_distance, coord_type, start_date[0], start_date[1], \
+												start_date[2], end_date[0], end_date[1], end_date[2], minimizee ])))
+
+	if not os.path.exists(plots_path):
+		os.makedirs(plots_path)
 
 	start_date, end_date = date(*start_date), date(*end_date)
 
@@ -199,12 +245,11 @@ if __name__ == '__main__':
 
 	per_hotel_taxi_data = {}
 	for hotel_name in taxi_data['Hotel Name'].unique():
-		# per_hotel_taxi_data[hotel_name] = { row['Date'].date() : row['Room Demand'] \
-		# 		for (idx, row) in daily_capacity_data.loc[daily_capacity_data['Share ID'] == hotel_name].iterrows() }
 		per_hotel_taxi_data[hotel_name] = np.array([ row['Distance From Hotel'] for (_, row) in \
 			taxi_data.loc[taxi_data['Hotel Name'] == hotel_name].iterrows() ])
 
 
 	print 'It took', timeit.default_timer() - start, 'to load the specified pre-processed taxicab data.'
 
-	best_distance = optimize_distance(per_hotel_capacity_data, per_hotel_taxi_data, min_distance, max_distance)
+	best_distance = optimize_distance(per_hotel_capacity_data, per_hotel_taxi_data, \
+												min_distance, max_distance, minimizee)
