@@ -145,9 +145,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	passenger_counts, trip_distances, fare_amounts = np.array(passenger_count), np.array(trip_distance), np.array(fare_amount)
 
 	# get file containing hotel names and addresses
-	hotel_file = pd.read_excel('../data/Final Hotel Identification.xlsx', sheetname='final match', skip_footer=180)
-
-	print hotel_file
+	hotel_file = pd.read_excel('../data/Final hotel Identification.xlsx', sheetname='final match', skip_footer=28)
 
 	# split the file into lists of names and addresses
 	hotel_IDs = hotel_file['Share ID']
@@ -172,7 +170,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	print '\n...finding distance criterion-satisfying taxicab pick-ups'
 
 	# create and open spreadsheet for nearby pick-ups and drop-offs for each hotel
-	writer = pd.ExcelWriter('../data/preprocessed_' + str(distance) + \
+	writer = pd.ExcelWriter('../data/all_preprocessed_' + str(distance) + \
 							'/NPD_' + taxi_file.split('.')[0] + '.xlsx')
 
 	# keep track of total time elapsed for all hotels
