@@ -8,6 +8,7 @@ import os
 import csv
 import imp
 import sys
+import time
 import gmplot
 import timeit
 import argparse
@@ -164,7 +165,14 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 
 	hotel_locations = multiprocess.Pool(8).map_async(geolocator.geocode, 
 					[ hotel_address for hotel_address in hotel_addresses ])
-	hotel_coords = [ (location.latitude, location.longitude) for location in hotel_locations.get() ]
+	
+	got_coordinates = False
+	while not got_coordinates:
+		try:
+			hotel_coords = [ (location.latitude, location.longitude) for location in hotel_locations.get() ]
+			got_coordinates = True
+		except geopy.exc.GeocoderQuotaExceeded:
+			time.sleep(100)
 
 	print '\nIt took', timeit.default_timer() - start_time, 'seconds to geolocate all hotels'
 	print '\n...finding distance criterion-satisfying taxicab pick-ups'
