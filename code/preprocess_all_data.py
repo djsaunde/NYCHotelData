@@ -8,6 +8,7 @@ import os
 import csv
 import imp
 import sys
+import geopy
 import gmplot
 import timeit
 import argparse

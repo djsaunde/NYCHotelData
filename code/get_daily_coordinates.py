@@ -49,7 +49,7 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 			coords = { hotel_name : coord for (hotel_name, coord) in zip(hotel_names, coords) }
 
 			print 'Total satisfying nearby', key, ':', sum([single_hotel_coords.shape[1] \
-												for single_hotel_coords in coords.values() if len(single_hotel_coords) > 0]), '/', len(data), '\n'
+					for single_hotel_coords in coords.values() if len(single_hotel_coords) > 0]), '/', len(data), '\n'
 			
 			print 'Satisfying nearby', key, 'by hotel:'
 			for name in coords:
