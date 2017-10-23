@@ -9,6 +9,7 @@ import csv
 import imp
 import sys
 import time
+import geopy
 import gmplot
 import timeit
 import argparse
