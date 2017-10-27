@@ -167,7 +167,7 @@ def preprocess(taxi_file, distance=300):
 	start_time = timeit.default_timer()
 
 	# keep track of how much we've written into the current Excel worksheet
-	# prev_len = 0
+	prev_len = 0
 
 	# loop through each hotel and find all satisfying taxicab rides
 	for idx, hotel_coord in enumerate(hotel_coords):
@@ -213,6 +213,9 @@ def preprocess(taxi_file, distance=300):
 			
 			# to_write.to_excel(writer, 'Starting Points', startrow=prev_len + 1, header=None, index=False)
 
+		# keep track of where we left off in the previous workbook
+		prev_len += len(to_write)
+
 	# get and report total elapsed time for all hotels
 	end_time = timeit.default_timer() - start_time
 	print '( total time elapsed for all hotels:', end_time, ') \n'
@@ -221,7 +224,7 @@ def preprocess(taxi_file, distance=300):
 	start_time = timeit.default_timer()
 
 	# keep track of how much we've written into the current Excel worksheet
-	# prev_len = 0
+	prev_len = 0
 
 
 	# loop through each hotel and find all satisfying taxicab rides
@@ -269,7 +272,7 @@ def preprocess(taxi_file, distance=300):
 			# to_write.to_excel(writer, 'Starting Points', startrow=prev_len + 1, header=None, index=False)
 		
 		# keep track of where we left off in the previous workbook
-		# prev_len += len(to_write)
+		prev_len += len(to_write)
 
 	# get and report total elapsed time for all hotels
 	end_time = timeit.default_timer() - start_time

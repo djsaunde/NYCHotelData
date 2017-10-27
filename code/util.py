@@ -504,8 +504,8 @@ def get_destination(args):
 	return None
 
 
-def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances,
-							fare_amounts, hotel_coords, distance, unit):
+def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, 
+										trip_distances, fare_amounts, hotel_coords, distance, unit):
 	'''
 	A function which, given (latitude, longitude) coordinates, returns an 
 	numpy array of (latitude, longitude) pairs such that each pair corresponds 
@@ -560,8 +560,8 @@ def get_destinations(pickup_coords, dropoff_coords, pickup_times, dropoff_times,
 	return np.array(destinations).T
 
 
-def get_starting_points(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts, trip_distances,
-									fare_amounts, hotel_coords, distance, unit):
+def get_starting_points(pickup_coords, dropoff_coords, pickup_times, dropoff_times, passenger_counts,
+											trip_distances, fare_amounts, hotel_coords, distance, unit):
 	'''
 	A function which, given (latitude, longitude) coordinates, returns an 
 	numpy array of (latitude, longitude) pairs such that each pair corresponds 
