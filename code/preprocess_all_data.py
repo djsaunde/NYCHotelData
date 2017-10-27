@@ -26,7 +26,7 @@ from IPython.display import Image, display
 
 from util import *
 
-def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9ayZ_qGz-Y'):
+def preprocess(taxi_file, distance=300):
 	'''
     Main logic for parsing taxi datafiles.
 	'''
@@ -146,28 +146,16 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	passenger_counts, trip_distances, fare_amounts = np.array(passenger_count), np.array(trip_distance), np.array(fare_amount)
 
 	# get file containing hotel names and addresses
-	hotel_file = pd.read_excel('../data/Final hotel Identification.xlsx', sheetname='final match', skip_footer=28)
+	hotel_file = pd.read_excel('../data/Final hotel Identification (with coordinates).xlsx', \
+													sheetname='final match (with coordinates)')
 
 	# split the file into lists of names and addresses
 	hotel_IDs = hotel_file['Share ID']
 	hotel_names = hotel_file['Name']
 	hotel_addresses = hotel_file['Address']
+	hotel_coords = [ (latitude, longitude) for latitude, longitude in \
+					zip(hotel_file['Latitude'], hotel_file['Longitude']) ]
 
-	# setting up geolocator object
-	geolocator = GoogleV3(api_key, timeout=10)
-
-	# storing the geocode of the above addresses
-	hotel_coords = []
-
-	print '\n...getting hotel coordinates'
-
-	start_time = timeit.default_timer()
-
-	hotel_locations = multiprocess.Pool(8).map_async(geolocator.geocode, 
-					[ hotel_address for hotel_address in hotel_addresses ])
-	hotel_coords = [ (location.latitude, location.longitude) for location in hotel_locations.get() ]
-
-	print '\nIt took', timeit.default_timer() - start_time, 'seconds to geolocate all hotels'
 	print '\n...finding distance criterion-satisfying taxicab pick-ups'
 
 	# create and open spreadsheet for nearby pick-ups and drop-offs for each hotel
@@ -178,8 +166,7 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	start_time = timeit.default_timer()
 
 	# keep track of how much we've written into the current Excel worksheet
-	prev_len = 0
-	has_written = False
+	# prev_len = 0
 
 	# loop through each hotel and find all satisfying taxicab rides
 	for idx, hotel_coord in enumerate(hotel_coords):
@@ -213,14 +200,17 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		to_write = pd.concat([ID_frame, name_frame, destinations], axis=1)
 		
 		# write sheet to Excel file
-		if idx == 0 or not has_written:
-			to_write.to_excel(writer, 'Destinations', index=False)
-			has_written = True
+		if idx == 0:
+			to_write.to_csv('../data/all_preprocessed_' + str(distance) + \
+					'/NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
+			
+			# to_write.to_excel(writer, 'Starting Points', index=False)
 		elif idx != 0:
-			to_write.to_excel(writer, 'Destinations', startrow=prev_len + 1, header=None, index=False)
-		
-		# keep track of where we left off in the previous workbook
-		prev_len += len(to_write)
+			with open('../data/all_preprocessed_' + str(distance) + '/NPD_destinations_' + \
+													taxi_file.split('.')[0] + '.csv', 'a') as f:
+    			to_write.to_csv(f, header=False)
+			
+			# to_write.to_excel(writer, 'Starting Points', startrow=prev_len + 1, header=None, index=False)
 
 	# get and report total elapsed time for all hotels
 	end_time = timeit.default_timer() - start_time
@@ -230,7 +220,8 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	start_time = timeit.default_timer()
 
 	# keep track of how much we've written into the current Excel worksheet
-	prev_len = 0
+	# prev_len = 0
+
 
 	# loop through each hotel and find all satisfying taxicab rides
 	for idx, hotel_coord in enumerate(hotel_coords):
@@ -265,12 +256,19 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		
 		# write sheet to Excel file
 		if idx == 0:
-			to_write.to_excel(writer, 'Starting Points', index=False)
+			to_write.to_csv('../data/all_preprocessed_' + str(distance) + \
+					'/NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
+
+			# to_write.to_excel(writer, 'Starting Points', index=False)
 		elif idx != 0:
-			to_write.to_excel(writer, 'Starting Points', startrow=prev_len + 1, header=None, index=False)
+			with open('../data/all_preprocessed_' + str(distance) + '/NPD_starting_points_' + \
+													taxi_file.split('.')[0] + '.csv', 'a') as f:
+    			to_write.to_csv(f, header=False)
+			
+			# to_write.to_excel(writer, 'Starting Points', startrow=prev_len + 1, header=None, index=False)
 		
 		# keep track of where we left off in the previous workbook
-		prev_len += len(to_write)
+		# prev_len += len(to_write)
 
 	# get and report total elapsed time for all hotels
 	end_time = timeit.default_timer() - start_time
@@ -279,9 +277,12 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--distance', type=int, default=300, help='Distance criterion (in feet) from hotels considered.')
-	parser.add_argument('--file_idx', type=int, default=0, help='Index of taxi file in ordered file list to preprocess.')
-	parser.add_argument('--file_name', type=str, default='', help='Name of taxi file to preprocess.')
+	parser.add_argument('--distance', type=int, default=300, \
+		help='Distance criterion (in feet) from hotels considered.')
+	parser.add_argument('--file_idx', type=int, default=0, \
+		help='Index of taxi file in ordered file list to preprocess.')
+	parser.add_argument('--file_name', type=str, default='', \
+							help='Name of taxi file to preprocess.')
 	args = parser.parse_args()
 
 	# get requested distance criterion
@@ -291,8 +292,8 @@ if __name__ == '__main__':
 
 	if file_name == '':
 		# taxi data files to preprocess
-		taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', 'taxi_data', '')) \
-														if 'yellow' in filename or 'green' in filename ]
+		taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', \
+						'taxi_data', '')) if 'yellow' in filename or 'green' in filename ]
 		
 		# preprocess our particular taxi data file
 		preprocess(taxi_files[file_idx], distance)
