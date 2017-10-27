@@ -209,7 +209,7 @@ def preprocess(taxi_file, distance=300):
 		elif idx != 0:
 			with open('../data/all_preprocessed_' + str(distance) + '/NPD_destinations_' + \
 													taxi_file.split('.')[0] + '.csv', 'a') as f:
-    			to_write.to_csv(f, header=False)
+				to_write.to_csv(f, header=False)
 			
 			# to_write.to_excel(writer, 'Starting Points', startrow=prev_len + 1, header=None, index=False)
 
@@ -264,7 +264,7 @@ def preprocess(taxi_file, distance=300):
 		elif idx != 0:
 			with open('../data/all_preprocessed_' + str(distance) + '/NPD_starting_points_' + \
 													taxi_file.split('.')[0] + '.csv', 'a') as f:
-    			to_write.to_csv(f, header=False)
+				to_write.to_csv(f, header=False)
 			
 			# to_write.to_excel(writer, 'Starting Points', startrow=prev_len + 1, header=None, index=False)
 		
