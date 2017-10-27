@@ -148,7 +148,7 @@ def preprocess(taxi_file, distance=300):
 
 	# get file containing hotel names and addresses
 	hotel_file = pd.read_excel('../data/Final hotel Identification (with coordinates).xlsx', \
-													sheetname='final match (with coordinates)')
+													sheetname='final match with coordinates')
 
 	# split the file into lists of names and addresses
 	hotel_IDs = hotel_file['Share ID']
