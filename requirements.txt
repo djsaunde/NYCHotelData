@@ -2,3 +2,4 @@ geopy
 gmplot
 joblib
 multiprocess
+vincenty
