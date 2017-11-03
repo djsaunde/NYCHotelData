@@ -1,12 +1,13 @@
 from __future__ import division
 
+from vincenty import vincenty
 from datetime import timedelta	
+from contextlib import closing
 from scipy.stats import entropy
 from multiprocessing import Pool
 from collections import defaultdict
 from joblib import Parallel, delayed
 from mpl_toolkits.basemap import Basemap
-from vincenty import vincenty
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
 
@@ -509,6 +510,14 @@ def coords_to_distance_miles(start_coords, end_coords):
 	return R * c
 
 
+def memory_usage_psutil():
+    # return the memory usage in MB
+    import psutil
+    process = psutil.Process(os.getpid())
+    mem = process.memory_info()[0] / float(2 ** 20)
+    return mem
+
+
 def worker(args):
 	hotel_coords, trip_coords = args
 
@@ -521,10 +530,9 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 
 	# Chunk up the trip coordinates according to how many cpu cores we have available.
 	trip_coords = [trip_coords[idx : idx + n_jobs] for idx in xrange(0, len(trip_coords), n_jobs)]
-	pool = Pool(n_jobs)
-
-	# Calculate distances between trip coordinates and trip coordinates.
-	dists = pool.map(worker, zip([hotel_coords] * len(trip_coords), trip_coords))
+	with closing(Pool(n_jobs)) as pool:
+		# Calculate distances between trip coordinates and trip coordinates.
+		dists = pool.map(worker, zip([hotel_coords] * len(trip_coords), trip_coords))
 
 	# Get the indices of the satisfying trips.
 	satisfying_indices = np.where(dists <= distance)
@@ -532,7 +540,7 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 	# End the timer and report length of computation.
 	end_time = timeit.default_timer() - start_time
 	print '( time elapsed:', end_time, ')', '\n'
-	
+
 	# Return the satisfying indices to perform downstream processing of these trips.
 	return satisfying_indices
 
