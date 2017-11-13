@@ -8,6 +8,8 @@ import os
 import csv
 import imp
 import sys
+import time
+import geopy
 import gmplot
 import timeit
 import argparse
@@ -25,7 +27,8 @@ from IPython.display import Image, display
 
 from util import *
 
-def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9ayZ_qGz-Y'):
+
+def preprocess(taxi_file, distance, n_jobs):
 	'''
     Main logic for parsing taxi datafiles.
 	'''
@@ -142,41 +145,31 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 	# store data as numpy arrays (transposing to have in a more work-friendly shape)    
 	pickup_coords, dropoff_coords = np.array(pickup_coords).T, np.array(dropoff_coords).T
 	pickup_times, dropoff_times = np.array(pickup_time).T, np.array(dropoff_time).T
-	passenger_counts, trip_distances, fare_amounts = np.array(passenger_count), np.array(trip_distance), np.array(fare_amount)
+	passenger_counts, trip_distances, fare_amounts = np.array(passenger_count), \
+									np.array(trip_distance), np.array(fare_amount)
 
 	# get file containing hotel names and addresses
-	hotel_file = pd.read_excel('../data/Pilot Set of Hotels.xlsx', sheetname='set 2')
+	hotel_file = pd.read_excel('../data/Final hotel Identification (with coordinates).xlsx', \
+													sheetname='final match with coordinates')
 
 	# split the file into lists of names and addresses
 	hotel_IDs = hotel_file['Share ID']
 	hotel_names = hotel_file['Name']
 	hotel_addresses = hotel_file['Address']
+	hotel_coords = [ (latitude, longitude) for latitude, longitude in \
+					zip(hotel_file['Latitude'], hotel_file['Longitude']) ]
 
-	# setting up geolocator object
-	geolocator = GoogleV3(api_key, timeout=10)
-
-	# storing the geocode of the above addresses
-	hotel_coords = []
-
-	print '\n...getting hotel coordinates'
-
-	start_time = timeit.default_timer()
-
-	hotel_locations = multiprocess.Pool(8).map_async(geolocator.geocode, [ hotel_address for hotel_address in hotel_addresses ])
-	hotel_coords = [ (location.latitude, location.longitude) for location in hotel_locations.get() ]
-
-	print '\nIt took', timeit.default_timer() - start_time, 'seconds to geolocate all hotels'
 	print '\n...finding distance criterion-satisfying taxicab pick-ups'
 
 	# create and open spreadsheet for nearby pick-ups and drop-offs for each hotel
-	writer = pd.ExcelWriter('../data/preprocessed_' + str(distance) + '/NPD_' + taxi_file.split('.')[0] + '.xlsx')
+	writer = pd.ExcelWriter('../data/all_preprocessed_' + str(distance) + \
+							'/NPD_' + taxi_file.split('.')[0] + '.xlsx')
 
 	# keep track of total time elapsed for all hotels
 	start_time = timeit.default_timer()
 
 	# keep track of how much we've written into the current Excel worksheet
 	prev_len = 0
-	has_written = False
 
 	# loop through each hotel and find all satisfying taxicab rides
 	for idx, hotel_coord in enumerate(hotel_coords):
@@ -185,29 +178,40 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
 		
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
-		destinations = get_destinations(pickup_coords.T, dropoff_coords.T, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coord, distance, unit='feet').T
+		satisfying_indices = get_satisfying_indices(pickup_coords.T, hotel_coord, distance, n_jobs)
+		destinations = np.array([item[satisfying_indices] for item in \
+					pickup_coords[:, 0], pickup_coords[:, 1], pickup_times, \
+				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
 	
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + destinations.shape[0] + 1) ]
 		try:
-			destinations = pd.DataFrame(destinations, index=index, columns=['Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time', 'Drop-off Time', 'Passenger Count', 'Trip Distance', 'Fare Amount'])
+			destinations = pd.DataFrame(destinations, index=index, 
+				columns=['Distance From Hotel', 'Latitude', 'Longitude', 
+				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
+				'Trip Distance', 'Fare Amount'])
 		except ValueError:
 			continue			
 
 		# add column for hotel name
-		name_frame = pd.DataFrame([hotel_names[idx]] * destinations.shape[0], index=destinations.index, columns=['Hotel Name'])
+		name_frame = pd.DataFrame([hotel_names[idx]] * destinations.shape[0], 
+							index=destinations.index, columns=['Hotel Name'])
 		to_write = pd.concat([name_frame, destinations], axis=1)
 			
 		# add column for hotel ID
-		ID_frame = pd.DataFrame([hotel_IDs[idx]] * destinations.shape[0], index=destinations.index, columns=['Share ID'])
+		ID_frame = pd.DataFrame([hotel_IDs[idx]] * destinations.shape[0], 
+							index=destinations.index, columns=['Share ID'])
 		to_write = pd.concat([ID_frame, name_frame, destinations], axis=1)
 		
 		# write sheet to Excel file
-		if idx == 0 or not has_written:
-			to_write.to_excel(writer, 'Destinations', index=False)
-			has_written = True
+		if idx == 0:
+			to_write.to_csv('../data/all_preprocessed_' + str(distance) + \
+					'/NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
+			
 		elif idx != 0:
-			to_write.to_excel(writer, 'Destinations', startrow=prev_len + 1, header=None, index=False)
+			with open('../data/all_preprocessed_' + str(distance) + '/NPD_destinations_' + \
+													taxi_file.split('.')[0] + '.csv', 'a') as f:
+				to_write.to_csv(f, header=False)
 		
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
@@ -229,28 +233,43 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
 		
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
-		starting_points = get_starting_points(pickup_coords.T, dropoff_coords.T, pickup_times, dropoff_times, passenger_counts, trip_distances, fare_amounts, hotel_coord, distance, unit='feet').T
+		satisfying_indices = get_satisfying_indices(dropoff_coords.T, hotel_coord, distance, n_jobs)
+		starting_points = np.array([item[satisfying_indices] for item in \
+					pickup_coords[:, 0], pickup_coords[:, 1], pickup_times, \
+				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
 		
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + starting_points.shape[0] + 1) ]
 		try:
-			starting_points = pd.DataFrame(starting_points, index=index, columns=['Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time', 'Drop-off Time', 'Passenger Count', 'Trip Distance', 'Fare Amount'])
+			starting_points = pd.DataFrame(starting_points, index=index, 
+				columns=['Distance From Hotel', 'Latitude', 'Longitude', 
+				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
+				'Trip Distance', 'Fare Amount'])
 		except ValueError:
 			continue			
 
 		# add column for hotel name
-		name_frame = pd.DataFrame([hotel_names[idx]] * starting_points.shape[0], index=starting_points.index, columns=['Hotel Name'])
+		name_frame = pd.DataFrame([hotel_names[idx]] * starting_points.shape[0], 
+							index=starting_points.index, columns=['Hotel Name'])
 		to_write = pd.concat([name_frame, starting_points], axis=1)
 			
 		# add column for hotel ID
-		ID_frame = pd.DataFrame([hotel_IDs[idx]] * starting_points.shape[0], index=starting_points.index, columns=['Share ID'])
+		ID_frame = pd.DataFrame([hotel_IDs[idx]] * starting_points.shape[0], 
+							index=starting_points.index, columns=['Share ID'])
 		to_write = pd.concat([ID_frame, name_frame, starting_points], axis=1)
 		
 		# write sheet to Excel file
 		if idx == 0:
-			to_write.to_excel(writer, 'Starting Points', index=False)
+			to_write.to_csv('../data/all_preprocessed_' + str(distance) + \
+					'/NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
+
+			# to_write.to_excel(writer, 'Starting Points', index=False)
 		elif idx != 0:
-			to_write.to_excel(writer, 'Starting Points', startrow=prev_len + 1, header=None, index=False)
+			with open('../data/all_preprocessed_' + str(distance) + '/NPD_starting_points_' + \
+													taxi_file.split('.')[0] + '.csv', 'a') as f:
+				to_write.to_csv(f, header=False)
+			
+			# to_write.to_excel(writer, 'Starting Points', startrow=prev_len + 1, header=None, index=False)
 		
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
@@ -262,22 +281,29 @@ def preprocess(taxi_file, distance=300, api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9a
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--distance', type=int, default=300, help='Distance criterion (in feet) from hotels considered.')
-	parser.add_argument('--file_idx', type=int, default=0, help='Index of taxi file in ordered file list to preprocess.')
-	parser.add_argument('--file_name', type=str, default='', help='Name of taxi file to preprocess.')
+	parser.add_argument('--distance', type=int, default=300, \
+		help='Distance criterion (in feet) from hotels considered.')
+	parser.add_argument('--file_idx', type=int, default=0, \
+		help='Index of taxi file in ordered file list to preprocess.')
+	parser.add_argument('--file_name', type=str, default='', \
+							help='Name of taxi file to preprocess.')
+	parser.add_argument('--n_jobs', type=int, default=8, \
+		help='Number of CPU cores to use for parallel computation.')
 	args = parser.parse_args()
 
-	# get requested distance criterion
+	# Parse command line arguments.
 	distance = args.distance
 	file_idx = args.file_idx
 	file_name = args.file_name.replace(',', '')
+	n_jobs = args.n_jobs
 
 	if file_name == '':
 		# taxi data files to preprocess
-		taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', 'taxi_data')) if 'yellow' in filename or 'green' in filename ]
+		taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', \
+						'taxi_data', '')) if 'yellow' in filename or 'green' in filename ]
 		
 		# preprocess our particular taxi data file
-		preprocess(taxi_files[file_idx], distance)
+		preprocess(taxi_files[file_idx], distance, n_jobs)
 	else:
 		# preprocess passed in taxi data file
-		preprocess(file_name, distance)
+		preprocess(file_name, distance, n_jobs)
