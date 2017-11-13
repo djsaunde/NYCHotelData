@@ -9,7 +9,6 @@ from util import *
 from contextlib import closing
 from datetime import timedelta, date, datetime
 
-data_path = os.path.join('..', 'data', 'preprocessed_100')
 output_path = os.path.join('..', 'data', 'daily_distributions')
 plots_path = os.path.join('..', 'plots', 'daily')
 
@@ -113,6 +112,7 @@ if __name__ == '__main__':
 		data_files = [ 'destinations.csv', 'starting_points.csv' ]
 
 	start_date, end_date = date(*start_date), date(*end_date)
+	data_path = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(distance)]))
 
 	# get dictionary of taxicab trip data based on `coord_type` argument
 	taxi_data = load_data(coord_type, data_files, data_path)
