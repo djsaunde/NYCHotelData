@@ -11,6 +11,6 @@ distance=${1:-300}
 
 echo $distance
 
-python combine_preprocessed.py --distance $distance
+python 2combine_preprocessed.py --distance $distance
 
 exit
