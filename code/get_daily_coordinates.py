@@ -78,7 +78,7 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 		combined_coords = [ (' '.join([str(lat), str(lon)])) for (lat, lon) in \
 				zip(list(combined_coords[0]), list(combined_coords[1])) if (lat, lon) != (0.0, 0.0) ]
 
-		# Writing this day's satisfying coordinates to a .csv file
+		# Writing this day's satisfying coordinates to the .xlsx file
 		worksheet.write(day_idx, 0, str(date))
 		for data_idx in xrange(len(combined_coords)):
 			worksheet.write(day_idx, data_idx + 1, combined_coords[data_idx])
