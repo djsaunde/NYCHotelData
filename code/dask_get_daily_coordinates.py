@@ -9,6 +9,7 @@ import multiprocessing as mp
 
 from dask_util import *
 from contextlib import closing
+from multiprocessing import cpu_count
 from datetime import timedelta, date, datetime
 
 output_path = os.path.join('..', 'data', 'daily_distributions')
@@ -17,6 +18,8 @@ plots_path = os.path.join('..', 'plots', 'daily')
 for directory in [ output_path, plots_path ]:
 	if not os.path.isdir(directory):
 		os.makedirs(directory)
+
+print 'Number of CPUs:', cpu_count()
 
 
 def plot_and_record_daily(taxi_data, start_date, end_date):
