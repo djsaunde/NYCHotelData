@@ -203,7 +203,7 @@ def preprocess(taxi_file, distance, n_jobs):
 							index=destinations.index, columns=['Share ID'])
 		to_write = pd.concat([ID_frame, name_frame, destinations], axis=1)
 		
-		# write sheet to Excel file
+		# write sheet to CSV file
 		if idx == 0:
 			to_write.to_csv('../data/all_preprocessed_' + str(distance) + \
 					'/NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
@@ -263,14 +263,10 @@ def preprocess(taxi_file, distance, n_jobs):
 			to_write.to_csv('../data/all_preprocessed_' + str(distance) + \
 					'/NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
 
-			# to_write.to_excel(writer, 'Starting Points', index=False)
-		elif idx != 0:
 			with open('../data/all_preprocessed_' + str(distance) + '/NPD_starting_points_' + \
 													taxi_file.split('.')[0] + '.csv', 'a') as f:
 				to_write.to_csv(f, header=False)
 			
-			# to_write.to_excel(writer, 'Starting Points', startrow=prev_len + 1, header=None, index=False)
-		
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
 

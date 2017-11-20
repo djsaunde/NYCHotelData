@@ -52,9 +52,13 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 		print 'Writing coordinates to a .xlsx file.'
 		start = timeit.default_timer()
 		worksheet.write(day_idx, 0, str(date))
+
+		idx = 1
 		for data_idx in coords.index.values:
-			worksheet.write(day_idx, data_idx + 1, coords[data_idx])
-		
+			if not type(coords[data_idx]) == pd.core.series.Series:
+				worksheet.write(day_idx, idx, coords[data_idx])
+				idx += 1
+
 		print '\n...It took', timeit.default_timer() - start, 'seconds to write the coordinates to disk.\n'
 
 
