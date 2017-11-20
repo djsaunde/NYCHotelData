@@ -12,11 +12,9 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
 
 import sys
-import dask
 import numpy as np
 import pandas as pd
 import cPickle as p
-import dask.dataframe as dd
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.colors as mcolors
@@ -73,8 +71,11 @@ def load_data(to_plot, data_files, data_path, chunksize=5000000):
 	taxi_data = {}
 	for dname, data_file in zip(dictnames, data_files):
 		print '... Loading', dname, 'data from disk.'
-		taxi_data[dname] = dd.read_csv(os.path.join(data_path, data_file), parse_dates=['Pick-up Time', \
-											'Drop-off Time'], dtype={'Fare Amount' : 'object'}).dropna()
+		for idx, chunk in enumerate(pd.read_csv(os.path.join(data_path, data_file), chunksize=chunksize)):
+			if idx == 0:
+				taxi_data[dname] = chunk
+			else:
+				taxi_data[dname] = pd.concat((taxi_data[dname], chunk))
 
 	print '... It took', timeit.default_timer() - start_time, 'seconds to load the taxicab trip data\n'
 
@@ -249,27 +250,61 @@ def get_nearby_dropoffs_times(args):
 	return satisfying_coords
 
 
-def get_nearby_window(trips, distance, start_datetime, end_datetime):
+def get_nearby_pickups_window(args):
 	'''
 	Given the days of the week and the start and end times from which to look, return all satisfying
 	taxicab rides which begin nearby.
 	
-	trips: A pandas DataFrame containing all fields of data from taxicab trips.
+	pickups: A pandas DataFrame containing all fields of data from pickups of a single hotel.
 	distance: A new distance used to cut out even more trips based on distance from the given hotel.
 	start_datetime: The date at which to start looking for data.
 	end_datetime: The date at which to stop looking for data.
 	'''
-	# Find the trips which first satisfy the specified distance criterion.
-	print 'Getting trips which satisfy the specified distance criterion.'
-	satisfying_distances = trips.loc[trips['Distance From Hotel'] <= distance]
+	pickups, distance, start_datetime, end_datetime = args
+
+	# cast date-time column to pandas Timestamp type
+	pickups['Pick-up Time'] = pd.to_datetime(pickups['Pick-up Time'])
+		
+	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
+	hotel_matches = pickups.loc[pickups['Distance From Hotel'] <= distance]
 	
-	# Find the trips which also satisfy the time criterion.
-	print 'Getting trips which satisfy the current time criterion.'
-	satisfying_locations = satisfying_distances[(satisfying_distances['Pick-up Time'] >= \
-					start_datetime) & (satisfying_distances['Pick-up Time'] <= end_datetime)]
+	# find the coordinates which satisfy the given distance and time criterias
+	satisfying_locations = hotel_matches[(pd.to_datetime(hotel_matches['Pick-up Time']) >= start_datetime) & \
+														(pd.to_datetime(hotel_matches['Pick-up Time']) <= end_datetime)]
 														
-	# Take only the (latitude, longitude) coordinates of these trips for downstream processing.
-	satisfying_coords = satisfying_locations['Latitude'].astype(str) + ' ' + satisfying_locations['Longitude'].astype(str)
+	# add the satisfying locations for this hotel to our dictionary data structure
+	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
+	
+	# return the satisfying nearby pick-up coordinates
+	return satisfying_coords
+
+
+def get_nearby_dropoffs_window(args):
+	'''
+	Given the days of the week and the start and end times from which to look, return all satisfying
+	taxicab rides which begin nearby.
+	
+	dropoffs: A pandas DataFrame containing all fields of data from dropoffs of a single hotel.
+	distance: A new distance used to cut out even more trips based on distance from the given hotel.
+	start_datetime: The date at which to start looking for data.
+	end_datetime: The date at which to stop looking for data.
+	'''
+	dropoffs, distance, start_datetime, end_datetime = args
+
+	# cast date-time column to pandas Timestamp type
+	dropoffs['Drop-off Time'] = pd.to_datetime(dropoffs['Drop-off Time'])
+		
+	# get the latitude, longitude coordinates of the corresponding pick-up locations for the trips
+	hotel_matches = dropoffs.loc[dropoffs['Distance From Hotel'] <= distance]
+	
+	# find the coordinates which satisfy the given distance and time criterias
+	satisfying_locations = hotel_matches[(pd.to_datetime(hotel_matches['Drop-off Time']) >= start_datetime) & \
+														(pd.to_datetime(hotel_matches['Drop-off Time']) <= end_datetime)]
+	
+	# add the satisfying locations for this hotel to our dictionary data structure
+	satisfying_coords = np.array(zip(satisfying_locations['Latitude'], satisfying_locations['Longitude'])).T
+	
+	# return the satisfying nearby pick-up coordinates
 	return satisfying_coords
 
 
