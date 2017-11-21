@@ -19,7 +19,7 @@ for directory in [ output_path, plots_path ]:
 		os.makedirs(directory)
 
 
-def plot_and_record_daily(taxi_data, start_date, end_date):
+def record_daily(taxi_data, start_date, end_date):
 	workbook = xlsxwriter.Workbook(os.path.join(output_path, '_'.join([ '_'.join(taxi_data.keys()), \
 				str(distance), str(start_date), str(end_date) ]) + '.xlsx'), {'constant_memory': True})
 	worksheet = workbook.add_worksheet()
@@ -48,6 +48,8 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 		coords = coords.compute()
 		print '\n...It took', timeit.default_timer() - start, 'seconds to format the data.\n'
 
+		print 'There were', len(coords), 'satisfying rides on day', str(date)
+
 		# Writing this day's satisfying coordinates to the .xlsx file
 		print 'Writing coordinates to a .xlsx file.'
 		start = timeit.default_timer()
@@ -63,13 +65,19 @@ def plot_and_record_daily(taxi_data, start_date, end_date):
 
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Making scatterplots and recording satisfying coordinates in a .csv file for a given window of time.')
+	parser = argparse.ArgumentParser(description='Recording satisfying coordinates in an Excel \
+																file for a given window of time.')
 
-	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1], help='The day on which to start looking for satisfying coordinates.')
-	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 1, 7], help='The day on which to stop looking for satisfying coordinates.')
-	parser.add_argument('--coord_type', type=str, default='pickups', help='The type of coordinates to look for (one of "pickups", "dropoffs", or "both").')
-	parser.add_argument('--distance', type=int, default=100, help='The distance (in feet) from hotels for which to look for satisfying taxicab trips.')
-	parser.add_argument('--n_jobs', type=int, default=4, help='The number of CPU cores to use in processing the taxicab data.')
+	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1], help='The day on \
+												which to start looking for satisfying coordinates.')
+	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 1, 7], help='The day on \
+												which to stop looking for satisfying coordinates.')
+	parser.add_argument('--coord_type', type=str, default='pickups', help='The type of coordinates \
+											to look for (one of "pickups", "dropoffs", or "both").')
+	parser.add_argument('--distance', type=int, default=100, help='The distance (in feet) from hotels \
+													for which to look for satisfying taxicab trips.')
+	parser.add_argument('--n_jobs', type=int, default=4, help='The number of CPU cores to use in \
+																	processing the taxicab data.')
 	parser.add_argument('--make_scatter_plots', dest='plot', action='store_true')
 	parser.add_argument('--no_make_scatter_plots', dest='plot', action='store_false')
 	parser.set_defaults(plot=False)
@@ -88,13 +96,12 @@ if __name__ == '__main__':
 		data_files = [ 'destinations.csv', 'starting_points.csv' ]
 
 	start_date, end_date = date(*start_date), date(*end_date)
-	# data_path = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(distance)]))
 	data_path = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(distance)]))
 
-	# get dictionary of taxicab trip data based on `coord_type` argument
+	# Get dictionary of taxicab trip data based on `coord_type` argument.
 	taxi_data = load_data(coord_type, data_files, data_path)
 
-	# create scatterplots and record coordinates for each day (from start_date to end_date) for all hotels combined
-	plot_and_record_daily(taxi_data, start_date, end_date)
+	# Record coordinates for each day (from start_date to end_date) for all hotels combined.
+	record_daily(taxi_data, start_date, end_date)
 
 	print '\n'

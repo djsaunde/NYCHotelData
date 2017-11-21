@@ -60,7 +60,10 @@ def get_pairwise_differences(sampled_taxi_data, hotel_coordinates):
 
 			pairwise_differences = pairwise_differences.append(pd.Series(pairwise_difference), ignore_index=True)
 
-	tuples = list(zip(sorted(sampled_taxi_data.keys() * len(hotel_coordinates.keys())), sorted(hotel_coordinates.keys()) * len(sampled_taxi_data.keys())))
+	tuples = list(zip(sorted(sampled_taxi_data.keys() * len(hotel_coordinates.keys())), \
+						sorted(hotel_coordinates.keys()) * len(sampled_taxi_data.keys())))
+
+
 
 	pairwise_differences.index = pd.MultiIndex.from_tuples(tuples, names=['Day', 'Hotel Name'])
 	pairwise_differences.columns = xrange(1, 101, 1)
@@ -94,7 +97,8 @@ if __name__ == '__main__':
 
 	start_date, end_date = date(*start_date), date(*end_date)
 
-	filename = os.path.join(input_path, '_'.join([ coord_type, str(distance), str(start_date), str(end_date) ]) + '.xlsx')
+	filename = os.path.join(input_path, '_'.join([ coord_type, str(distance), \
+									str(start_date), str(end_date) ]) + '.xlsx')
 
 	print '\n...Reading in daily distributions workbook.'
 
@@ -103,13 +107,14 @@ if __name__ == '__main__':
 	except Exception:
 		raise Exception('Reading in the daily distributions workbook caused an error.')
 
-	print '\n...Maping dates to taxicab coordinates in a dictionary data structure.'
+	print '\n...Mapping dates to taxicab coordinates in a dictionary data structure.'
 
 	print daily_distributions
 
 	distro_mapping = { date(*[ int(item) for item in row[0].encode('ascii', 'ignore').split('-') ]) : \
 				[ datum for datum in row[1:][~row[1:].isnull()] ] for idx, row in daily_distributions.iterrows() }
-	distro_mapping = { key : [ item.encode('ascii', 'ignore') for item in value ] for key, value in distro_mapping.items() }
+	distro_mapping = { key : [ item.encode('ascii', 'ignore') for item in value ] \
+										for key, value in distro_mapping.items() }
 	distro_mapping = { key : np.array([ (float(item.split()[0]), float(item.split()[1])) \
 								for item in value ]) for key, value in distro_mapping.items() }
 
