@@ -1,6 +1,6 @@
 distance=${1:-100}
 
-declare -a fnames=("yellow_tripdata_2015-05.csv", "yellow_tripdata_2014-08.csv")
+declare -a fnames=("yellow_tripdata_2015-11.csv", "yellow_tripdata_2011-10.csv")
 
 for fname in "${fnames[@]}"
 do

@@ -1,10 +1,10 @@
 #!/bin/bash
 #
 #SBATCH --partition=longq
-#SBATCH --time=24:00:00
+#SBATCH --time=03-00:00:00
 #SBATCH --mem=60000
 #SBATCH --account=rkozma
-#SBATCH --ntasks-per-node=4
+#SBATCH --ntasks-per-node=32
 #SBATCH --output=/mnt/nfs/work1/rkozma/djsaunde/NYCHotelData/code/job_reports/%j.out
 
 distance=${1:-100}
