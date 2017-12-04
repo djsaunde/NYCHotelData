@@ -12,14 +12,13 @@ from contextlib import closing
 from datetime import timedelta, date, datetime
 
 output_path = os.path.join('..', 'data', 'daily_distributions')
-plots_path = os.path.join('..', 'plots', 'daily')
 
-for directory in [ output_path, plots_path ]:
+for directory in [ output_path ]:
 	if not os.path.isdir(directory):
 		os.makedirs(directory)
 
 
-def record_daily(taxi_data, start_date, end_date):
+def get_daily(taxi_data, start_date, end_date):
 	workbook = xlsxwriter.Workbook(os.path.join(output_path, '_'.join([ '_'.join(taxi_data.keys()), \
 				str(distance), str(start_date), str(end_date) ]) + '.xlsx'), {'constant_memory': True})
 	worksheet = workbook.add_worksheet()
@@ -78,9 +77,6 @@ if __name__ == '__main__':
 													for which to look for satisfying taxicab trips.')
 	parser.add_argument('--n_jobs', type=int, default=4, help='The number of CPU cores to use in \
 																	processing the taxicab data.')
-	parser.add_argument('--make_scatter_plots', dest='plot', action='store_true')
-	parser.add_argument('--no_make_scatter_plots', dest='plot', action='store_false')
-	parser.set_defaults(plot=False)
 
 	args = parser.parse_args()
 	args = vars(args)
@@ -102,6 +98,6 @@ if __name__ == '__main__':
 	taxi_data = load_data(coord_type, data_files, data_path)
 
 	# Record coordinates for each day (from start_date to end_date) for all hotels combined.
-	record_daily(taxi_data, start_date, end_date)
+	get_daily(taxi_data, start_date, end_date)
 
 	print '\n'

@@ -161,10 +161,6 @@ def preprocess(taxi_file, distance, n_jobs):
 
 	print '\n...finding distance criterion-satisfying taxicab pick-ups'
 
-	# create and open spreadsheet for nearby pick-ups and drop-offs for each hotel
-	writer = pd.ExcelWriter('../data/all_preprocessed_' + str(distance) + \
-							'/NPD_' + taxi_file.split('.')[0] + '.xlsx')
-
 	# keep track of total time elapsed for all hotels
 	start_time = timeit.default_timer()
 

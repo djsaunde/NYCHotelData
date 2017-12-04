@@ -260,18 +260,22 @@ def get_nearby_window(trips, distance, start_datetime, end_datetime):
 	start_datetime: The date at which to start looking for data.
 	end_datetime: The date at which to stop looking for data.
 	'''
-	# Find the trips which first satisfy the specified distance criterion.
-	print 'Getting trips which satisfy the specified distance criterion.'
-	satisfying_distances = trips.loc[trips['Distance From Hotel'] <= distance]
-	
 	# Find the trips which also satisfy the time criterion.
 	print 'Getting trips which satisfy the current time criterion.'
-	satisfying_locations = satisfying_distances[(satisfying_distances['Pick-up Time'] >= \
-					start_datetime) & (satisfying_distances['Pick-up Time'] <= end_datetime)]
+	trips = trips[(trips['Pick-up Time'] >= start_datetime) & (trips['Pick-up Time'] <= end_datetime)]
+
+	# Find the trips which first satisfy the specified distance criterion.
+	print 'Getting trips which satisfy the specified distance criterion.'
+	trips = trips.loc[trips['Distance From Hotel'] <= distance]
+
+	# Removing trips with degenerate (latitude, longitude) coordinates
+	# (Why isn't this filtered out in the first step?)
+	print 'Removing taxicab trips with degenerate (latitude, longitude) coordinates.'
+	trips = trips[(trips['Latitude'] != 0.0) & (trips['Longitude'] != 0.0)]
 														
 	# Take only the (latitude, longitude) coordinates of these trips for downstream processing.
-	satisfying_coords = satisfying_locations['Latitude'].astype(str) + ' ' + satisfying_locations['Longitude'].astype(str)
-	return satisfying_coords
+	trips = trips['Latitude'].astype(str) + ' ' + trips['Longitude'].astype(str)
+	return trips
 
 
 def get_intersection_point(centers, radii):
