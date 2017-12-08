@@ -28,7 +28,7 @@ from IPython.display import Image, display
 from util import *
 
 
-def preprocess(taxi_file, distance, n_jobs):
+def preprocess(taxi_file, distance, n_jobs, n_hotels):
 	'''
     Main logic for parsing taxi datafiles.
 	'''
@@ -159,6 +159,9 @@ def preprocess(taxi_file, distance, n_jobs):
 	hotel_coords = [ (latitude, longitude) for latitude, longitude in \
 					zip(hotel_file['Latitude'], hotel_file['Longitude']) ]
 
+	if n_hotels == -1:
+		n_hotels = len(hotel_coords)
+
 	print '\n...finding distance criterion-satisfying taxicab pick-ups'
 
 	# keep track of total time elapsed for all hotels
@@ -168,7 +171,7 @@ def preprocess(taxi_file, distance, n_jobs):
 	prev_len = 0
 
 	# loop through each hotel and find all satisfying taxicab rides
-	for idx, hotel_coord in enumerate(hotel_coords):
+	for idx, hotel_coord in enumerate(hotel_coords[:n_hotels]):
 		
 		# print progress to console
 		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
@@ -178,6 +181,8 @@ def preprocess(taxi_file, distance, n_jobs):
 		destinations = np.array([item[satisfying_indices] for item in \
 					pickup_coords[:, 0], pickup_coords[:, 1], pickup_times, \
 				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
+
+		print satisfying_indices
 	
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + destinations.shape[0] + 1) ]
@@ -187,7 +192,7 @@ def preprocess(taxi_file, distance, n_jobs):
 				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
 				'Trip Distance', 'Fare Amount'])
 		except ValueError:
-			continue			
+			continue
 
 		# add column for hotel name
 		name_frame = pd.DataFrame([hotel_names[idx]] * destinations.shape[0], 
@@ -223,7 +228,7 @@ def preprocess(taxi_file, distance, n_jobs):
 	prev_len = 0
 
 	# loop through each hotel and find all satisfying taxicab rides
-	for idx, hotel_coord in enumerate(hotel_coords):
+	for idx, hotel_coord in enumerate(hotel_coords[:n_hotels]):
 		
 		# print progress to console
 		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
@@ -233,6 +238,8 @@ def preprocess(taxi_file, distance, n_jobs):
 		starting_points = np.array([item[satisfying_indices] for item in \
 					pickup_coords[:, 0], pickup_coords[:, 1], pickup_times, \
 				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
+
+		print satisfying_indices
 		
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + starting_points.shape[0] + 1) ]
@@ -242,7 +249,7 @@ def preprocess(taxi_file, distance, n_jobs):
 				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
 				'Trip Distance', 'Fare Amount'])
 		except ValueError:
-			continue			
+			continue		
 
 		# add column for hotel name
 		name_frame = pd.DataFrame([hotel_names[idx]] * starting_points.shape[0], 
@@ -281,6 +288,7 @@ if __name__ == '__main__':
 							help='Name of taxi file to preprocess.')
 	parser.add_argument('--n_jobs', type=int, default=8, \
 		help='Number of CPU cores to use for parallel computation.')
+	parser.add_argument('--n_hotels', type=int, default=-1)
 	args = parser.parse_args()
 
 	# Parse command line arguments.
@@ -288,6 +296,7 @@ if __name__ == '__main__':
 	file_idx = args.file_idx
 	file_name = args.file_name.replace(',', '')
 	n_jobs = args.n_jobs
+	n_hotels = args.n_hotels
 
 	if file_name == '':
 		# taxi data files to preprocess
@@ -295,7 +304,7 @@ if __name__ == '__main__':
 						'taxi_data', '')) if 'yellow' in filename or 'green' in filename ]
 		
 		# preprocess our particular taxi data file
-		preprocess(taxi_files[file_idx], distance, n_jobs)
+		preprocess(taxi_files[file_idx], distance, n_jobs, n_hotels)
 	else:
 		# preprocess passed in taxi data file
-		preprocess(file_name, distance, n_jobs)
+		preprocess(file_name, distance, n_jobs, n_hotels)

@@ -491,10 +491,16 @@ def memory_usage_psutil():
 def worker(args):
 	hotel_coords, trip_coords = args
 
-	return [ vincenty(hotel_coords, coord) * 5280 for coord in trip_coords ]
+	return [ vincenty(hotel_coords, coord, miles=True) * 5280 for coord in trip_coords ]
 
 
 def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
+	# print trip_coords.shape
+
+	# plt.scatter(trip_coords[:10000, 0][trip_coords[:10000, 0] != 0], trip_coords[:10000, 1][trip_coords[:10000, 1] != 0])
+	# plt.scatter(hotel_coords[0], hotel_coords[1])
+	# plt.show()
+
 	# Start a timer to record the length of the computation.
 	start_time = timeit.default_timer()
 
@@ -506,7 +512,7 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 
 	# Get the indices of the satisfying trips.
 	satisfying_indices = np.where(dists <= distance)
-		
+
 	# End the timer and report length of computation.
 	end_time = timeit.default_timer() - start_time
 	print '( time elapsed:', end_time, ')', '\n'
