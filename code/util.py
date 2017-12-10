@@ -495,12 +495,6 @@ def worker(args):
 
 
 def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
-	# print trip_coords.shape
-
-	# plt.scatter(trip_coords[:10000, 0][trip_coords[:10000, 0] != 0], trip_coords[:10000, 1][trip_coords[:10000, 1] != 0])
-	# plt.scatter(hotel_coords[0], hotel_coords[1])
-	# plt.show()
-
 	# Start a timer to record the length of the computation.
 	start_time = timeit.default_timer()
 
@@ -510,6 +504,8 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 		# Calculate distances between trip coordinates and trip coordinates.
 		dists = pool.map(worker, zip([hotel_coords] * len(trip_coords), trip_coords))
 
+	dists = np.array([ item for sublist in dists for item in sublist ]).ravel()
+
 	# Get the indices of the satisfying trips.
 	satisfying_indices = np.where(dists <= distance)
 
@@ -518,7 +514,7 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 	print '( time elapsed:', end_time, ')', '\n'
 
 	# Return the satisfying indices to perform downstream processing of these trips.
-	return satisfying_indices
+	return satisfying_indices, dists[satisfying_indices]
 
 
 def log_progress(sequence, every=None, size=None):

@@ -177,15 +177,16 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
 		
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
-		satisfying_indices = get_satisfying_indices(pickup_coords.T, hotel_coord, distance, n_jobs)
-		destinations = np.array([item[satisfying_indices] for item in \
-					pickup_coords[:, 0], pickup_coords[:, 1], pickup_times, \
+		satisfying_indices, dists = get_satisfying_indices(pickup_coords.T, \
+												hotel_coord, distance, n_jobs)
+
+		destinations = np.array([dists] + [item[satisfying_indices] for item in \
+					pickup_coords[0, :], pickup_coords[1, :], pickup_times, \
 				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
 
-		print satisfying_indices
-	
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + destinations.shape[0] + 1) ]
+
 		try:
 			destinations = pd.DataFrame(destinations, index=index, 
 				columns=['Distance From Hotel', 'Latitude', 'Longitude', 
@@ -206,12 +207,12 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 		
 		# write sheet to CSV file
 		if idx == 0:
-			to_write.to_csv('../data/all_preprocessed_' + str(distance) + \
-					'/NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
+			to_write.to_csv(os.path.join(processed_path, 'NPD_destinations_' \
+											+ taxi_file.split('.')[0] + '.csv'))
 			
-		elif idx != 0:
-			with open('../data/all_preprocessed_' + str(distance) + '/NPD_destinations_' + \
-													taxi_file.split('.')[0] + '.csv', 'a') as f:
+		else:
+			with open(os.path.join(processed_path, 'NPD_destinations_' + \
+								taxi_file.split('.')[0] + '.csv'), 'a') as f:
 				to_write.to_csv(f, header=False)
 		
 		# keep track of where we left off in the previous workbook
@@ -234,13 +235,13 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
 		
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
-		satisfying_indices = get_satisfying_indices(dropoff_coords.T, hotel_coord, distance, n_jobs)
-		starting_points = np.array([item[satisfying_indices] for item in \
-					pickup_coords[:, 0], pickup_coords[:, 1], pickup_times, \
+		satisfying_indices, dists = get_satisfying_indices(dropoff_coords.T, \
+												hotel_coord, distance, n_jobs)
+
+		starting_points = np.array([dists] + [item[satisfying_indices] for item in \
+					pickup_coords[0, :], pickup_coords[1, :], pickup_times, \
 				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
 
-		print satisfying_indices
-		
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + starting_points.shape[0] + 1) ]
 		try:
@@ -261,13 +262,14 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 							index=starting_points.index, columns=['Share ID'])
 		to_write = pd.concat([ID_frame, name_frame, starting_points], axis=1)
 		
-		# write sheet to Excel file
+		# write sheet to CSV file
 		if idx == 0:
-			to_write.to_csv('../data/all_preprocessed_' + str(distance) + \
-					'/NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
-
-			with open('../data/all_preprocessed_' + str(distance) + '/NPD_starting_points_' + \
-													taxi_file.split('.')[0] + '.csv', 'a') as f:
+			to_write.to_csv(os.path.join(processed_path, 'NPD_starting_points_' \
+											+ taxi_file.split('.')[0] + '.csv'))
+			
+		else:
+			with open(os.path.join(processed_path, 'NPD_starting_points_' + \
+								taxi_file.split('.')[0] + '.csv'), 'a') as f:
 				to_write.to_csv(f, header=False)
 			
 		# keep track of where we left off in the previous workbook
@@ -297,6 +299,10 @@ if __name__ == '__main__':
 	file_name = args.file_name.replace(',', '')
 	n_jobs = args.n_jobs
 	n_hotels = args.n_hotels
+
+	processed_path = os.path.join('..', 'data', 'all_preprocessed_' + str(distance))
+	if not os.path.isdir(processed_path):
+		os.makedirs(processed_path)
 
 	if file_name == '':
 		# taxi data files to preprocess
