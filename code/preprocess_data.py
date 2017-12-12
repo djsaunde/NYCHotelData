@@ -9,6 +9,7 @@ import csv
 import imp
 import sys
 import time
+import gzip
 import geopy
 import gmplot
 import timeit
@@ -149,8 +150,9 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 									np.array(trip_distance), np.array(fare_amount)
 
 	# get file containing hotel names and addresses
-	hotel_file = pd.read_excel('../data/Final hotel Identification (with coordinates).xlsx', \
-													sheetname='final match with coordinates')
+	hotel_file = pd.read_excel(os.path.join('..', 'data', \
+		'Final hotel Identification (with coordinates).xlsx'), \
+						sheetname='final match with coordinates')
 
 	# split the file into lists of names and addresses
 	hotel_IDs = hotel_file['Share ID']
@@ -206,14 +208,13 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 		to_write = pd.concat([ID_frame, name_frame, destinations], axis=1)
 		
 		# write sheet to CSV file
+		filename = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
 		if idx == 0:
-			to_write.to_csv(os.path.join(processed_path, 'NPD_destinations_' \
-											+ taxi_file.split('.')[0] + '.csv'))
+			to_write.to_csv(filename, compression='gzip')
 			
 		else:
-			with open(os.path.join(processed_path, 'NPD_destinations_' + \
-								taxi_file.split('.')[0] + '.csv'), 'a') as f:
-				to_write.to_csv(f, header=False)
+			with gzip.open(filename, 'a') as f:
+				to_write.to_csv(f, header=False, compression='gzip')
 		
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
@@ -263,14 +264,13 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 		to_write = pd.concat([ID_frame, name_frame, starting_points], axis=1)
 		
 		# write sheet to CSV file
+		filename = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
 		if idx == 0:
-			to_write.to_csv(os.path.join(processed_path, 'NPD_starting_points_' \
-											+ taxi_file.split('.')[0] + '.csv'))
+			to_write.to_csv(filename, compression='gzip')
 			
 		else:
-			with open(os.path.join(processed_path, 'NPD_starting_points_' + \
-								taxi_file.split('.')[0] + '.csv'), 'a') as f:
-				to_write.to_csv(f, header=False)
+			with gzip.open(filename, 'a') as f:
+				to_write.to_csv(f, header=False, compression='gzip')
 			
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)

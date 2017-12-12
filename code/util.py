@@ -462,7 +462,7 @@ def memory_usage_psutil():
 def worker(args):
 	hotel_coords, trip_coords = args
 
-	dists = [ vincenty(hotel_coords, coord, miles=True) for coord in trip_coords ]
+	dists = [ vincenty(hotel_coords, coord, miles=True) * 5280 for coord in trip_coords ]
 	return [ dist if dist is not None else np.inf for dist in dists ]
 
 
