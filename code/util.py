@@ -462,8 +462,8 @@ def memory_usage_psutil():
 def worker(args):
 	hotel_coords, trip_coords = args
 
-	dists = [ vincenty(hotel_coords, coord, miles=True) * 5280 for coord in trip_coords ]
-	return [ dist if dist is not None else np.inf for dist in dists ]
+	dists = [ vincenty(hotel_coords, coord, miles=True) for coord in trip_coords ]
+	return [ dist * 5280 if dist is not None else np.inf for dist in dists ]
 
 
 def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
