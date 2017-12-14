@@ -27,7 +27,7 @@ for idx, fname in enumerate(files):
 	start = timeit.default_timer()
 	
 	if 'destinations' in fname:
-		destinations = pd.read_csv(os.path.join(data_path, fname))
+		destinations = pd.read_csv(os.path.join(data_path, fname), compression='gzip')
 	
 		if first_destinations:
 			destinations.to_csv(os.path.join(data_path, 'destinations.csv'), mode='w', header=True, index=False)
@@ -35,7 +35,7 @@ for idx, fname in enumerate(files):
 		else:
 			destinations.to_csv(os.path.join(data_path, 'destinations.csv'), mode='a', header=False, index=False)
 	elif 'starting_points' in fname:
-		starting_points = pd.read_csv(os.path.join(data_path, fname))
+		starting_points = pd.read_csv(os.path.join(data_path, fname), compression='gzip')
 		
 		if first_starting_points:
 			starting_points.to_csv(os.path.join(data_path, 'starting_points.csv'), mode='w', header=True, index=False)

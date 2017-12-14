@@ -1,5 +1,5 @@
 distance=${1:-300}
-n_jobs=${2:-16}
+n_jobs=${2:-8}
 
 mkdir "../data/all_preprocessed_$distance"
 
