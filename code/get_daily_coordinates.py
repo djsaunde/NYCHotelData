@@ -23,6 +23,8 @@ def get_daily(taxi_data, start_date, end_date):
 				str(distance), str(start_date), str(end_date) ]) + '.xlsx'), {'constant_memory': True})
 	worksheet = workbook.add_worksheet()
 
+	columns = ['Hotel Name', 'Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time', 'Drop-off Time']
+
 	# set up main loop: loop through each day from start_date to end_date
 	for day_idx, date in enumerate(daterange(start_date, end_date)):
 
@@ -30,7 +32,7 @@ def get_daily(taxi_data, start_date, end_date):
 
 		# get coordinates of new distance and time-constraint satisfying taxicab trips with nearby pick-ups
 		for idx, key in enumerate(taxi_data):
-			data = taxi_data[key]
+			data = taxi_data[key][columns]
 
 			# Get the pick-up (drop-off) coordinates of the trip which ended (began) near this each hotel
 			current_coords = get_nearby_window(data, distance, datetime.combine(date, \

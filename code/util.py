@@ -59,7 +59,6 @@ def load_data(to_plot, data_files, data_path, chunksize=5000000):
 		print '... Loading', dname, 'data from disk.'
 		taxi_data[dname] = dd.read_csv(os.path.join(data_path, data_file), parse_dates=['Pick-up Time', \
 											'Drop-off Time'], dtype={'Fare Amount' : 'object'}).dropna()
-		taxi_data[dname]['Fare Amount'] = taxi_data[dname]['Fare Amount'].astype(np.float64)
 
 	print '... It took', timeit.default_timer() - start_time, 'seconds to load the taxicab trip data\n'
 
