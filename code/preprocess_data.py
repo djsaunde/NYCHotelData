@@ -28,6 +28,8 @@ from IPython.display import Image, display
 from util import *
 
 
+print '\n...Running preprocess_data.py'
+
 def preprocess(taxi_file, distance, n_jobs):
 	'''
     Main logic for parsing taxi datafiles.
@@ -81,7 +83,8 @@ def preprocess(taxi_file, distance, n_jobs):
 					or '2009-06' in taxi_file or '2009-04' in taxi_file or '2009-09' in taxi_file or '2009-03' in taxi_file \
 					or '2009-07' in taxi_file or '2009-05' in taxi_file or '2009-02' in taxi_file or '2009-12' in taxi_file:
 				# let's load a single .csv file of taxicab records (say, January 2016)
-				taxi_data = pd.read_csv(fpath, usecols=['Start_Lat', 'Start_Lon', 'End_Lat', 'End_Lon', 'Trip_Pickup_DateTime', 'Trip_Dropoff_DateTime', 'Passenger_Count', 'Trip_Distance', 'Fare_Amt'])
+				taxi_data = pd.read_csv(fpath, usecols=['Start_Lat', 'Start_Lon', 'End_Lat', 'End_Lon', \
+					'Trip_Pickup_DateTime', 'Trip_Dropoff_DateTime', 'Passenger_Count', 'Trip_Distance', 'Fare_Amt'])
 				
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['Start_Lat']), np.array(taxi_data['Start_Lon'])
@@ -98,7 +101,8 @@ def preprocess(taxi_file, distance, n_jobs):
 					or '2015-02' in taxi_file or '2015-09' in taxi_file or '2015-03' in taxi_file or '2015-10' in taxi_file \
 					or '2016-02' in taxi_file or '2016-04' in taxi_file or '2015-07' in taxi_file:
 				# let's load a single .csv file of taxicab records (say, January 2016)	
-				taxi_data = pd.read_csv(fpath, usecols=['pickup_latitude', 'pickup_longitude', 'dropoff_latitude', 'dropoff_longitude', 'tpep_pickup_datetime', 'tpep_dropoff_datetime', 'passenger_count', 'trip_distance', 'fare_amount'])
+				taxi_data = pd.read_csv(fpath, usecols=['pickup_latitude', 'pickup_longitude', 'dropoff_latitude', \
+					'dropoff_longitude', 'tpep_pickup_datetime', 'tpep_dropoff_datetime', 'passenger_count', 'trip_distance', 'fare_amount'])
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['pickup_latitude']), np.array(taxi_data['pickup_longitude'])
 				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude'])
@@ -110,7 +114,8 @@ def preprocess(taxi_file, distance, n_jobs):
 
 			else:
 				# let's load a single .csv file of taxicab records (say, January 2016)
-				taxi_data = pd.read_csv(fpath, usecols=['pickup_latitude', 'pickup_longitude', 'dropoff_latitude', 'dropoff_longitude', 'pickup_datetime', 'dropoff_datetime', 'passenger_count', 'trip_distance', 'fare_amount'])
+				taxi_data = pd.read_csv(fpath, usecols=['pickup_latitude', 'pickup_longitude', 'dropoff_latitude', \
+					'dropoff_longitude', 'pickup_datetime', 'dropoff_datetime', 'passenger_count', 'trip_distance', 'fare_amount'])
 				
 				# get relevant rows of the data and store them as numpy arrays
 				pickup_lats, pickup_longs = np.array(taxi_data['pickup_latitude']), np.array(taxi_data['pickup_longitude'])
@@ -175,10 +180,11 @@ def preprocess(taxi_file, distance, n_jobs):
 		
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
 		satisfying_indices = get_satisfying_indices(pickup_coords.T, hotel_coord, distance, n_jobs)
+
 		destinations = np.array([item[satisfying_indices] for item in \
 					pickup_coords[:, 0], pickup_coords[:, 1], pickup_times, \
 				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
-	
+
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + destinations.shape[0] + 1) ]
 		try:
@@ -187,7 +193,7 @@ def preprocess(taxi_file, distance, n_jobs):
 				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
 				'Trip Distance', 'Fare Amount'])
 		except ValueError:
-			continue			
+			destinations = pd.DataFrame(destinations)
 
 		# add column for hotel name
 		name_frame = pd.DataFrame([hotel_names[idx]] * destinations.shape[0], 
@@ -201,12 +207,11 @@ def preprocess(taxi_file, distance, n_jobs):
 		
 		# write sheet to CSV file
 		if idx == 0:
-			to_write.to_csv('../data/all_preprocessed_' + str(distance) + \
-					'/NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
+			to_write.to_csv(os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv'))
 			
 		elif idx != 0:
-			with open('../data/all_preprocessed_' + str(distance) + '/NPD_destinations_' + \
-													taxi_file.split('.')[0] + '.csv', 'a') as f:
+			with open(os.path.join(processed_path, 'NPD_destinations_' + \
+								taxi_file.split('.')[0] + '.csv'), 'a') as f:
 				to_write.to_csv(f, header=False)
 		
 		# keep track of where we left off in the previous workbook
@@ -256,11 +261,12 @@ def preprocess(taxi_file, distance, n_jobs):
 		
 		# write sheet to Excel file
 		if idx == 0:
-			to_write.to_csv('../data/all_preprocessed_' + str(distance) + \
-					'/NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
+			to_write.to_csv(os.path.join(processed_path, 'NPD_starting_points_' \
+											+ taxi_file.split('.')[0] + '.csv'))
 
-			with open('../data/all_preprocessed_' + str(distance) + '/NPD_starting_points_' + \
-													taxi_file.split('.')[0] + '.csv', 'a') as f:
+		elif idx != 0:
+			with open(os.path.join(processed_path, 'NPD_starting_points_' + \
+								taxi_file.split('.')[0] + '.csv'), 'a') as f:
 				to_write.to_csv(f, header=False)
 			
 		# keep track of where we left off in the previous workbook
@@ -288,6 +294,10 @@ if __name__ == '__main__':
 	file_idx = args.file_idx
 	file_name = args.file_name.replace(',', '')
 	n_jobs = args.n_jobs
+
+	processed_path = os.path.join('..', 'data', 'all_preprocessed_' + str(distance))
+	if not os.path.isdir(processed_path):
+		os.makedirs(processed_path)
 
 	if file_name == '':
 		# taxi data files to preprocess

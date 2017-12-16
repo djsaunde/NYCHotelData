@@ -1,22 +1,20 @@
 from __future__ import division
 
-from vincenty import vincenty
 from datetime import timedelta	
 from contextlib import closing
 from scipy.stats import entropy
 from multiprocessing import Pool
 from collections import defaultdict
+from vincenty import vincenty
 from joblib import Parallel, delayed
 from mpl_toolkits.basemap import Basemap
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
 
 import sys
-import dask
 import numpy as np
 import pandas as pd
 import cPickle as p
-import dask.dataframe as dd
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.colors as mcolors
@@ -491,7 +489,7 @@ def memory_usage_psutil():
 def worker(args):
 	hotel_coords, trip_coords = args
 
-	return [ vincenty(hotel_coords, coord) * 5280 for coord in trip_coords ]
+	return [ vincenty(hotel_coords, coord, miles=True) * 5280 for coord in trip_coords ]
 
 
 def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
@@ -504,9 +502,15 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 		# Calculate distances between trip coordinates and trip coordinates.
 		dists = pool.map(worker, zip([hotel_coords] * len(trip_coords), trip_coords))
 
+	dists = np.array(dists).ravel()
+	print(dists[0])
+
 	# Get the indices of the satisfying trips.
 	satisfying_indices = np.where(dists <= distance)
-		
+	
+	print satisfying_indices
+	print(min(dists))
+
 	# End the timer and report length of computation.
 	end_time = timeit.default_timer() - start_time
 	print '( time elapsed:', end_time, ')', '\n'
