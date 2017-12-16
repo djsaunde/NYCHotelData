@@ -21,22 +21,6 @@ import matplotlib.colors as mcolors
 import math, itertools, timeit, multiprocessing, os, multiprocess
 
 
-class BatchCompletionCallBack(object):
-	completed = defaultdict(int)
-
-	def __init__(self, time, index, parallel):
-		self.index = index
-		self.parallel = parallel
-
-	def __call__(self, index):
-		BatchCompletionCallBack.completed[self.parallel] += 1
-		print("done with {}".format(BatchCompletionCallBack.completed[self.parallel]))
-		if self.parallel._original_iterator is not None:
-			self.parallel.dispatch_next()
-
-import joblib.parallel
-joblib.parallel.BatchCompletionCallBack = BatchCompletionCallBack
-
 # print out entire numpy arrays
 np.set_printoptions(threshold=np.nan)
 
@@ -73,7 +57,6 @@ def load_data(to_plot, data_files, data_path, chunksize=5000000):
 		print '... Loading', dname, 'data from disk.'
 		taxi_data[dname] = dd.read_csv(os.path.join(data_path, data_file), parse_dates=['Pick-up Time', \
 											'Drop-off Time'], dtype={'Fare Amount' : 'object'}).dropna()
-		taxi_data[dname]['Fare Amount'] = taxi_data[dname]['Fare Amount'].astype(np.float64)
 
 	print '... It took', timeit.default_timer() - start_time, 'seconds to load the taxicab trip data\n'
 
@@ -386,16 +369,6 @@ def other_vars_same(prop_row, manhattan_row, capacity):
 	if not (row1_size == 1 and row2_size < 75 or row1_size == 2 and row2_size >= 75 and row2_size <= 149 or row1_size == 3 and row2_size >= 150 and row2_size <= 299 or row1_size == 4 and row2_size >= 300 and row2_size <= 500 or row1_size == 5 and row2_size > 500):
 		return False
 	
-	# checking that the rows match on year opened / date open
-	# if not math.isnan(prop_row['OpenDate']) and manhattan_row['Open Date'] != '    -  -  ':
-	#    row1_year, row2_year = int(prop_row['OpenDate']), int(manhattan_row['Open Date'][0:4])
-	#    if not row1_year == row2_year:
-	#        return False
-	
-	# checking that the capacity of the masked hotel matches the capacity of the hotel from the given row
-	# if not int(capacity) == manhattan_row['Rooms']:
-	#    return False
-	
 	# the rows match on all constraints; therefore, return True
 	return True
 
@@ -427,7 +400,6 @@ def get_hotel_coords(attr_coords, distances):
 	output:
 		The coordinates (latitude, longitude) of the hotel in question.
 	'''
-	
 	# try each permutation of the distances
 	for perm in itertools.permutations(distances):
 		# calculate intersection point
@@ -448,7 +420,6 @@ def get_radius(cx, cy, px, py):
 	output:
 		The radius of the circle.
 	'''
-	
 	dx = px - cx
 	dy = py - cy
 	return math.sqrt(dx ** 2 + dy ** 2)
@@ -465,7 +436,6 @@ def coords_to_distance_miles(start_coords, end_coords):
 	output:
 		The distance between the two points in miles.
 	'''
-	
 	# variables for computing coordinates -> miles
 	R = 6371e3
 	phi_1, phi_2 = math.radians(start_coords[0]), math.radians(end_coords[0])
@@ -489,7 +459,8 @@ def memory_usage_psutil():
 def worker(args):
 	hotel_coords, trip_coords = args
 
-	return [ vincenty(hotel_coords, coord, miles=True) * 5280 for coord in trip_coords ]
+	dists = [ vincenty(hotel_coords, coord, miles=True) for coord in trip_coords ]
+	return [ dist * 5280 if dist is not None else np.inf for dist in dists ]
 
 
 def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
@@ -502,21 +473,18 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 		# Calculate distances between trip coordinates and trip coordinates.
 		dists = pool.map(worker, zip([hotel_coords] * len(trip_coords), trip_coords))
 
-	dists = np.array(dists).ravel()
-	print(dists[0])
+	# Cast distances to numpy array after flattening result of parallel computation.
+	dists = np.array([ item for sublist in dists for item in sublist ]).ravel()
 
 	# Get the indices of the satisfying trips.
 	satisfying_indices = np.where(dists <= distance)
-	
-	print satisfying_indices
-	print(min(dists))
 
 	# End the timer and report length of computation.
 	end_time = timeit.default_timer() - start_time
 	print '( time elapsed:', end_time, ')', '\n'
 
 	# Return the satisfying indices to perform downstream processing of these trips.
-	return satisfying_indices
+	return satisfying_indices, dists[satisfying_indices]
 
 
 def log_progress(sequence, every=None, size=None):
@@ -584,7 +552,6 @@ def plot_destinations(destinations, append_to_title):
 	output:
 		Matplotlib plot of datapoints in the range of the latitude, longitude pairs.
 	'''
-
 	plt.plot(destinations[0], destinations[1], 'o')
 	plt.title('Destinations From ' + append_to_title)
 	plt.xlabel('Longitude')

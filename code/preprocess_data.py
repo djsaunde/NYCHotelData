@@ -9,6 +9,7 @@ import csv
 import imp
 import sys
 import time
+import gzip
 import geopy
 import gmplot
 import timeit
@@ -30,7 +31,7 @@ from util import *
 
 print '\n...Running preprocess_data.py'
 
-def preprocess(taxi_file, distance, n_jobs):
+def preprocess(taxi_file, distance, n_jobs, n_hotels):
 	'''
     Main logic for parsing taxi datafiles.
 	'''
@@ -154,8 +155,9 @@ def preprocess(taxi_file, distance, n_jobs):
 									np.array(trip_distance), np.array(fare_amount)
 
 	# get file containing hotel names and addresses
-	hotel_file = pd.read_excel('../data/Final hotel Identification (with coordinates).xlsx', \
-													sheetname='final match with coordinates')
+	hotel_file = pd.read_excel(os.path.join('..', 'data', \
+		'Final hotel Identification (with coordinates).xlsx'), \
+						sheetname='final match with coordinates')
 
 	# split the file into lists of names and addresses
 	hotel_IDs = hotel_file['Share ID']
@@ -163,6 +165,9 @@ def preprocess(taxi_file, distance, n_jobs):
 	hotel_addresses = hotel_file['Address']
 	hotel_coords = [ (latitude, longitude) for latitude, longitude in \
 					zip(hotel_file['Latitude'], hotel_file['Longitude']) ]
+
+	if n_hotels == -1:
+		n_hotels = len(hotel_coords)
 
 	print '\n...finding distance criterion-satisfying taxicab pick-ups'
 
@@ -173,27 +178,29 @@ def preprocess(taxi_file, distance, n_jobs):
 	prev_len = 0
 
 	# loop through each hotel and find all satisfying taxicab rides
-	for idx, hotel_coord in enumerate(hotel_coords):
+	for idx, hotel_coord in enumerate(hotel_coords[:n_hotels]):
 		
 		# print progress to console
 		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
 		
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
-		satisfying_indices = get_satisfying_indices(pickup_coords.T, hotel_coord, distance, n_jobs)
+		satisfying_indices, dists = get_satisfying_indices(pickup_coords.T, \
+												hotel_coord, distance, n_jobs)
 
-		destinations = np.array([item[satisfying_indices] for item in \
-					pickup_coords[:, 0], pickup_coords[:, 1], pickup_times, \
+		destinations = np.array([dists] + [item[satisfying_indices] for item in \
+					pickup_coords[0, :], pickup_coords[1, :], pickup_times, \
 				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
 
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + destinations.shape[0] + 1) ]
+
 		try:
 			destinations = pd.DataFrame(destinations, index=index, 
 				columns=['Distance From Hotel', 'Latitude', 'Longitude', 
 				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
 				'Trip Distance', 'Fare Amount'])
 		except ValueError:
-			destinations = pd.DataFrame(destinations)
+			continue
 
 		# add column for hotel name
 		name_frame = pd.DataFrame([hotel_names[idx]] * destinations.shape[0], 
@@ -206,13 +213,13 @@ def preprocess(taxi_file, distance, n_jobs):
 		to_write = pd.concat([ID_frame, name_frame, destinations], axis=1)
 		
 		# write sheet to CSV file
+		filename = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
 		if idx == 0:
-			to_write.to_csv(os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv'))
+			to_write.to_csv(filename, compression='gzip')
 			
-		elif idx != 0:
-			with open(os.path.join(processed_path, 'NPD_destinations_' + \
-								taxi_file.split('.')[0] + '.csv'), 'a') as f:
-				to_write.to_csv(f, header=False)
+		else:
+			with gzip.open(filename, 'a') as f:
+				to_write.to_csv(f, header=False, compression='gzip')
 		
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
@@ -228,17 +235,19 @@ def preprocess(taxi_file, distance, n_jobs):
 	prev_len = 0
 
 	# loop through each hotel and find all satisfying taxicab rides
-	for idx, hotel_coord in enumerate(hotel_coords):
+	for idx, hotel_coord in enumerate(hotel_coords[:n_hotels]):
 		
 		# print progress to console
 		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
 		
 		# call the 'get_destinations' function from the 'util.py' script on all trips stored
-		satisfying_indices = get_satisfying_indices(dropoff_coords.T, hotel_coord, distance, n_jobs)
-		starting_points = np.array([item[satisfying_indices] for item in \
-					pickup_coords[:, 0], pickup_coords[:, 1], pickup_times, \
+		satisfying_indices, dists = get_satisfying_indices(dropoff_coords.T, \
+												hotel_coord, distance, n_jobs)
+
+		starting_points = np.array([dists] + [item[satisfying_indices] for item in \
+					pickup_coords[0, :], pickup_coords[1, :], pickup_times, \
 				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
-		
+
 		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
 		index = [ i for i in range(prev_len + 1, prev_len + starting_points.shape[0] + 1) ]
 		try:
@@ -247,7 +256,7 @@ def preprocess(taxi_file, distance, n_jobs):
 				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
 				'Trip Distance', 'Fare Amount'])
 		except ValueError:
-			continue			
+			continue		
 
 		# add column for hotel name
 		name_frame = pd.DataFrame([hotel_names[idx]] * starting_points.shape[0], 
@@ -259,15 +268,14 @@ def preprocess(taxi_file, distance, n_jobs):
 							index=starting_points.index, columns=['Share ID'])
 		to_write = pd.concat([ID_frame, name_frame, starting_points], axis=1)
 		
-		# write sheet to Excel file
+		# write sheet to CSV file
+		filename = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
 		if idx == 0:
-			to_write.to_csv(os.path.join(processed_path, 'NPD_starting_points_' \
-											+ taxi_file.split('.')[0] + '.csv'))
-
-		elif idx != 0:
-			with open(os.path.join(processed_path, 'NPD_starting_points_' + \
-								taxi_file.split('.')[0] + '.csv'), 'a') as f:
-				to_write.to_csv(f, header=False)
+			to_write.to_csv(filename, compression='gzip')
+			
+		else:
+			with gzip.open(filename, 'a') as f:
+				to_write.to_csv(f, header=False, compression='gzip')
 			
 		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
@@ -287,6 +295,7 @@ if __name__ == '__main__':
 							help='Name of taxi file to preprocess.')
 	parser.add_argument('--n_jobs', type=int, default=8, \
 		help='Number of CPU cores to use for parallel computation.')
+	parser.add_argument('--n_hotels', type=int, default=-1)
 	args = parser.parse_args()
 
 	# Parse command line arguments.
@@ -294,6 +303,11 @@ if __name__ == '__main__':
 	file_idx = args.file_idx
 	file_name = args.file_name.replace(',', '')
 	n_jobs = args.n_jobs
+	n_hotels = args.n_hotels
+
+	processed_path = os.path.join('..', 'data', 'all_preprocessed_' + str(distance))
+	if not os.path.isdir(processed_path):
+		os.makedirs(processed_path)
 
 	processed_path = os.path.join('..', 'data', 'all_preprocessed_' + str(distance))
 	if not os.path.isdir(processed_path):
@@ -305,7 +319,7 @@ if __name__ == '__main__':
 						'taxi_data', '')) if 'yellow' in filename or 'green' in filename ]
 		
 		# preprocess our particular taxi data file
-		preprocess(taxi_files[file_idx], distance, n_jobs)
+		preprocess(taxi_files[file_idx], distance, n_jobs, n_hotels)
 	else:
 		# preprocess passed in taxi data file
-		preprocess(file_name, distance, n_jobs)
+		preprocess(file_name, distance, n_jobs, n_hotels)
