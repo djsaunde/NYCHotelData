@@ -8,9 +8,9 @@
 #SBATCH --output=/mnt/nfs/work1/rkozma/djsaunde/NYCHotelData/code/job_reports/%j.out
 
 distance=${1:-100}
-date=${2:-'2013 1 1'}
+day=${2:-'2013 1 1'}
 coord_type=${3:-'pickups'}
 
-python get_daily_coordinates.py --distance $distance --date $date --coord_type $coord_type
+python get_daily_coordinates.py --distance $distance --day $day --coord_type $coord_type
 
 exit
