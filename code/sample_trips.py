@@ -6,6 +6,7 @@ import multiprocess
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from tqdm import tqdm
 from geopy.distance import vincenty
 from geopy.geocoders import GoogleV3
 from joblib import Parallel, delayed
@@ -13,7 +14,7 @@ from datetime import date, timedelta, datetime
 
 input_path = os.path.join('..', 'data', 'daily_distributions')
 output_path = os.path.join('..', 'data', 'daily_sampled_pairwise_distances')
-hotel_list_path = os.path.join('..', 'data', 'Pilot Set of Hotels.xlsx')
+hotel_list_path = os.path.join('..', 'data', 'Final hotel Identification (with coordinates).xlsx')
 
 api_key='AIzaSyAWV7aBLcawx2WyMO7fM4oOL9ayZ_qGz-Y'
 
@@ -33,13 +34,8 @@ def sample_data(distro_mapping, n_samples=100):
 
 
 def get_hotel_coordinates():
-	hotel_sheet = pd.read_excel(hotel_list_path, sheetname='set 2')
-	hotel_names, hotel_addresses = list(hotel_sheet['Name']), list(hotel_sheet['Address'])
-
-	geolocator = GoogleV3(api_key, timeout=10)
-
-	hotel_coords = multiprocess.Pool(8).map_async(geolocator.geocode, [ hotel_address for hotel_address in hotel_addresses ])
-	hotel_coords = { hotel_name : (location.latitude, location.longitude) for hotel_name, location in zip(hotel_names, hotel_coords.get()) }
+	df = pd.read_excel(hotel_list_path, sheetname='final match with coordinates')
+	hotel_coords = { df['Name'][idx] : (df['Latitude'][idx], df['Longitude'][idx]) for idx in xrange(len(df)) }
 
 	return hotel_coords
 
@@ -47,7 +43,7 @@ def get_hotel_coordinates():
 def get_pairwise_differences(sampled_taxi_data, hotel_coordinates):
 	pairwise_differences = pd.DataFrame()
 
-	for day, taxi_coords in sorted(sampled_taxi_data.items()):
+	for day, taxi_coords in tqdm(sorted(sampled_taxi_data.items())):
 		for hotel, hotel_coord in sorted(hotel_coordinates.items()):
 			pairwise_difference = []
 			for taxi_coord in taxi_coords:
@@ -129,9 +125,9 @@ if __name__ == '__main__':
 
 	pairwise_differences.to_excel(writer, float_format='%02d')
 
-	workbook  = writer.book
+	workbook = writer.book
 	worksheet = writer.sheets['Sheet1']
 	worksheet.set_column('A:A', 20)
-	worksheet.set_column('B:B', 45)
+	worksheet.set_column('B:B', 65)
 
 	writer.save()
