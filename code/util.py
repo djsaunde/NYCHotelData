@@ -1,32 +1,25 @@
 from __future__ import division
 
+import os
+import math
+import timeit
+import itertools
+import numpy as np
+import pandas as pd
+import dask.dataframe as dd
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
 from datetime import timedelta	
 from contextlib import closing
-from scipy.stats import entropy
 from multiprocessing import Pool
-from collections import defaultdict
 from vincenty import vincenty
 from joblib import Parallel, delayed
 from mpl_toolkits.basemap import Basemap
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.metrics import silhouette_score
 
-import sys
-import numpy as np
-import pandas as pd
-import cPickle as p
-import dask.dataframe as dd
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import matplotlib.colors as mcolors
-import math, itertools, timeit, multiprocessing, os, multiprocess
-
-
-# print out entire numpy arrays
 np.set_printoptions(threshold=np.nan)
-
-# tolerance level for intersection point
-EPS = 0.000001
 
 
 def daterange(start_date, end_date):
@@ -34,7 +27,7 @@ def daterange(start_date, end_date):
 		yield start_date + timedelta(n)
 
 
-def load_data(to_plot, data_files, data_path, chunksize=5000000):
+def load_data(to_plot, data_files, data_path):
 	'''
 	Load the pre-processed taxi data file(s) needed for plotting empirical pick-up / drop-off point distributions as heatmaps.
 
@@ -260,7 +253,7 @@ def get_nearby_window(trips, distance, start_datetime, end_datetime):
 	return trips
 
 
-def get_intersection_point(centers, radii):
+def get_intersection_point(centers, radii, EPS=1e-6):
 	'''
 	Given four centers and radii, each specifying a circle, calculate their intersection point, if it exists. It should be
 	unique.
@@ -336,6 +329,7 @@ def get_intersection_point(centers, radii):
 		return intersection2_x, intersection2_y
 	return None
 
+
 def other_vars_same(prop_row, manhattan_row, capacity):
 	'''
 	Returns true if all identifying columns are the same. This is to further ensure that we've found the best
@@ -352,22 +346,32 @@ def other_vars_same(prop_row, manhattan_row, capacity):
 	
 	# checking that the rows match on the Operation column
 	row1_op, row2_op = prop_row['Operation'], manhattan_row['Operation']
-	if not (row1_op == 1 and row2_op == 'Chain Management' or row1_op == 2 and row2_op == 'Franchise' or row1_op == 3 and row2_op == 'Independent'):
+	if not (row1_op == 1 and row2_op == 'Chain Management' or row1_op == 2 and \
+				row2_op == 'Franchise' or row1_op == 3 and row2_op == 'Independent'):
 		return False
 
 	# checking that the rows match on the Scale column
 	row1_scale, row2_scale = prop_row['Scale'], manhattan_row['Scale']
-	if not (row1_scale == 1 and row2_scale == 'Luxury Chains' or row1_scale == 2 and row2_scale == 'Upper Upscale Chains' or row1_scale == 3 and row2_scale == 'Upscale Chains' or row1_scale == 4 and row2_scale == 'Upper Midscale Chains' or row1_scale == 5 and row2_scale == 'Midscale Chains' or row1_scale == 6 and row2_scale == 'Economy Chains' or row1_scale == 7 and row2_scale == 'Independents'):
+	if not (row1_scale == 1 and row2_scale == 'Luxury Chains' or row1_scale == 2 and \
+			row2_scale == 'Upper Upscale Chains' or row1_scale == 3 and row2_scale == 'Upscale Chains' or \
+			row1_scale == 4 and row2_scale == 'Upper Midscale Chains' or row1_scale == 5 and \
+			row2_scale == 'Midscale Chains' or row1_scale == 6 and row2_scale == 'Economy Chains' or \
+			row1_scale == 7 and row2_scale == 'Independents'):
 		return False
 	
 	# checking that the rows match on the Class column
 	row1_class, row2_class = prop_row['Class'], manhattan_row['Class']
-	if not (row1_class == 1 and row2_class == 'Luxury Class' or row1_class == 2 and row2_class == 'Upper Upscale Class' or row1_class == 3 and row2_class == 'Upscale Class' or row1_class == 4 and row2_class == 'Upper Midscale Class' or row1_class == 5 and row2_class == 'Midscale Class' or row1_class == 6 and row2_class == 'Economy Class'):
+	if not (row1_class == 1 and row2_class == 'Luxury Class' or row1_class == 2 and \
+			row2_class == 'Upper Upscale Class' or row1_class == 3 and row2_class == 'Upscale Class' or \
+			row1_class == 4 and row2_class == 'Upper Midscale Class' or row1_class == 5 and \
+			row2_class == 'Midscale Class' or row1_class == 6 and row2_class == 'Economy Class'):
 		return False
 	
 	# checking that the rows match on number of rooms / size code columns
 	row1_size, row2_size = prop_row['SizeCode'], manhattan_row['Rooms']
-	if not (row1_size == 1 and row2_size < 75 or row1_size == 2 and row2_size >= 75 and row2_size <= 149 or row1_size == 3 and row2_size >= 150 and row2_size <= 299 or row1_size == 4 and row2_size >= 300 and row2_size <= 500 or row1_size == 5 and row2_size > 500):
+	if not (row1_size == 1 and row2_size < 75 or row1_size == 2 and row2_size >= 75 and row2_size <= 149 or \
+			row1_size == 3 and row2_size >= 150 and row2_size <= 299 or row1_size == 4 and row2_size >= 300 and \
+			row2_size <= 500 or row1_size == 5 and row2_size > 500):
 		return False
 	
 	# the rows match on all constraints; therefore, return True
@@ -449,15 +453,7 @@ def coords_to_distance_miles(start_coords, end_coords):
 	return R * c
 
 
-def memory_usage_psutil():
-    # return the memory usage in MB
-    import psutil
-    process = psutil.Process(os.getpid())
-    mem = process.memory_info()[0] / float(2 ** 20)
-    return mem
-
-
-def worker(args):
+def get_distances(args):
 	hotel_coords, trip_coords = args
 
 	dists = [ vincenty(hotel_coords, coord, miles=True) for coord in trip_coords ]
@@ -472,7 +468,7 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 	trip_coords = [trip_coords[idx : idx + n_jobs] for idx in xrange(0, len(trip_coords), n_jobs)]
 	with closing(Pool(n_jobs)) as pool:
 		# Calculate distances between trip coordinates and trip coordinates.
-		dists = pool.map(worker, zip([hotel_coords] * len(trip_coords), trip_coords))
+		dists = pool.map(get_distances, zip([hotel_coords] * len(trip_coords), trip_coords))
 
 	# Cast distances to numpy array after flattening result of parallel computation.
 	dists = np.array([ item for sublist in dists for item in sublist ]).ravel()
@@ -486,59 +482,6 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 
 	# Return the satisfying indices to perform downstream processing of these trips.
 	return satisfying_indices, dists[satisfying_indices]
-
-
-def log_progress(sequence, every=None, size=None):
-	'''
-	This method allows me to visualize progress in loops, inline in Jupyter notebooks.
-	'''
-	from ipywidgets import IntProgress, HTML, VBox
-	from IPython.display import display
-
-	is_iterator = False
-	if size is None:
-		try:
-			size = len(sequence)
-		except TypeError:
-			is_iterator = True
-	if size is not None:
-		if every is None:
-			if size <= 200:
-				every = 1
-			else:
-				every = int(size / 200)     # every 0.5%
-	else:
-		assert every is not None, 'sequence is iterator, set every'
-
-	if is_iterator:
-		progress = IntProgress(min=0, max=1, value=1)
-		progress.bar_style = 'info'
-	else:
-		progress = IntProgress(min=0, max=size, value=0)
-	label = HTML()
-	box = VBox(children=[label, progress])
-	display(box)
-
-	index = 0
-	try:
-		for index, record in enumerate(sequence, 1):
-			if index == 1 or index % every == 0:
-				if is_iterator:
-					label.value = '{index} / ?'.format(index=index)
-				else:
-					progress.value = index
-					label.value = u'{index} / {size}'.format(
-						index=index,
-						size=size
-					)
-			yield record
-	except:
-		progress.bar_style = 'danger'
-		raise
-	else:
-		progress.bar_style = 'success'
-		progress.value = index
-		label.value = str(index or '?')
 
 
 def plot_destinations(destinations, append_to_title):
