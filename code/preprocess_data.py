@@ -1,8 +1,4 @@
-'''
-Data ingestion and preprocessing script.
-
-@author: Dan Saunders (djsaunde.github.io)
-'''
+from __future__ import print_function
 
 import os
 import csv
@@ -29,17 +25,16 @@ from IPython.display import Image, display
 from util import *
 
 
-print '\n...Running preprocess_data.py'
+print('\n...Running preprocess_data.py')
+
 
 def preprocess(taxi_file, distance, n_jobs, n_hotels):
 	'''
     Main logic for parsing taxi datafiles.
 	'''
-	print '\n'
-
 	start_time = timeit.default_timer()
 		
-	print '...loading taxicab data file:', taxi_file
+	print('\n...loading taxicab data file:', taxi_file)
 	
 	year = int(taxi_file.split('_')[2].split('-')[0])
 	
@@ -47,31 +42,34 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 
 	try:
 		if 'green' in taxi_file:
-			if taxi_file in ['green_tripdata_2016-11.csv', 'green_tripdata_2016-12.csv', 'green_tripdata_2016-07.csv', 'green_tripdata_2016-08.csv', 'green_tripdata_2016-09.csv']:
-				return
-			else:
-				# let's load a single .csv file of taxicab records (say, January 2016)
-				taxi_data = pd.read_csv(fpath, usecols=[1,2,5,6,7,8,9,10,11], index_col=False)
-	
-				# get relevant rows of the data and store them as numpy arrays
-				pickup_lats, pickup_longs = np.array(taxi_data['Pickup_latitude']), np.array(taxi_data['Pickup_longitude'])
-				dropoff_lats, dropoff_longs = np.array(taxi_data['Dropoff_latitude']), np.array(taxi_data['Dropoff_longitude'])
-				pickup_time = np.array(taxi_data['lpep_pickup_datetime'])
-				dropoff_time = np.array(taxi_data['Lpep_dropoff_datetime'])
-				passenger_count = np.array(taxi_data['Passenger_count'])
-				trip_distance = np.array(taxi_data['Trip_distance'])
-				fare_amount = np.array(taxi_data['Fare_amount'])
+			# Check for months in which (latitude, longitude) coordinates weren't recorded.
+			for year_month in ['2016-07', '2016-08', '2016-09', '2016-10', '2016-11', '2016-12']:
+				if year_month in taxi_file:
+					return
 
+			# Load a single .csv file of taxicab records.
+			taxi_data = pd.read_csv(fpath, usecols=[1,2,5,6,7,8,9,10,11], index_col=False)
+
+			# Get relevant rows of the data.
+			pickup_lats, pickup_longs = np.array(taxi_data['Pickup_latitude']), np.array(taxi_data['Pickup_longitude'])
+			dropoff_lats, dropoff_longs = np.array(taxi_data['Dropoff_latitude']), np.array(taxi_data['Dropoff_longitude'])
+			pickup_time = np.array(taxi_data['lpep_pickup_datetime'])
+			dropoff_time = np.array(taxi_data['Lpep_dropoff_datetime'])
+			passenger_count = np.array(taxi_data['Passenger_count'])
+			trip_distance = np.array(taxi_data['Trip_distance'])
+			fare_amount = np.array(taxi_data['Fare_amount'])
 			
 		elif 'yellow' in taxi_file:
-			if '2014-08' in taxi_file or '2014-09' in taxi_file or '2014-01' in taxi_file or '2014-07' in taxi_file \
-					or '2014-06' in taxi_file or '2014-11' in taxi_file or '2014-12' in taxi_file or '2014-02' in taxi_file \
-					or '2014-10' in taxi_file or '2014-05' in taxi_file or '2014-03' in taxi_file or '2014-04' in taxi_file \
-					or '2014-05' in taxi_file:
-				# let's load a single .csv file of taxicab records (say, January 2016)
+			# Check for months in which (latitude, longitude) coordinates weren't recorded.
+			for year_month in ['2016-07', '2016-08', '2016-09', '2016-10', '2016-11', '2016-12']:
+				if year_month in taxi_file:
+					return
+
+			if '2014' in taxi_file:
+				# Load a single .csv file of taxicab records.
 				taxi_data = pd.read_csv(fpath, usecols=[' pickup_latitude', ' pickup_longitude', ' dropoff_latitude', ' dropoff_longitude', ' pickup_datetime', ' dropoff_datetime', ' passenger_count', ' trip_distance', ' fare_amount'])
 				
-				# get relevant rows of the data and store them as numpy arrays
+				# Get relevant rows of the data.
 				pickup_lats, pickup_longs = np.array(taxi_data[' pickup_latitude']), np.array(taxi_data[' pickup_longitude'])
 				dropoff_lats, dropoff_longs = np.array(taxi_data[' dropoff_latitude']), np.array(taxi_data[' dropoff_longitude'])
 				pickup_time = np.array(taxi_data[' pickup_datetime'])
@@ -80,14 +78,12 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 				trip_distance = np.array(taxi_data[' trip_distance'])
 				fare_amount = np.array(taxi_data[' fare_amount'])
 
-			elif '2009-11' in taxi_file or '2009-10' in taxi_file or '2009-01' in taxi_file or '2009-08' in taxi_file \
-					or '2009-06' in taxi_file or '2009-04' in taxi_file or '2009-09' in taxi_file or '2009-03' in taxi_file \
-					or '2009-07' in taxi_file or '2009-05' in taxi_file or '2009-02' in taxi_file or '2009-12' in taxi_file:
-				# let's load a single .csv file of taxicab records (say, January 2016)
+			elif '2009' in taxi_file:
+				# Load a single .csv file of taxicab records.
 				taxi_data = pd.read_csv(fpath, usecols=['Start_Lat', 'Start_Lon', 'End_Lat', 'End_Lon', \
 					'Trip_Pickup_DateTime', 'Trip_Dropoff_DateTime', 'Passenger_Count', 'Trip_Distance', 'Fare_Amt'])
 				
-				# get relevant rows of the data and store them as numpy arrays
+				# Get relevant rows of the data.
 				pickup_lats, pickup_longs = np.array(taxi_data['Start_Lat']), np.array(taxi_data['Start_Lon'])
 				dropoff_lats, dropoff_longs = np.array(taxi_data['End_Lat']), np.array(taxi_data['End_Lon'])
 				pickup_time = np.array(taxi_data['Trip_Pickup_DateTime'])
@@ -96,15 +92,12 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 				trip_distance = np.array(taxi_data['Trip_Distance'])
 				fare_amount = np.array(taxi_data['Fare_Amt'])
 
-			elif '2015-05' in taxi_file or '2015-12' in taxi_file or '2015-04' in taxi_file or '2015-03' in taxi_file \
-					or '2015-08' in taxi_file or '2016-06' in taxi_file or '2016-01' in taxi_file or '2016-03' in taxi_file \
-					or '2015-06' in taxi_file or '2016-05' in taxi_file or '2015-11' in taxi_file or '2015-01' in taxi_file \
-					or '2015-02' in taxi_file or '2015-09' in taxi_file or '2015-03' in taxi_file or '2015-10' in taxi_file \
-					or '2016-02' in taxi_file or '2016-04' in taxi_file or '2015-07' in taxi_file:
-				# let's load a single .csv file of taxicab records (say, January 2016)	
+			elif '2015' in taxi_file or '2016' in taxi_file:
+				# Load a single .csv file of taxicab records.
 				taxi_data = pd.read_csv(fpath, usecols=['pickup_latitude', 'pickup_longitude', 'dropoff_latitude', \
 					'dropoff_longitude', 'tpep_pickup_datetime', 'tpep_dropoff_datetime', 'passenger_count', 'trip_distance', 'fare_amount'])
-				# get relevant rows of the data and store them as numpy arrays
+
+				# Get relevant rows of the data.
 				pickup_lats, pickup_longs = np.array(taxi_data['pickup_latitude']), np.array(taxi_data['pickup_longitude'])
 				dropoff_lats, dropoff_longs = np.array(taxi_data['dropoff_latitude']), np.array(taxi_data['dropoff_longitude'])
 				pickup_time = np.array(taxi_data['tpep_pickup_datetime'])
@@ -132,8 +125,7 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 			raise NotImplementedError
 
 	except ValueError:
-		taxi_data = pd.read_csv(fpath, error_bad_lines=False)
-		print '\n', year, '-', 'pickup / dropoff ID rather than (lat, long) coordinates'
+		print('\nPickup or dropoff IDs rather than (lat, lon) coordinates.')
 		return
 
 	# remove the taxicab data from memory
@@ -143,10 +135,8 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 	pickup_coords = zip(pickup_lats, pickup_longs)
 	dropoff_coords = zip(dropoff_lats, dropoff_longs)
 
-	# report stats about taxi data as we go
-	print '\n...loaded', len(pickup_coords), 'taxicab trips'
-
-	print '\nIt took', timeit.default_timer() - start_time, 'seconds to load the above taxi data files'
+	print('\n...loaded %d taxicab trips' % len(pickup_coords))
+	print('\nIt took %.4f seconds to load the above taxi data files' % timeit.default_timer() - start_time)
 
 	# store data as numpy arrays (transposing to have in a more work-friendly shape)    
 	pickup_coords, dropoff_coords = np.array(pickup_coords).T, np.array(dropoff_coords).T
@@ -154,7 +144,7 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 	passenger_counts, trip_distances, fare_amounts = np.array(passenger_count), \
 									np.array(trip_distance), np.array(fare_amount)
 
-	# get file containing hotel names and addresses
+	# Load file containing hotel names and addresses.
 	hotel_file = pd.read_excel(os.path.join('..', 'data', \
 		'Final hotel Identification (with coordinates).xlsx'), \
 						sheetname='final match with coordinates')
@@ -169,21 +159,16 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 	if n_hotels == -1:
 		n_hotels = len(hotel_coords)
 
-	print '\n...finding distance criterion-satisfying taxicab pick-ups'
+	print('\nFinding distance criterion-satisfying taxicab pick-ups.')
 
-	# keep track of total time elapsed for all hotels
-	start_time = timeit.default_timer()
-
-	# keep track of how much we've written into the current Excel worksheet
+	# Find all end points of taxi trips ending near 
+	# hotels which satisfy distance criterion, per hotel.
 	prev_len = 0
-
-	# loop through each hotel and find all satisfying taxicab rides
+	start_time = timeit.default_timer()
 	for idx, hotel_coord in enumerate(hotel_coords[:n_hotels]):
+		print('\nFinding satisfying taxicab rides for %s' % hotel_names[idx])
 		
-		# print progress to console
-		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
-		
-		# call the 'get_destinations' function from the 'util.py' script on all trips stored
+		# Get the indices of the taxi trips which satisfy the distance criterion.
 		satisfying_indices, dists = get_satisfying_indices(pickup_coords.T, \
 												hotel_coord, distance, n_jobs)
 
@@ -191,10 +176,10 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 					pickup_coords[0, :], pickup_coords[1, :], pickup_times, \
 				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
 
-		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
-		index = [ i for i in range(prev_len + 1, prev_len + destinations.shape[0] + 1) ]
+		n_trips = destinations.shape[0]
 
 		try:
+			index = [ idx for idx in xrange(prev_len + 1, prev_len + n_trips + 1) ]
 			destinations = pd.DataFrame(destinations, index=index, 
 				columns=['Distance From Hotel', 'Latitude', 'Longitude', 
 				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
@@ -202,45 +187,33 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 		except ValueError:
 			continue
 
-		# add column for hotel name
-		name_frame = pd.DataFrame([hotel_names[idx]] * destinations.shape[0], 
-							index=destinations.index, columns=['Hotel Name'])
-		to_write = pd.concat([name_frame, destinations], axis=1)
-			
-		# add column for hotel ID
-		ID_frame = pd.DataFrame([hotel_IDs[idx]] * destinations.shape[0], 
-							index=destinations.index, columns=['Share ID'])
-		to_write = pd.concat([ID_frame, name_frame, destinations], axis=1)
+		# Add columns for hotel names and IDs.
+		names = pd.DataFrame([hotel_names[idx]] * n_trips, index=destinations.index, columns=['Hotel Name'])
+		IDs = pd.DataFrame([hotel_IDs[idx]] * n_trips, index=destinations.index, columns=['Share ID'])
+		to_write = pd.concat([IDs, names, destinations], axis=1)
 		
-		# write sheet to CSV file
-		filename = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
+		# Write DataFrame to .csv file.
+		fname = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
 		if idx == 0:
-			to_write.to_csv(filename, compression='gzip')
+			to_write.to_csv(fname, compression='gzip')
 			
 		else:
-			with gzip.open(filename, 'a') as f:
+			with gzip.open(fname, 'a') as f:
 				to_write.to_csv(f, header=False, compression='gzip')
 		
-		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
 
-	# get and report total elapsed time for all hotels
 	end_time = timeit.default_timer() - start_time
-	print '( total time elapsed for all hotels:', end_time, ') \n'
+	print('Time elapsed while finding destinations: %.4f\n' % end_time)
 	
-	# keep track of total time elapsed for all hotels
-	start_time = timeit.default_timer()
-
-	# keep track of how much we've written into the current Excel worksheet
+	# Find all starting locations of taxi trips ending near 
+	# hotels which satisfy distance criterion, per hotel.
 	prev_len = 0
-
-	# loop through each hotel and find all satisfying taxicab rides
+	start_time = timeit.default_timer()
 	for idx, hotel_coord in enumerate(hotel_coords[:n_hotels]):
+		print('\nFinding satisfying taxicab rides for %s' % hotel_names[idx])
 		
-		# print progress to console
-		print '\n...finding satisfying taxicab rides for', hotel_names[idx]
-		
-		# call the 'get_destinations' function from the 'util.py' script on all trips stored
+		# Get the indices of the taxi trips which satisfy the distance criterion.
 		satisfying_indices, dists = get_satisfying_indices(dropoff_coords.T, \
 												hotel_coord, distance, n_jobs)
 
@@ -248,9 +221,10 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 					pickup_coords[0, :], pickup_coords[1, :], pickup_times, \
 				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
 
-		# create pandas DataFrame from output from destinations (distance from hotel, latitude, longitude)
-		index = [ i for i in range(prev_len + 1, prev_len + starting_points.shape[0] + 1) ]
+		n_trips = starting_points.shape[0]
+
 		try:
+			index = [ i for i in range(prev_len + 1, prev_len + n_trips + 1) ]
 			starting_points = pd.DataFrame(starting_points, index=index, 
 				columns=['Distance From Hotel', 'Latitude', 'Longitude', 
 				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
@@ -258,31 +232,24 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 		except ValueError:
 			continue		
 
-		# add column for hotel name
-		name_frame = pd.DataFrame([hotel_names[idx]] * starting_points.shape[0], 
-							index=starting_points.index, columns=['Hotel Name'])
-		to_write = pd.concat([name_frame, starting_points], axis=1)
-			
-		# add column for hotel ID
-		ID_frame = pd.DataFrame([hotel_IDs[idx]] * starting_points.shape[0], 
-							index=starting_points.index, columns=['Share ID'])
-		to_write = pd.concat([ID_frame, name_frame, starting_points], axis=1)
+		# Add columns for hotel names and IDs.
+		names = pd.DataFrame([hotel_names[idx]] * n_trips, index=starting_points.index, columns=['Hotel Name'])
+		IDs = pd.DataFrame([hotel_IDs[idx]] * n_trips, index=starting_points.index, columns=['Share ID'])
+		to_write = pd.concat([ID_frame, names, starting_points], axis=1)
 		
-		# write sheet to CSV file
-		filename = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
+		# Write DataFrame to .csv file.
+		fname = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
 		if idx == 0:
-			to_write.to_csv(filename, compression='gzip')
+			to_write.to_csv(fname, compression='gzip')
 			
 		else:
-			with gzip.open(filename, 'a') as f:
+			with gzip.open(fname, 'a') as f:
 				to_write.to_csv(f, header=False, compression='gzip')
 			
-		# keep track of where we left off in the previous workbook
 		prev_len += len(to_write)
 
-	# get and report total elapsed time for all hotels
 	end_time = timeit.default_timer() - start_time
-	print '( total time elapsed for all hotels:', end_time, ') \n'
+	print('Time elapsed while finding starting points: %.4f\n' % end_time)
 
 
 if __name__ == '__main__':

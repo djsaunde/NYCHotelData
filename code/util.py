@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 
 import os
 import math
@@ -42,17 +42,17 @@ def load_data(to_plot, data_files, data_path):
 	elif to_plot == 'both':
 		dictnames = [ 'pickups', 'dropoffs' ]
 
-	print '\n... Loading taxicab trip data (pilot set of 24 hotels)'
+	print('\n... Loading taxicab trip data (pilot set of 24 hotels)')
 
 	start_time = timeit.default_timer()
 
 	taxi_data = {}
 	for dname, data_file in zip(dictnames, data_files):
-		print '... Loading', dname, 'data from disk.'
+		print('... Loading', dname, 'data from disk.')
 		taxi_data[dname] = dd.read_csv(os.path.join(data_path, data_file), parse_dates=['Pick-up Time', \
 											'Drop-off Time'], dtype={'Fare Amount' : 'object'}).dropna()
 
-	print '... It took', timeit.default_timer() - start_time, 'seconds to load the taxicab trip data\n'
+	print('... It took', timeit.default_timer() - start_time, 'seconds to load the taxicab trip data\n')
 
 	return taxi_data
 
@@ -63,9 +63,9 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	'''
 
 	if title == None:
-		print '- plotting scatter plot for', hotel_name, '\n'
+		print('- plotting scatter plot for', hotel_name, '\n')
 	else:
-		print '- plotting scatter plot for', title, '\n'
+		print('- plotting scatter plot for', title, '\n')
 
 	# size of figures in inches
 	plt.rcParams["figure.figsize"] = (18.5, 9.75)
@@ -115,9 +115,9 @@ def plot_arcgis_nyc_scatter_plot(coords, hotel_name, directory, service='World_S
 	'''
 
 	if title == None:
-		print '- plotting scatter plot for', hotel_name
+		print('- plotting scatter plot for', hotel_name)
 	else:
-		print '- plotting scatter plot for', title
+		print('- plotting scatter plot for', title)
 
 	# size of figures in inches
 	plt.rcParams["figure.figsize"] = (18.5, 9.75)
@@ -236,16 +236,16 @@ def get_nearby_window(trips, distance, start_datetime, end_datetime):
 	end_datetime: The date at which to stop looking for data.
 	'''
 	# Find the trips which also satisfy the time criterion.
-	print 'Getting trips which satisfy the current time criterion.'
+	print('Getting trips which satisfy the current time criterion.')
 	trips = trips[(trips['Pick-up Time'] >= start_datetime) & (trips['Pick-up Time'] <= end_datetime)]
 
 	# Find the trips which first satisfy the specified distance criterion.
-	print 'Getting trips which satisfy the specified distance criterion.'
+	print('Getting trips which satisfy the specified distance criterion.')
 	trips = trips.loc[trips['Distance From Hotel'] <= distance]
 
 	# Removing trips with degenerate (latitude, longitude) coordinates
 	# (Why isn't this filtered out in the first step?)
-	print 'Removing taxicab trips with degenerate (latitude, longitude) coordinates.'
+	print('Removing taxicab trips with degenerate (latitude, longitude) coordinates.')
 	trips = trips[(trips['Latitude'] != 0.0) & (trips['Longitude'] != 0.0)]
 														
 	# Take only the (latitude, longitude) coordinates of these trips for downstream processing.
@@ -478,7 +478,7 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 
 	# End the timer and report length of computation.
 	end_time = timeit.default_timer() - start_time
-	print '( time elapsed:', end_time, ')', '\n'
+	print('( time elapsed:', end_time, ')', '\n')
 
 	# Return the satisfying indices to perform downstream processing of these trips.
 	return satisfying_indices, dists[satisfying_indices]
