@@ -42,4 +42,4 @@ if __name__ == '__main__':
 			with open(os.path.join(output_path, current_fname), 'r') as to_read:
 				reader = csv.reader(to_read)
 				for row in reader:
-					writer.writerow(row)
+					writer.writerow([date] + row)
