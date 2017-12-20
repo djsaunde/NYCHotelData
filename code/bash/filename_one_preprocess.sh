@@ -1,16 +1,17 @@
 #!/bin/bash
 #
 #SBATCH --partition=longq
-#SBATCH --time=48:00:00
+#SBATCH --time=12:00:00
 #SBATCH --mem=60000
 #SBATCH --account=rkozma
-#SBATCH --ntasks-per-node=1
+#SBATCH --ntasks-per-node=8
 #SBATCH --output=/mnt/nfs/work1/rkozma/djsaunde/NYCHotelData/code/job_reports/%j.out
 
-distance=${1:-300}
+cd ..
 
-echo $distance
+distance=${1:-100}
+file_name=${2:-''}
 
-python combine_preprocessed.py --distance $distance
+python preprocess_data.py --distance $distance --file_name $file_name
 
 exit
