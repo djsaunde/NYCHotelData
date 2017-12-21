@@ -136,7 +136,7 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 	dropoff_coords = zip(dropoff_lats, dropoff_longs)
 
 	print('\n...loaded %d taxicab trips' % len(pickup_coords))
-	print('\nIt took %.4f seconds to load the above taxi data files' % timeit.default_timer() - start_time)
+	print('\nIt took %.4f seconds to load the above taxi data files' % (timeit.default_timer() - start_time))
 
 	# store data as numpy arrays (transposing to have in a more work-friendly shape)    
 	pickup_coords, dropoff_coords = np.array(pickup_coords).T, np.array(dropoff_coords).T
@@ -187,6 +187,8 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 		except ValueError:
 			continue
 
+		n_trips = destinations.shape[0]
+
 		# Add columns for hotel names and IDs.
 		names = pd.DataFrame([hotel_names[idx]] * n_trips, index=destinations.index, columns=['Hotel Name'])
 		IDs = pd.DataFrame([hotel_IDs[idx]] * n_trips, index=destinations.index, columns=['Share ID'])
@@ -231,6 +233,8 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 				'Trip Distance', 'Fare Amount'])
 		except ValueError:
 			continue		
+
+		n_trips = starting_points.shape[0]
 
 		# Add columns for hotel names and IDs.
 		names = pd.DataFrame([hotel_names[idx]] * n_trips, index=starting_points.index, columns=['Hotel Name'])
