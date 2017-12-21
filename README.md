@@ -1,22 +1,22 @@
 # NYC Hotel Data Project
 
-This repository contains code for projects associated with yellow and green taxicab data from New York City from 2008-2016. The data is necessarily sparse due to inconsistent data collection and removable of (latitude, longitude) pick-up and drop-off coordinates for certain months / years. One goal of this project is to use the dataset of taxicab rides, along with a dataset of NYC hotels and associated data, to quantify the competition between the top hotels in NYC and to determine which parts of the city are underserved by the hotel industry.
+This repository contains code for projects making use of yellow and green taxicab data from New York City during the years 2009-2017. All years and months (except for July 2016 onward) have (latitude, longitude) coordinates associated with taxicab trips pickup and dropoff location. One goal of this project is to use the dataset of taxicab rides, along with a dataset of NYC hotel data, to quantify the competition between the top hotels in NYC and to determine which parts of the city are underserved by the hotel industry.
 
 ## Methods
 
-For each hotel in NYC, we look at the taxicab trips which either originate from or end up at it. We say that those trips which begin or end within, say, 50 feet of the hotel are _close enough_ to provide a good estimation of this population. Luckily, the [New York City Taxi and Limousine Commission](http://www.nyc.gov/html/tlc/html/home/home.shtml) provides us with the aforementioned geospatial coordinates of these trips (along with other potentially useful information per trip), and, given the addresses of the hotels in NYC which we aim to investigate, we can use a geolocation service to get their coordinates as well. This project uses the [Google Maps Geolocation API](https://developers.google.com/maps/documentation/geolocation/intro), accessed from the convenient Python interface [geopy](https://github.com/geopy/geopy).
+For each hotel in NYC, we look at the taxicab trips which either originate from or end up at it. We say that those trips which begin or end within, say, 100 feet of the hotel are _close enough_ to provide a good estimation of these groups of trips. Luckily, the [New York City Taxi and Limousine Commission](http://www.nyc.gov/html/tlc/html/home/home.shtml) provides us with the aforementioned geospatial coordinates of these trips (along with other potentially useful details). Given the addresses of the hotels in NYC which we aim to investigate, we can use a geolocation service to get their coordinates as well. This project uses the [Google Maps Geolocation API](https://developers.google.com/maps/documentation/geolocation/intro), accessed from the convenient Python interface [geopy](https://github.com/geopy/geopy).
 
-After discovering those trips which begin or end _close_ to each hotel of interest, we would then like to estimate the distribution of pick-up or drop-off locations by hotel; i.e., in the case of pick-ups, given a hotel, from where did the patron likely come from? Since we are only interested in the city of New York, we can first represent the city by choosing a geospatial bounding box around it (given by four sets of (latitude, longitude) coordinates),
+After discovering those trips which begin or end _close_ to each hotel of interest, we would then like to estimate the distribution of pick-up or drop-off locations by hotel; i.e., in the case of pick-ups, given a hotel, where did the patron likely come from? Since we are only interested in the city of New York, we can first represent the city by choosing a geospatial bounding box around it (given by four sets of (latitude, longitude) coordinates):
 
 ![NYC Bounding Box](https://github.com/djsaunde/NYCHotelData/blob/master/nyc_box.png)
 
-and then divide the box into regularly-sized "bins" of, say, 500 square feet. To estimate the distribution of pick-up locations for a particular hotel, we assign a count to each bin, incrementing it for each pick-up coordinate which lies inside. To obtain a proper probability distribution, we divide each bin's count by the total number of trips in our dataset, ensuring that the bins' values sum to 1. 
+We can then divide the box into regularly-sized "bins" of, say, 500 square feet. To estimate the distribution of pick-up locations for a particular hotel, we assign a count to each bin, incrementing it for each pick-up coordinate which lies inside. To obtain a proper probability distribution, we divide each bin's count by the total number of trips in our dataset, ensuring that the bins' values sum to 1. 
 
-We can then graft this empiricial probability distribution onto the map of NYC for viewing purposes.
+We can draw this __empiricial probability distribution__ onto the map of NYC for visualization purposes.
 
-Next, given some population of interest (pick-ups, drop-offs, or both), we want to investigate some measure of similarity between these populations per hotel. Once we have computed the distributions as described above, we can compute their pairwise [Kullbeck-Liebler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence), although we must be careful to assign small non-negative probabilities to the bins on the NYC map for which there are no data and renormalize before we do.
+Next, given some population of interest (pick-ups, drop-offs, or both), we want to investigate some measure of similarity between these populations per hotel. Once we have computed the distributions as described above, we can compute their pairwise [Kullbeck-Liebler divergence](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence), although we must assign small non-negative probabilities to the bins on the NYC map for which there are no data and renormalize before we do.
 
-It is important to note that the estimation of these distributions and their comparison can be done for certain time intervals of interest: we may choose the year, month, day, and time of day, which may change the form of the per-hotel, per-population distributions. For example, we may expect more taxicab traffic in NYC's commerical district during the week than during the weekends, and more traffic in the downtown area at night and on the weekends.
+The estimation of these distributions and their comparison can be done for any time interval of interest: we may choose the year, month, day, and time of day, or given a start and end date, which should change the per-hotel, per-population distributions. For example, we may expect more taxicab traffic in NYC's commerical district during the week than during the weekends, and more traffic in the downtown area at night and on the weekends.
 
 ## Setting Things Up
 
@@ -26,7 +26,7 @@ This guide will assume you are using a \*nix system. Clone the repository and ch
 pip install -r requirements.txt
 ```
 
-to install (some of) the project's dependencies.
+to install the project's dependencies.
 
 Plotting heatmaps over a map of NYC requires a bit more setup. Namely, you will need to download and install ```mpl_toolkits.basemap```, one of the ```matplotlib``` toolkits, which doesn't seem to come standard as part of the ```matplotlib``` package anymore.
 
@@ -62,13 +62,3 @@ Now, ```basemap``` should be installed. To verify this, enter a Python interacti
 ```
 from mpl_toolkits.basemap import Basemap
 ```
-
-
-This repository contains code for projects associated with hotel data from New York City over the
-course of the past several years, in the form of (latitude, longitude) coordinates of pickups and dropoffs
-of taxicab rides and auxiliary taxicab ride data. The various notebooks and scripts in this repository
-are designed to explore these datasets and there relation to hotels and tourist or business attractions
-in the city. One major goal of this project is to make advertisement recommendations to hotels based on the
-distribution of destinations of taxicab rides which originate near a given hotel. We are interested in
-the global (24/7) distribution of such rides, and finer-grained distributions at the level of per-day and
-per-hour / time period.
