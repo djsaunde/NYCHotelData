@@ -478,7 +478,7 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 
 	# End the timer and report length of computation.
 	end_time = timeit.default_timer() - start_time
-	print('( time elapsed:', end_time, ')', '\n')
+	print('Time elapsed: %.4f\n' % end_time)
 
 	# Return the satisfying indices to perform downstream processing of these trips.
 	return satisfying_indices, dists[satisfying_indices]

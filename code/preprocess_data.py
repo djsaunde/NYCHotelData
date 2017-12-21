@@ -179,15 +179,13 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 		n_trips = destinations.shape[0]
 
 		try:
-			index = [ idx for idx in xrange(prev_len + 1, prev_len + n_trips + 1) ]
+			index = [ i for i in xrange(prev_len + 1, prev_len + n_trips + 1) ]
 			destinations = pd.DataFrame(destinations, index=index, 
 				columns=['Distance From Hotel', 'Latitude', 'Longitude', 
 				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
 				'Trip Distance', 'Fare Amount'])
 		except ValueError:
 			continue
-
-		n_trips = destinations.shape[0]
 
 		# Add columns for hotel names and IDs.
 		names = pd.DataFrame([hotel_names[idx]] * n_trips, index=destinations.index, columns=['Hotel Name'])
