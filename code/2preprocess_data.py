@@ -27,7 +27,7 @@ from util import *
 print('\nRunning data pre-processing.')
 
 
-def preprocess(taxi_file, hotel_index, distance, n_jobs):
+def preprocess(taxi_file, hotel_idx, distance, n_jobs):
 	'''
     Parse a single taxi data file.
 	'''
@@ -161,93 +161,77 @@ def preprocess(taxi_file, hotel_index, distance, n_jobs):
 
 	# Find all end points of taxi trips ending near 
 	# hotels which satisfy distance criterion, per hotel.
-	prev_len = 0
 	start_time = timeit.default_timer()
-	for idx, hotel_coord in enumerate(hotel_coords):
-		print('\nFinding satisfying taxicab rides for %s' % hotel_names[idx])
+
+	hotel_coord = hotel_coords[hotel_idx]
+
+	print('\nFinding satisfying taxicab rides for %s' % hotel_names[hotel_idx])
+	
+	# Get the indices of the taxi trips which satisfy the distance criterion.
+	satisfying_indices, dists = get_satisfying_indices(pickup_coords.T, \
+											hotel_coord, distance, n_jobs)
+
+	destinations = np.array([dists] + [item[satisfying_indices] for item in \
+				pickup_coords[0, :], pickup_coords[1, :], pickup_times, \
+			dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
+
+	n_trips = destinations.shape[0]
+
+	destinations = pd.DataFrame(destinations, columns=['Distance From Hotel',
+					'Latitude', 'Longitude', 'Pick-up Time', 'Drop-off Time', 
+						'Passenger Count', 'Trip Distance', 'Fare Amount'])
+
+	# Add columns for hotel names and IDs.
+	names = pd.DataFrame([hotel_names[hotel_idx]] * n_trips, columns=['Hotel Name'])
+	IDs = pd.DataFrame([hotel_IDs[hotel_idx]] * n_trips, columns=['Share ID'])
+	to_write = pd.concat([IDs, names, destinations], axis=1)
+	
+	# Write DataFrame to .csv file.
+	fname = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
+	if not os.path.exists(fname):
+		to_write.to_csv(fname, compression='gzip', index=False)
 		
-		# Get the indices of the taxi trips which satisfy the distance criterion.
-		satisfying_indices, dists = get_satisfying_indices(pickup_coords.T, \
-												hotel_coord, distance, n_jobs)
-
-		destinations = np.array([dists] + [item[satisfying_indices] for item in \
-					pickup_coords[0, :], pickup_coords[1, :], pickup_times, \
-				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
-
-		n_trips = destinations.shape[0]
-
-		try:
-			index = [ i for i in xrange(prev_len + 1, prev_len + n_trips + 1) ]
-			destinations = pd.DataFrame(destinations, index=index, 
-				columns=['Distance From Hotel', 'Latitude', 'Longitude', 
-				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
-				'Trip Distance', 'Fare Amount'])
-		except ValueError:
-			continue
-
-		# Add columns for hotel names and IDs.
-		names = pd.DataFrame([hotel_names[idx]] * n_trips, index=destinations.index, columns=['Hotel Name'])
-		IDs = pd.DataFrame([hotel_IDs[idx]] * n_trips, index=destinations.index, columns=['Share ID'])
-		to_write = pd.concat([IDs, names, destinations], axis=1)
-		
-		# Write DataFrame to .csv file.
-		fname = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
-		if idx == 0:
-			to_write.to_csv(fname, compression='gzip')
-			
-		else:
-			with gzip.open(fname, 'a') as f:
-				to_write.to_csv(f, header=False, compression='gzip')
-		
-		prev_len += len(to_write)
-
+	else:
+		with gzip.open(fname, 'a') as f:
+			to_write.to_csv(f, header=False, compression='gzip', index=False)
+	
 	end_time = timeit.default_timer() - start_time
 	print('Time elapsed while finding destinations: %.4f\n' % end_time)
 	
 	# Find all starting locations of taxi trips ending near 
 	# hotels which satisfy distance criterion, per hotel.
-	prev_len = 0
 	start_time = timeit.default_timer()
-	for idx, hotel_coord in enumerate(hotel_coords):
-		print('\nFinding satisfying taxicab rides for %s' % hotel_names[idx])
+	print('\nFinding satisfying taxicab rides for %s' % hotel_names[hotel_idx])
+	
+	# Get the indices of the taxi trips which satisfy the distance criterion.
+	satisfying_indices, dists = get_satisfying_indices(dropoff_coords.T, \
+											hotel_coord, distance, n_jobs)
+
+	starting_points = np.array([dists] + [item[satisfying_indices] for item in \
+				pickup_coords[0, :], pickup_coords[1, :], pickup_times, \
+			dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
+
+
+	starting_points = pd.DataFrame(starting_points, columns=['Distance From Hotel', 
+							'Latitude', 'Longitude', 'Pick-up Time', 'Drop-off Time',
+									'Passenger Count', 'Trip Distance', 'Fare Amount'])
+
+	n_trips = starting_points.shape[0]
+
+	# Add columns for hotel names and IDs.
+	names = pd.DataFrame([hotel_names[hotel_idx]] * n_trips, index=starting_points.index, columns=['Hotel Name'])
+	IDs = pd.DataFrame([hotel_IDs[hotel_idx]] * n_trips, index=starting_points.index, columns=['Share ID'])
+	to_write = pd.concat([IDs, names, starting_points], axis=1)
+	
+	# Write DataFrame to .csv file.
+	fname = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
+	if not os.path.exists(fname):
+		to_write.to_csv(fname, compression='gzip', index=False)
 		
-		# Get the indices of the taxi trips which satisfy the distance criterion.
-		satisfying_indices, dists = get_satisfying_indices(dropoff_coords.T, \
-												hotel_coord, distance, n_jobs)
-
-		starting_points = np.array([dists] + [item[satisfying_indices] for item in \
-					pickup_coords[0, :], pickup_coords[1, :], pickup_times, \
-				dropoff_times, passenger_counts, trip_distances, fare_amounts]).T
-
-		n_trips = starting_points.shape[0]
-
-		try:
-			index = [ i for i in range(prev_len + 1, prev_len + n_trips + 1) ]
-			starting_points = pd.DataFrame(starting_points, index=index, 
-				columns=['Distance From Hotel', 'Latitude', 'Longitude', 
-				'Pick-up Time', 'Drop-off Time', 'Passenger Count', 
-				'Trip Distance', 'Fare Amount'])
-		except ValueError:
-			continue		
-
-		n_trips = starting_points.shape[0]
-
-		# Add columns for hotel names and IDs.
-		names = pd.DataFrame([hotel_names[idx]] * n_trips, index=starting_points.index, columns=['Hotel Name'])
-		IDs = pd.DataFrame([hotel_IDs[idx]] * n_trips, index=starting_points.index, columns=['Share ID'])
-		to_write = pd.concat([ID_frame, names, starting_points], axis=1)
+	else:
+		with gzip.open(fname, 'a') as f:
+			to_write.to_csv(f, header=False, compression='gzip', index=False)
 		
-		# Write DataFrame to .csv file.
-		fname = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
-		if idx == 0:
-			to_write.to_csv(fname, compression='gzip')
-			
-		else:
-			with gzip.open(fname, 'a') as f:
-				to_write.to_csv(f, header=False, compression='gzip')
-			
-		prev_len += len(to_write)
-
 	end_time = timeit.default_timer() - start_time
 	print('Time elapsed while finding starting points: %.4f\n' % end_time)
 
@@ -272,10 +256,6 @@ if __name__ == '__main__':
 	file_name = args.file_name.replace(',', '')
 	hotel_idx = args.hotel_idx
 	n_jobs = args.n_jobs
-
-	processed_path = os.path.join('..', 'data', 'all_preprocessed_' + str(distance))
-	if not os.path.isdir(processed_path):
-		os.makedirs(processed_path)
 
 	processed_path = os.path.join('..', 'data', 'all_preprocessed_' + str(distance))
 	if not os.path.isdir(processed_path):
