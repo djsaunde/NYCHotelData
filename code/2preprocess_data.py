@@ -185,15 +185,16 @@ def preprocess(taxi_file, hotel_idx, distance, n_jobs):
 	names = pd.DataFrame([hotel_names[hotel_idx]] * n_trips, columns=['Hotel Name'])
 	IDs = pd.DataFrame([hotel_IDs[hotel_idx]] * n_trips, columns=['Share ID'])
 	to_write = pd.concat([IDs, names, destinations], axis=1)
+
+	print(to_write)
 	
 	# Write DataFrame to .csv file.
 	fname = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
 	if not os.path.exists(fname):
-		to_write.to_csv(fname, compression='gzip', index=False)
+		to_write.to_csv(fname, index=False)
 		
 	else:
-		with gzip.open(fname, 'a') as f:
-			to_write.to_csv(f, header=False, compression='gzip', index=False)
+		to_write.to_csv(fname, header=False, mode='a', index=False)
 	
 	end_time = timeit.default_timer() - start_time
 	print('Time elapsed while finding destinations: %.4f\n' % end_time)
@@ -222,16 +223,17 @@ def preprocess(taxi_file, hotel_idx, distance, n_jobs):
 	names = pd.DataFrame([hotel_names[hotel_idx]] * n_trips, index=starting_points.index, columns=['Hotel Name'])
 	IDs = pd.DataFrame([hotel_IDs[hotel_idx]] * n_trips, index=starting_points.index, columns=['Share ID'])
 	to_write = pd.concat([IDs, names, starting_points], axis=1)
+
+	print(to_write)
 	
 	# Write DataFrame to .csv file.
 	fname = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
 	if not os.path.exists(fname):
-		to_write.to_csv(fname, compression='gzip', index=False)
+		to_write.to_csv(fname, index=False)
 		
 	else:
-		with gzip.open(fname, 'a') as f:
-			to_write.to_csv(f, header=False, compression='gzip', index=False)
-		
+		to_write.to_csv(fname, header=False, mode='a', index=False)
+	
 	end_time = timeit.default_timer() - start_time
 	print('Time elapsed while finding starting points: %.4f\n' % end_time)
 
