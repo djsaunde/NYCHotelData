@@ -144,6 +144,7 @@ def preprocess(taxi_file, distance, n_jobs):
 			all_destinations = all_destinations.append(destinations)
 		
 	# Write dask.DataFrame to partitioned .csv files.
+	print('Writing out partitioned dask.DataFrame.')
 	outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
 	glob_name = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.*.csv')
 	all_destinations.to_csv(glob_name, index=False)
