@@ -1,5 +1,5 @@
-distance=${1:-300}
-n_jobs=${2:-8}
+distance=${1:-100}
+n_jobs=${3:-16}
 
 DIRECTORY="../../data/all_preprocessed_$distance"
 
@@ -14,8 +14,5 @@ n_files=$(ls ../../data/taxi_data/ | wc -l)
 
 for (( file=0; file<$n_files; file++ ))
 do
-	for hotel in $(seq 0 177)
-	do
-		sbatch 2one_preprocess.sh $distance $file $hotel $n_jobs
-	done
+	sbatch 3one_preprocess.sh $distance $file $n_jobs
 done
