@@ -5,7 +5,7 @@
 #SBATCH --mem=60000
 #SBATCH --account=rkozma
 #SBATCH --ntasks-per-node=8
-#SBATCH --output=/mnt/nfs/work1/rkozma/djsaunde/NYCHotelData/code/job_reports/%j.out
+#SBATCH --output=/mnt/nfs/work1/rkozma/djsaunde/NYCHotelData/job_reports/%j.out
 
 cd ..
 
