@@ -464,8 +464,6 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 	# Start a timer to record the length of the computation.
 	start_time = timeit.default_timer()
 
-	dists 
-
 	# Chunk up the trip coordinates according to how many cpu cores we have available.
 	trip_coords = [trip_coords[idx : idx + n_jobs] for idx in xrange(0, len(trip_coords), n_jobs)]
 	with closing(Pool(n_jobs)) as pool:
@@ -486,7 +484,7 @@ def get_satisfying_indices(trip_coords, hotel_coords, distance, n_jobs):
 	return satisfying_indices, dists[satisfying_indices]
 
 
-def dask_get_satisfying_indices(taxi_data, hotel_row, distance, n_jobs):
+def dask_get_satisfying_indices(taxi_data, hotel_row, distance):
 	# Start a timer to record the length of the computation.
 	start_time = timeit.default_timer()
 
@@ -494,7 +492,7 @@ def dask_get_satisfying_indices(taxi_data, hotel_row, distance, n_jobs):
 	# taxi coordinates and hotel coordinates.
 	hotel_coords = (hotel_row['Latitude'], hotel_row['Longitude'])
 	taxi_data['Distance From Hotel'] = taxi_data.apply(lambda x : vincenty((x['Pick-up Latitude'],
-							x['Pick-up Longitude']), hotel_coords, miles=True), axis=1)
+								x['Pick-up Longitude']), hotel_coords, miles=True), axis=1) * 5280
 
 	# Keep only the trips which (begin / end) near the current hotel coordinates.
 	taxi_data = taxi_data[taxi_data['Distance From Hotel'] < distance]

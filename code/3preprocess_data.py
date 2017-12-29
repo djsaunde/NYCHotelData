@@ -29,7 +29,7 @@ from util import *
 print('\nRunning data pre-processing.')
 
 
-def preprocess(taxi_file, distance, n_jobs):
+def preprocess(taxi_file, distance):
 	'''
     Parse a single taxi data file.
 	'''
@@ -132,7 +132,7 @@ def preprocess(taxi_file, distance, n_jobs):
 		print('Progress: (%d / %d)' % (idx + 1, n_hotels))
 
 		# Get the taxi trips which satisfy the distance criterion.
-		destinations = dask_get_satisfying_indices(taxi_data, row, distance, n_jobs)
+		destinations = dask_get_satisfying_indices(taxi_data, row, distance)
 
 		# Add columns for hotel names and IDs.
 		destinations['Hotel Name'] = row['Name']
@@ -142,24 +142,29 @@ def preprocess(taxi_file, distance, n_jobs):
 			all_destinations = destinations
 		else:
 			all_destinations = all_destinations.append(destinations)
-		
-	# Write dask.DataFrame to partitioned .csv files.
-	print('Writing out partitioned dask.DataFrame.')
-	outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
-	glob_name = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.*.csv')
-	all_destinations.to_csv(glob_name, index=False)
 
+	# # Write dask.DataFrame to partitioned .csv files.
 	# print('Writing out partitioned dask.DataFrame.')
-	# outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0])
-	# all_destinations.to_parquet(outpath, write_index=False)
+	# outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
+	# glob_name = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.*.csv')
+	# all_destinations.to_csv(glob_name, index=False)
+
+	print('Re-partitioning data.')
+	all_destinations = all_destinations.repartition(npartitions=10)
+	print('Writing out partitioned dask.DataFrame.')
+	outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0])
+	all_destinations.to_parquet(outpath, write_index=False)
 	
 	# Combine fragmented data into a single .csv file.
-	print('Combining partitioned .csv files into one file.')
-	fnames = glob(glob_name)
-	with open(outpath, 'w') as out:
-		for fname in fnames:
-			with open(fname) as f:
-				out.write(f.read() + '\n')
+	# print('Combining partitioned .csv files into one file.')
+	# fnames = glob(glob_name)
+	# with open(outpath, 'w') as out:
+	# 	for idx, fname in enumerate(fnames):
+	# 		with open(fname) as f:
+	# 			if idx > 0:
+	# 				next(f)
+
+	# 			out.write(f.read())
 
 	end_time = timeit.default_timer() - start_time
 	print('Time elapsed while finding destinations: %.4f\n' % end_time)
@@ -172,7 +177,7 @@ def preprocess(taxi_file, distance, n_jobs):
 		print('Progress: (%d / %d)' % (idx + 1, n_hotels))
 
 		# Get the taxi trips which satisfy the distance criterion.
-		starting_points = dask_get_satisfying_indices(taxi_data, row, distance, n_jobs)
+		starting_points = dask_get_satisfying_indices(taxi_data, row, distance)
 
 		# Add columns for hotel names and IDs.
 		starting_points['Hotel Name'] = row['Name']
@@ -183,23 +188,25 @@ def preprocess(taxi_file, distance, n_jobs):
 		else:
 			all_starting_points = all_starting_points.append(starting_points)
 
-	# print('Writing out partitioned dask.DataFrame.')
-	# outpath = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0])
-	# all_starting_points.to_parquet(outpath, write_index=False)
-		
-	# Write dask.DataFrame to partitioned .csv files.
+	print('Re-partitioning data.')
+	all_starting_points = all_starting_points.repartition(npartitions=10)
 	print('Writing out partitioned dask.DataFrame.')
-	outpath = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
-	glob_name = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.*.csv')
-	all_starting_points.to_csv(glob_name, index=False)
+	outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0])
+	all_starting_points.to_parquet(outpath, write_index=False)
+		
+	# # Write dask.DataFrame to partitioned .csv files.
+	# print('Writing out partitioned dask.DataFrame.')
+	# outpath = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
+	# glob_name = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.*.csv')
+	# all_starting_points.to_csv(glob_name, index=False)
 	
-	# Combine fragmented data into a single .csv file.
-	print('Combining partitioned .csv files into one file.')
-	fnames = glob(glob_name)
-	with open(outpath, 'w') as out:
-		for fname in fnames:
-			with open(fname) as f:
-				out.write(f.read() + '\n')
+	# # Combine fragmented data into a single .csv file.
+	# print('Combining partitioned .csv files into one file.')
+	# fnames = glob(glob_name)
+	# with open(outpath, 'w') as out:
+	# 	for fname in fnames:
+	# 		with open(fname) as f:
+	# 			out.write(f.read())
 	
 	end_time = timeit.default_timer() - start_time
 	print('Time elapsed while finding starting points: %.4f\n' % end_time)
@@ -213,15 +220,12 @@ if __name__ == '__main__':
 		help='Index of taxi file in ordered file list to preprocess.')
 	parser.add_argument('--file_name', type=str, default='', \
 							help='Name of taxi file to preprocess.')
-	parser.add_argument('--n_jobs', type=int, default=8, \
-		help='Number of CPU cores to use for parallel computation.')
 	args = parser.parse_args()
 
 	# Parse command line arguments.
 	distance = args.distance
 	file_idx = args.file_idx
 	file_name = args.file_name.replace(',', '')
-	n_jobs = args.n_jobs
 
 	processed_path = os.path.join('..', 'data', 'all_preprocessed_' + str(distance))
 	if not os.path.isdir(processed_path):
@@ -233,7 +237,7 @@ if __name__ == '__main__':
 						'taxi_data', '')) if 'yellow' in filename or 'green' in filename ]
 		
 		# preprocess our particular taxi data file
-		preprocess(taxi_files[file_idx], distance, n_jobs)
+		preprocess(taxi_files[file_idx], distance)
 	else:
 		# preprocess passed in taxi data file
-		preprocess(file_name, distance, n_jobs)
+		preprocess(file_name, distance)
