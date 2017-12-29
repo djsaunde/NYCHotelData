@@ -11,8 +11,7 @@ cd ..
 
 distance=${1:-100}
 file_idx=${2:-0}
-n_jobs=${3:-32}
 
-python 3preprocess_data.py --distance $distance --file_idx $file_idx --n_jobs $n_jobs
+python 3preprocess_data.py --distance $distance --file_idx $file_idx
 
 exit

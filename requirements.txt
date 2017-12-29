@@ -3,3 +3,5 @@ gmplot
 joblib
 multiprocess
 vincenty
+fastparquet
+pyarrow - c conda-forge
