@@ -12,8 +12,6 @@ mkdir $DIRECTORY
 
 n_files=$(ls ../../data/taxi_data/ | wc -l)
 
-cd ..
-
 for (( file=0; file<$n_files; file++ ))
 do
 	for hotel in $(seq 0 177)
