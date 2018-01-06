@@ -62,3 +62,45 @@ Now, ```basemap``` should be installed. To verify this, enter a Python interacti
 ```
 from mpl_toolkits.basemap import Basemap
 ```
+
+## Running the code
+
+These instructions are intended for all those involved with this project in the UMass Amhest Department of Resource Economics. In order to run the code, you must have certain sensitive NYC hotel data on your machine, which requires that you are a part of this project and have been granted access.
+
+However, a large part of this codebase is general-purpose and does not rely on such specific credentials. Feel free to reuse and repurpose all code pertaining to the NYC taxicab data.
+
+### Geolocating hotels
+
+Ensure that you have a Google Geocoding-enabled API key in a file titled "key.txt", located at the top level of the project directory. You must also have the file titled "Final hotel Identification.xlsx" in the `data` directory. This contains data on the "Share ID"s, names, and addresses of each NYC hotel we are interested in.
+
+Navigate to the `code` directory and run `python geolocate_hotel.py` This will create a new file, titled "Final hotel Identification (with coordinates).csv", which adds latitude and longitude columns to the data from the original file, which have been calculated using the `GoogleV3` geolocation interface provided by the [`geopy`](https://pypi.python.org/pypi/geopy) library.
+
+### Getting taxicab data
+
+As a first step, we can download all the taxicab data we care to inspect. In the `code/bash` directory, one can find the `download_raw_data.sh` and `get_data_file.sh` bash scripts, which can be run by issuing `./download_raw_data.sh` or `./get_data_file.sh [color] [year] [month]` (replace "color" with "yellow" or "green", "year" with "2009", ..., "2017", and "month" with "01", ..., "12"). Note that only years 2009 - 2016 (up through June 2016) contain (latitude, longitude) coordinates; other years / months will cause errors in later processing steps.
+
+These scripts download the indicated taxi data files to the `taxi/taxi_data` directory. 
+
+### Pre-processing taxicab data
+
+In order to reduce the large volume of the NYC taxi data, we can safely discard trips which don't begin at or end up *near* any of the hotels in our list. This nearness is specified by some *distance* criterion in feet. Also, we may only be interested in *pickups* or *dropoffs* near hotels, or the combination thereof.
+
+Once some (or all) taxicab data is downloaded (A few hundred gigabytes! Consider using high-performance computing (HPC) resources), one can use the script `preprocess_data.py` in the `code` directory to throw away unneeded trips. This script accepts arguments `distance` (distance from hotel criterion), `file_name` (name of file to pre-process), `n_hotels` (number of hotels, in order, to pre-process with respect to; used for debugging purposes), `n_jobs` (number of CPU threads to use for parallel computing), and `file_idx` (index of data file in alphabetically ordered list of data file names; used in bash scripts for massive parallelization). An example run of this script is as follows:
+
+```
+python preprocess_data.py --distance 300 --file_name yellow_tripdata_2013-01.csv --n_jobs 8
+``` 
+
+The default values for all but the `distance` and `file_name` arguments will typically suffice.
+
+To pre-process all taxi data using an HPC system with the [Slurm workload manager](https://slurm.schedmd.com/), one can use the bash script `all_preprocess.sh` which accepts command-line arguments for `distance` and `n_jobs`. For example,
+
+```
+./all_preprocess.sh 300 16
+```
+
+will submit a Slurm job (using the `sbatch` command) running `preprocess_data.py` for each taxi data file in the `data/taxi_data`, in which in individual process will use 16 threads for parallel processing.
+
+The `all_preprocess.sh` script submits jobs via the `one_preprocess.sh` script, which contains Slurm job arguments at the top of the file. Modify these according to the limitations of your HPC system, or for your desired configuration.
+
+The `preprocess_data.py` 

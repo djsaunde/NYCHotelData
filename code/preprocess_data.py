@@ -31,14 +31,13 @@ print('\n...Running preprocess_data.py')
 def preprocess(taxi_file, distance, n_jobs, n_hotels):
 	'''
     Main logic for parsing taxi datafiles.
-	'''
-	start_time = timeit.default_timer()
-		
-	print('\n...loading taxicab data file:', taxi_file)
+	'''		
+	print('\nLoading taxicab data file:', taxi_file)
 	
 	year = int(taxi_file.split('_')[2].split('-')[0])
-	
 	fpath = os.path.join('..', 'data', 'taxi_data', taxi_file)
+
+	start_time = timeit.default_timer()
 
 	try:
 		if 'green' in taxi_file:
@@ -256,15 +255,15 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--distance', type=int, default=300, \
+	parser.add_argument('--distance', type=int, default=300,
 		help='Distance criterion (in feet) from hotels considered.')
-	parser.add_argument('--file_idx', type=int, default=0, \
-		help='Index of taxi file in ordered file list to preprocess.')
-	parser.add_argument('--file_name', type=str, default='', \
+	parser.add_argument('--file_name', type=str, default='',
 							help='Name of taxi file to preprocess.')
-	parser.add_argument('--n_jobs', type=int, default=8, \
-		help='Number of CPU cores to use for parallel computation.')
 	parser.add_argument('--n_hotels', type=int, default=-1)
+	parser.add_argument('--n_jobs', type=int, default=8,
+		help='Number of CPU threads to use for parallel computation.')
+	parser.add_argument('--file_idx', type=int, default=0,
+		help='Index of taxi file in ordered file list to preprocess.')
 	args = parser.parse_args()
 
 	# Parse command line arguments.

@@ -104,3 +104,6 @@ tlc_statistics/*
 
 # ignore slurm output files
 *.out
+
+# API Key!
+key.txt

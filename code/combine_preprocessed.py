@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import xlrd
 import timeit
@@ -8,21 +10,21 @@ import pandas as pd
 parser = argparse.ArgumentParser()
 parser.add_argument('--distance', type=int, default=300)
 args = parser.parse_args()
-
 distance = args.distance
 
-# Path to preprocessed data by month
 data_path = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(distance)]))
 
-# Get names of preprocessed data files
-files = [ fname for fname in os.listdir(data_path) if '.csv' in fname and ('starting_points' in fname or 'destinations' in fname) \
-							and not fname == 'starting_points.csv' and not fname == 'destinations.csv' ]
+# Get names of preprocessed data files.
+files = [ fname for fname in os.listdir(data_path) if '.csv' in fname and \
+			('starting_points' in fname or 'destinations' in fname) and not \
+			fname == 'starting_points.csv' and not fname == 'destinations.csv' ]
 
-first_destinations = True
-first_starting_points = True
-# Read in each Excel file as a pandas dataframe and append to a list
+first_destinations, first_starting_points = True, True
+
+# Read in each Excel file to a pandas.DataFrame and
+# gradually append them to a single .csv file.
 for idx, fname in enumerate(files):
-	print ' '.join(['-', fname, '(', str(idx + 1), '/', str(len(files)), ')'])
+	print('Filename: %s; Progress: %d / %d' % (fname, idx + 1, len(files)))
  
 	start = timeit.default_timer()
 	
@@ -43,6 +45,6 @@ for idx, fname in enumerate(files):
 		else:
 			starting_points.to_csv(os.path.join(data_path, 'starting_points.csv'), mode='a', header=False, index=False)
 
-	print ' '.join(['... It took', str(timeit.default_timer() - start), 'seconds to merge the last dataframe in.'])
+	print('Time: %.4f\n' % timeit.default_timer() - start)
 
-print '\nDone!\n'
+print('Finished merging all preprocessed data to "destinations.csv" and "starting_points.csv".')

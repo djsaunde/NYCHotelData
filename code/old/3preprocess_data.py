@@ -143,28 +143,31 @@ def preprocess(taxi_file, distance):
 		else:
 			all_destinations = all_destinations.append(destinations)
 
-	# # Write dask.DataFrame to partitioned .csv files.
-	# print('Writing out partitioned dask.DataFrame.')
-	# outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
-	# glob_name = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.*.csv')
-	# all_destinations.to_csv(glob_name, index=False)
-
+	# Write dask.DataFrame to partitioned .csv files.
 	print('Re-partitioning data.')
 	all_destinations = all_destinations.repartition(npartitions=10)
+
 	print('Writing out partitioned dask.DataFrame.')
-	outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0])
-	all_destinations.to_parquet(outpath, write_index=False)
+	outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.csv')
+	glob_name = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0] + '.*.csv')
+	all_destinations.to_csv(glob_name, index=False)
+
+	# print('Re-partitioning data.')
+	# all_destinations = all_destinations.repartition(npartitions=10)
+	# print('Writing out partitioned dask.DataFrame.')
+	# outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0])
+	# all_destinations.to_parquet(outpath, write_index=False)
 	
 	# Combine fragmented data into a single .csv file.
-	# print('Combining partitioned .csv files into one file.')
-	# fnames = glob(glob_name)
-	# with open(outpath, 'w') as out:
-	# 	for idx, fname in enumerate(fnames):
-	# 		with open(fname) as f:
-	# 			if idx > 0:
-	# 				next(f)
+	print('Combining partitioned .csv files into one file.')
+	fnames = glob(glob_name)
+	with open(outpath, 'w') as out:
+		for idx, fname in enumerate(fnames):
+			with open(fname) as f:
+				if idx > 0:
+					next(f)
 
-	# 			out.write(f.read())
+				out.write(f.read())
 
 	end_time = timeit.default_timer() - start_time
 	print('Time elapsed while finding destinations: %.4f\n' % end_time)
@@ -188,25 +191,31 @@ def preprocess(taxi_file, distance):
 		else:
 			all_starting_points = all_starting_points.append(starting_points)
 
+	# Write dask.DataFrame to partitioned .csv files.
 	print('Re-partitioning data.')
 	all_starting_points = all_starting_points.repartition(npartitions=10)
-	print('Writing out partitioned dask.DataFrame.')
-	outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0])
-	all_starting_points.to_parquet(outpath, write_index=False)
-		
-	# # Write dask.DataFrame to partitioned .csv files.
-	# print('Writing out partitioned dask.DataFrame.')
-	# outpath = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
-	# glob_name = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.*.csv')
-	# all_starting_points.to_csv(glob_name, index=False)
 	
-	# # Combine fragmented data into a single .csv file.
-	# print('Combining partitioned .csv files into one file.')
-	# fnames = glob(glob_name)
-	# with open(outpath, 'w') as out:
-	# 	for fname in fnames:
-	# 		with open(fname) as f:
-	# 			out.write(f.read())
+	print('Writing out partitioned dask.DataFrame.')
+	outpath = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
+	glob_name = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.*.csv')
+	all_starting_points.to_csv(glob_name, index=False)
+
+	# print('Re-partitioning data.')
+	# all_starting_points = all_starting_points.repartition(npartitions=10)
+	# print('Writing out partitioned dask.DataFrame.')
+	# outpath = os.path.join(processed_path, 'NPD_destinations_' + taxi_file.split('.')[0])
+	# all_starting_points.to_parquet(outpath, write_index=False)
+	
+	# Combine fragmented data into a single .csv file.
+	print('Combining partitioned .csv files into one file.')
+	fnames = glob(glob_name)
+	with open(outpath, 'w') as out:
+		for idx, fname in enumerate(fnames):
+			with open(fname) as f:
+				if idx > 0:
+					next(f)
+
+				out.write(f.read())
 	
 	end_time = timeit.default_timer() - start_time
 	print('Time elapsed while finding starting points: %.4f\n' % end_time)
