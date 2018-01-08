@@ -18,61 +18,50 @@ for directory in [ output_path ]:
 		os.makedirs(directory)
 
 
-def get_daily(taxi_data, start_date, end_date):
-	workbook = xlsxwriter.Workbook(os.path.join(output_path, '_'.join([ '_'.join(taxi_data.keys()), \
-				str(distance), str(start_date), str(end_date) ]) + '.xlsx'), {'constant_memory': True})
-	worksheet = workbook.add_worksheet()
-
+def get_daily(taxi_data, day):
+	# Columns to read from pre-processed data.
 	columns = ['Hotel Name', 'Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time', 'Drop-off Time']
 
-	# set up main loop: loop through each day from start_date to end_date
-	for day_idx, date in enumerate(daterange(start_date, end_date)):
+	print '\n*** Date:', day, '***\n'
 
-		print '\n*** Date:', date, '***\n'
+	# get coordinates of new distance and time-constraint satisfying taxicab trips with nearby pick-ups
+	for idx, key in enumerate(taxi_data):
+		data = taxi_data[key][columns]
 
-		# get coordinates of new distance and time-constraint satisfying taxicab trips with nearby pick-ups
-		for idx, key in enumerate(taxi_data):
-			data = taxi_data[key][columns]
+		# Get the pick-up (drop-off) coordinates of the trip which ended (began) near this each hotel
+		current_coords = get_nearby_window(data, distance, datetime.combine(day, \
+				datetime.min.time()), datetime.combine(day, datetime.max.time()))
 
-			# Get the pick-up (drop-off) coordinates of the trip which ended (began) near this each hotel
-			current_coords = get_nearby_window(data, distance, datetime.combine(date, \
-					datetime.min.time()), datetime.combine(date, datetime.max.time()))
+		if idx == 0:
+			coords = current_coords
+		else:
+			coords = all_coords.append(current_coords)
 
-			if idx == 0:
-				coords = current_coords
-			else:
-				coords = all_coords.append(current_coords)
+	# Convert dask dataframe into a xlsxwriter writeable data structure.
+	print 'Converting coordinate format for writing out to disk.'
+	start = timeit.default_timer()
+	coords = list(coords.compute())
+	print '\n...It took', timeit.default_timer() - start, 'seconds to format the data.\n'
 
-		# Convert dask dataframe into a xlsxwriter writeable data structure.
-		print 'Converting coordinate format for writing out to disk.'
-		start = timeit.default_timer()
-		coords = coords.compute()
-		print '\n...It took', timeit.default_timer() - start, 'seconds to format the data.\n'
+	print 'There were', len(coords), 'satisfying rides on day', str(day)
 
-		print 'There were', len(coords), 'satisfying rides on day', str(date)
+	# Writing this day's satisfying coordinates to the .xlsx file
+	print 'Writing coordinates to a .csv file.'
+	start = timeit.default_timer()
 
-		# Writing this day's satisfying coordinates to the .xlsx file
-		print 'Writing coordinates to a .xlsx file.'
-		start = timeit.default_timer()
-		worksheet.write(day_idx, 0, str(date))
+	with open(os.path.join(output_path, '_'.join([ '_'.join(taxi_data.keys()), str(distance), str(day) ])) + '.csv', 'w') as f:
+		writer = csv.writer(f)
+		writer.writerow(coords)
 
-		idx = 1
-		for data_idx in coords.index.values:
-			if not type(coords[data_idx]) == pd.core.series.Series:
-				worksheet.write(day_idx, idx, coords[data_idx])
-				idx += 1
-
-		print '\n...It took', timeit.default_timer() - start, 'seconds to write the coordinates to disk.\n'
+	print '\n...It took', timeit.default_timer() - start, 'seconds to write the coordinates to disk.\n'
 
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Recording satisfying coordinates in an Excel \
 																file for a given window of time.')
 
-	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1], help='The day on \
-												which to start looking for satisfying coordinates.')
-	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 1, 7], help='The day on \
-												which to stop looking for satisfying coordinates.')
+	parser.add_argument('--day', type=int, nargs=3, default=[2013, 1, 1], help='The day on \
+													which to look for satisfying coordinates.')
 	parser.add_argument('--coord_type', type=str, default='pickups', help='The type of coordinates \
 											to look for (one of "pickups", "dropoffs", or "both").')
 	parser.add_argument('--distance', type=int, default=100, help='The distance (in feet) from hotels \
@@ -91,13 +80,13 @@ if __name__ == '__main__':
 	elif coord_type == 'both':
 		data_files = [ 'destinations.csv', 'starting_points.csv' ]
 
-	start_date, end_date = date(*start_date), date(*end_date)
+	day = date(*day)
 	data_path = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(distance)]))
 
 	# Get dictionary of taxicab trip data based on `coord_type` argument.
 	taxi_data = load_data(coord_type, data_files, data_path)
 
 	# Record coordinates for each day (from start_date to end_date) for all hotels combined.
-	get_daily(taxi_data, start_date, end_date)
+	get_daily(taxi_data, day)
 
 	print '\n'

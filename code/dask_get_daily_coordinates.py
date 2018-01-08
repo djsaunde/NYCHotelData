@@ -21,7 +21,7 @@ for directory in [ output_path ]:
 		os.makedirs(directory)
 
 
-def get_daily(taxi_data, start_date, end_date, frac_samples):
+def get_daily(taxi_data, start_date, end_date):
 	workbook = xlsxwriter.Workbook(os.path.join(output_path, '_'.join([ '_'.join(taxi_data.keys()), \
 				str(distance), str(start_date), str(end_date) ]) + '.xlsx'), {'constant_memory': True})
 	worksheet = workbook.add_worksheet()
@@ -60,39 +60,10 @@ def get_daily(taxi_data, start_date, end_date, frac_samples):
 		        with open(fname) as file:
 		            out_file.write(file.read())
 
-	# Create a dask Bag (parallel Python objects), then make them
-	# a list of delayed objects, to be written out to disk.
-	# to_write = db.from_sequence(daily_coordinates)
-
-	# print '\n'
-	# for obj in to_write:
-	# 	print obj.compute()
-
-		# # Convert dask dataframe into a xlsxwriter writeable data structure.
-		# print 'Converting coordinate format for writing out to disk.'
-		# start = timeit.default_timer()
-		# coords = coords.compute()
-		# print '\n...It took', timeit.default_timer() - start, 'seconds to format the data.\n'
-
-		# print 'There were', len(coords), 'satisfying rides on day', str(date)
-
-		# # Writing this day's satisfying coordinates to the .xlsx file
-		# print 'Writing coordinates to a .xlsx file.'
-		# start = timeit.default_timer()
-		# worksheet.write(day_idx, 0, str(date))
-
-		# idx = 1
-		# for data_idx in coords.index.values:
-		# 	if not type(coords[data_idx]) == pd.core.series.Series:
-		# 		worksheet.write(day_idx, idx, coords[data_idx])
-		# 		idx += 1
-
-		# print '\n...It took', timeit.default_timer() - start, 'seconds to write the coordinates to disk.\n'
-
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Recording satisfying coordinates in an Excel \
-																file for a given window of time.')
+	parser = argparse.ArgumentParser(description='Recording satisfying coordinates in an CSV \
+															file for a given window of time.')
 
 	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1], help='The day on \
 												which to start looking for satisfying coordinates.')
@@ -102,9 +73,6 @@ if __name__ == '__main__':
 											to look for (one of "pickups", "dropoffs", or "both").')
 	parser.add_argument('--distance', type=int, default=100, help='The distance (in feet) from hotels \
 													for which to look for satisfying taxicab trips.')
-	parser.add_argument('--n_jobs', type=int, default=4, help='The number of CPU cores to use in \
-																	processing the taxicab data.')
-	parser.add_argument('--frac_samples', type=int, default=0.1, help='The fraction of samples to take per day.')
 
 	args = parser.parse_args()
 	args = vars(args)
@@ -126,6 +94,6 @@ if __name__ == '__main__':
 	taxi_data = load_data(coord_type, data_files, data_path)
 
 	# Record coordinates for each day (from start_date to end_date) for all hotels combined.
-	get_daily(taxi_data, start_date, end_date, frac_samples)
+	get_daily(taxi_data, start_date, end_date)
 
 	print '\n'
