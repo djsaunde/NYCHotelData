@@ -65,15 +65,15 @@ from mpl_toolkits.basemap import Basemap
 
 ## Running the code
 
-These instructions are intended for all those involved with this project in the UMass Amhest Department of Resource Economics. In order to run the code, you must have certain sensitive NYC hotel data on your machine, which requires that you are a part of this project and have been granted access.
+These instructions are intended for all those involved with this project in the UMass Amherst Department of Resource Economics. In order to run the code, you must have certain sensitive NYC hotel data on your machine, which requires that you are a part of this project and have been granted access.
 
-However, a large part of this codebase is general-purpose and does not rely on such specific credentials. Feel free to reuse and repurpose all code pertaining to the NYC taxicab data.
+However, a large part of this codebase is general-purpose and does not rely on such specific credentials. Feel free to reuse and repurpose all code pertaining to the taxi data.
 
 ### Geolocating hotels
 
-Ensure that you have a Google Geocoding-enabled API key in a file titled "key.txt", located at the top level of the project directory. You must also have the file titled "Final hotel Identification.xlsx" in the `data` directory. This contains data on the "Share ID"s, names, and addresses of each NYC hotel we are interested in.
+Ensure that you have a [Google Geocoding-enabled API](https://developers.google.com/maps/documentation/geocoding/start) key in a file titled "_key.txt_", located at the top level of the project directory. You must also have the file titled "_Final hotel Identification.xlsx_" in the `data` directory. This contains data on the "Share ID"s, names, and addresses of each NYC hotel being studied.
 
-Navigate to the `code` directory and run `python geolocate_hotel.py` This will create a new file, titled "Final hotel Identification (with coordinates).csv", which adds latitude and longitude columns to the data from the original file, which have been calculated using the `GoogleV3` geolocation interface provided by the [`geopy`](https://pypi.python.org/pypi/geopy) library.
+Navigate to the `code` directory and run `python geolocate_hotel.py` This will create a new file, titled "_Final hotel Identification (with coordinates).csv_", which adds latitude and longitude columns to the data from the original file, which have been calculated using the `GoogleV3` geolocation interface provided by the [`geopy`](https://pypi.python.org/pypi/geopy) library.
 
 ### Getting taxicab data
 
@@ -83,9 +83,9 @@ These scripts download the indicated taxi data files to the `taxi/taxi_data` dir
 
 ### Pre-processing taxicab data
 
-In order to reduce the large volume of the NYC taxi data, we can safely discard trips which don't begin at or end up *near* any of the hotels in our list. This nearness is specified by some *distance* criterion in feet. Also, we may only be interested in *pickups* or *dropoffs* near hotels, or the combination thereof.
+In order to reduce the large volume of the NYC taxi data, we can safely discard trips which don't begin at or end up *near* any of the hotels in our list. This nearness is specified by some *distance* criterion in feet. Also, we may only be interested in *pick-ups* or *drop-offs* near hotels, or the combination thereof.
 
-Once some (or all) taxicab data is downloaded (A few hundred gigabytes! Consider using high-performance computing (HPC) resources), one can use the script `preprocess_data.py` in the `code` directory to throw away unneeded trips. This script accepts arguments `distance` (distance from hotel criterion), `file_name` (name of file to pre-process), `n_hotels` (number of hotels, in order, to pre-process with respect to; used for debugging purposes), `n_jobs` (number of CPU threads to use for parallel computing), and `file_idx` (index of data file in alphabetically ordered list of data file names; used in bash scripts for massive parallelization). An example run of this script is as follows:
+Once some (or all) taxicab data is downloaded (A few hundred gigabytes! Consider using high-performance computing (HPC) resources), one can use the script `preprocess_data.py` in the `code` directory to throw away unneeded trips. This script accepts arguments `distance` (distance from hotel criterion), `file_name` (name of file to pre-process), `n_hotels` (number of hotels, in order, to pre-process with respect to; used for debugging purposes), `n_jobs` (number of CPU threads to use for parallel computing), and `file_idx` (index of data file in alphabetically ordered list of data file names; used in bash scripts for parallelization). An example run of this script is as follows:
 
 ```
 python preprocess_data.py --distance 300 --file_name yellow_tripdata_2013-01.csv --n_jobs 8
@@ -99,8 +99,32 @@ To pre-process all taxi data using an HPC system with the [Slurm workload manage
 ./all_preprocess.sh 300 16
 ```
 
-will submit a Slurm job (using the `sbatch` command) running `preprocess_data.py` for each taxi data file in the `data/taxi_data`, in which in individual process will use 16 threads for parallel processing.
+will submit a Slurm job (using the `sbatch` command) running `preprocess_data.py` for each taxi data file in the `data/taxi_data`, in which in individual process will use a 300 feet distance criterion, and 16 threads for parallel processing.
 
 The `all_preprocess.sh` script submits jobs via the `one_preprocess.sh` script, which contains Slurm job arguments at the top of the file. Modify these according to the limitations of your HPC system, or for your desired configuration.
 
-The `preprocess_data.py` 
+The `preprocess_data.py` writes out those trips satisfying the user-specified criteria at the command-line: Whether to look for nearby taxicab pick-up / drop-off trips or both, and how far trips need to *start at* or *end up* near a hotel to be considered *nearby*. Trips are written to a directory `data/all_preprocessed_[distance]` as `.csv` files with titles like `NPD_[coordinate_type]_[taxi data filename].csv`, where `coordinate_type` is replaced with one of `destinations` or `starting_points`, which correspond to the endpoints or nearby pick-ups and starting points of nearby drop-offs, respectively.
+
+Finally, we can combine all pre-processed data thus far with the script `combine_preprocessed.py`, which can be run on an HPC system with `run_combine_preprocessed.sh`. Both the Python and bash scripts accept a `distance` argument, which then looks for pre-processed taxi data in the corresponding `data/all_preprocessed_[distance]` directory. The end result of these programs are the files `destinations.csv` and `starting_points.csv`, stored again in `data/all_preprocessed_[distance]`, which simply combined all pre-processed data with the distance criterion.
+
+### Getting daily distributions of trip coordinates
+
+The script `get_daily_coordinates.py` accepts arguments `start_date` (list of year, month, and day), `end_date` (list of year, month, and day), `coord_type` (string; one of "pickups", "dropoffs", or "both"), and `distance` (integer distance criterion in feet). This script makes use of the [`dask` parallel computing library](http://dask.pydata.org/en/latest/index.html) to generate CSV files for each day from `start_date` to `end_date` containing a single row of (pick-up, drop-off, or both) coordinates of rides (beginning, ending, or both) near all hotels being studied. This script can be run, for example, with:
+
+```
+python get_daily_coordinates.py --start_date 2014 6 14 --end_date 2014 6 21 --coord_type pickups --distance 100
+```
+
+This will generate CSV files of the form `pickups_100_[date].csv`, where `date` ranges from `start_date` to `end_date`.
+
+Run the script `combine_daily_coordinates.py` (accepting the same command-line arguments as `get_daily_coordinates.py`, to retrieve the appropriate files) to combine all those single-row CSV files previously generated into a comprehensive CSV file containing one row for each day from `start_date` to `end_date`, where dates are indexed by the first column. The script stored the CSV file as `[coord_type]_[distance]_[start_date]_[end_date].csv`.
+
+## Contact
+
+The following is a list of the personnel working involved in this project, along with contact information and other details:
+
+- Daniel Saunders ([email](mailto:djsaunde@cs.umass.edu) | [webpage](https://djsaunde.github.io) | [blog](https://djsaunde.wordpress.com))
+
+- Professor Christian Rojas ([email](mailto:rojas@resecon.umass.edu) | [webpage](https://www.umass.edu/resec/people/rojas))
+
+- Professor Debi Mohapatra ([email](mailto:dmohapatra@umass.edu) | [webpage](https://sites.google.com/a/cornell.edu/debi-prasad/))
