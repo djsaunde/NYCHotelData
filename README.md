@@ -123,8 +123,8 @@ Run the script `combine_daily_coordinates.py` (accepting the same command-line a
 
 The following is a list of the personnel working involved in this project, along with contact information and other details:
 
-- Daniel Saunders ([email](mailto:djsaunde@cs.umass.edu) | [webpage](https://djsaunde.github.io) | [blog](https://djsaunde.wordpress.com))
+- Daniel Saunders ([email](mailto:djsaunde@cs.umass.edu) (djsaunde@cs.umass.edu) | [webpage](https://djsaunde.github.io) | [blog](https://djsaunde.wordpress.com))
 
-- Professor Christian Rojas ([email](mailto:rojas@resecon.umass.edu) | [webpage](https://www.umass.edu/resec/people/rojas))
+- Professor Christian Rojas ([email](mailto:rojas@resecon.umass.edu) (rojas@resecon.umass.edu) | [webpage](https://www.umass.edu/resec/people/rojas))
 
-- Professor Debi Mohapatra ([email](mailto:dmohapatra@umass.edu) | [webpage](https://sites.google.com/a/cornell.edu/debi-prasad/))
+- Professor Debi Mohapatra ([email](mailto:dmohapatra@umass.edu) (dmohapatra@umass.edu) | [webpage](https://sites.google.com/a/cornell.edu/debi-prasad/))
