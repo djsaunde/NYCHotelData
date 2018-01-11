@@ -1,4 +1,7 @@
+from __future__ import print_function
+
 import os
+import sys
 import timeit
 import argparse
 import numpy as np
@@ -26,22 +29,22 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 	hotel_names = capacity_hotel_names.intersection(taxi_hotel_names)
 
 	for backwards_stepwise_idx in xrange(len(hotel_names)):
-		capacity_sum = sum([ value for (hotel_name, value) in capacity_data.items() if hotel_name in hotel_names ])
+		capacity_sum = sum([ value for (hotel_name, value) in capacity_data.items() if hotel_name.strip() in hotel_names ])
 		capacity_distribution = { hotel_name : capacity / float(capacity_sum) \
-			for (hotel_name, capacity) in sorted(capacity_data.items()) if hotel_name in hotel_names }
+			for (hotel_name, capacity) in sorted(capacity_data.items()) if hotel_name.strip() in hotel_names }
 
 		taxi_distributions = []
 		for distance in distances:
 			taxi_subset = { hotel_name : len(data[data <= distance]) for \
-				(hotel_name, data) in sorted(taxi_data.items()) if hotel_name in hotel_names }
+				(hotel_name, data) in sorted(taxi_data.items()) if hotel_name.strip() in hotel_names }
 			taxi_sum = sum([ value for value in taxi_subset.values()])
 
 			if taxi_sum != 0:
 				taxi_distributions.append({ hotel_name : n_trips / float(taxi_sum) \
-					for (hotel_name, n_trips) in sorted(taxi_subset.items()) if hotel_name in hotel_names })
+					for (hotel_name, n_trips) in sorted(taxi_subset.items()) if hotel_name.strip() in hotel_names })
 			else:
 				taxi_distributions.append({ hotel_name : 0.0 for hotel_name in \
-						sorted(taxi_subset.keys()) if hotel_name in hotel_names })
+						sorted(taxi_subset.keys()) if hotel_name.strip() in hotel_names })
 
 		for idx, taxi_distribution in enumerate(taxi_distributions):
 			objective_evaluations[idx] = objective(capacity_distribution, taxi_distribution, minimizee)
@@ -129,7 +132,7 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 
 		to_remove = sorted(hotel_names)[np.argmax(absolute_differences[np.argmin(objective_evaluations), :])]
 		
-		print '\nRemoving hotel', to_remove
+		print('\nRemoving hotel %s' % to_remove)
 		
 		hotel_names.remove(sorted(hotel_names)[np.argmax(absolute_differences[np.argmin(objective_evaluations), :])])
 
@@ -161,7 +164,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--max_distance', default=100, type=int)
 	parser.add_argument('--min_distance', default=25, type=int)
-	parser.add_argument('--coord_type', default='dropoffs', type=str)
+	parser.add_argument('--coord_type', default='pickups', type=str)
 	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1], \
 				help='The day on which to start looking for satisfying coordinates.')
 	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 2, 1], \
@@ -177,9 +180,9 @@ if __name__ == '__main__':
 
 	locals().update(args)
 
-	plots_path = os.path.join('..', 'plots', 'distance_optimization', '_'.join(map(str, [ min_distance, \
+	plots_path = os.path.join('..', 'plots', 'distance_optimization', '_'.join(map(str, [min_distance, \
 												max_distance, coord_type, start_date[0], start_date[1], \
-												start_date[2], end_date[0], end_date[1], end_date[2], minimizee ])))
+												start_date[2], end_date[0], end_date[1], end_date[2], minimizee])))
 
 	if not os.path.exists(plots_path):
 		os.makedirs(plots_path)
@@ -187,7 +190,7 @@ if __name__ == '__main__':
 	start_date, end_date = date(*start_date), date(*end_date)
 
 	# Load daily capacity data.
-	print '\nLoading daily per-hotel capacity data.'
+	print('\nLoading daily per-hotel capacity data.')
 	start = timeit.default_timer()
 
 	daily_capacity_data = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
@@ -195,46 +198,37 @@ if __name__ == '__main__':
 	daily_capacity_data = daily_capacity_data.loc[(daily_capacity_data['Date'] >= start_date) & \
 													(daily_capacity_data['Date'] <= end_date)]
 
-	print 'It took', timeit.default_timer() - start, 'to load the capacity data.'
+	print('Time: %.4f' % (timeit.default_timer() - start))
 
 	# Create a dictionary which contains per-hotel daily capacity data.
-	print '\nOrganizing data into per-hotel, per-day dictionary structure.'
+	print('\nOrganizing data into per-hotel, per-day dictionary structure.')
 	start = timeit.default_timer()
 	
 	per_hotel_capacity_data = {}
 	for hotel_name in daily_capacity_data['Share ID'].unique():
-		# per_hotel_capacity_data[hotel_name] = { row['Date'].date() : row['Room Demand'] \
-		# 		for (idx, row) in daily_capacity_data.loc[daily_capacity_data['Share ID'] == hotel_name].iterrows() }
 		per_hotel_capacity_data[hotel_name] = sum([ row['Room Demand'] for (_, row) in \
 			daily_capacity_data.loc[daily_capacity_data['Share ID'] == hotel_name].iterrows() ])
 
-	print 'It took', timeit.default_timer() - start, 'to create the dictionary data structure.'
+	print('Time: %.4f' % (timeit.default_timer() - start))
 
 	# Load preprocessed data according to command-line "distance" parameter.
-	print '\nReading in the pre-processed taxicab data according to', \
-					'user-specified trip type (pickups, dropoffs, or both).'
+	print('\nReading in the pre-processed taxicab data.')
 	start = timeit.default_timer()
 
+	usecols = ['Share ID', 'Hotel Name', 'Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time',
+								'Drop-off Time', 'Passenger Count',	'Trip Distance', 'Fare Amount']
 	if coord_type == 'pickups':
-		taxi_data = pd.read_csv(os.path.join('..', 'data', '_'.join(\
-				[ 'preprocessed', str(max_distance) ]), 'destinations.csv'), header=0, index_col=False,
-					usecols=['Share ID', 'Hotel Name', 'Distance From Hotel', 'Latitude', 'Longitude', 
-					'Pick-up Time', 'Drop-off Time', 'Passenger Count',	'Trip Distance', 'Fare Amount' ])
+		taxi_data = pd.read_csv(os.path.join('..', 'data', '_'.join(['all_preprocessed', str(max_distance)]),
+												'destinations.csv'), header=0, index_col=False, usecols=usecols)
 	elif coord_type == 'dropoffs':
-		taxi_data = pd.read_csv(os.path.join('..', 'data', '_'.join(\
-				[ 'preprocessed', str(max_distance) ]), 'starting_points.csv'), header=0, index_col=False,
-					usecols=['Share ID', 'Hotel Name', 'Distance From Hotel', 'Latitude', 'Longitude', 
-					'Pick-up Time', 'Drop-off Time', 'Passenger Count',	'Trip Distance', 'Fare Amount' ])
+		taxi_data = pd.read_csv(os.path.join('..', 'data', '_'.join(['all_preprocessed', str(max_distance)]),
+											'starting_points.csv'), header=0, index_col=False, usecols=usecols)
 	elif coord_type == 'both':
-		taxi_data = pd.read_csv(os.path.join('..', 'data', '_'.join(\
-				[ 'preprocessed', str(max_distance) ]), 'destinations.csv'), header=0, index_col=False,
-					usecols=['Share ID', 'Hotel Name', 'Distance From Hotel', 'Latitude', 'Longitude', 
-					'Pick-up Time', 'Drop-off Time', 'Passenger Count',	'Trip Distance', 'Fare Amount' ])
-		taxi_data = pd.concat([taxi_data, pd.read_csv(os.path.join('..', 'data', \
-			'_'.join([ 'preprocessed', str(distance) ]), 'starting_points.csv'), header=0, index_col=False,
-					usecols=['Share ID', 'Hotel Name', 'Distance From Hotel', 'Latitude', 'Longitude', 
-					'Pick-up Time', 'Drop-off Time', 'Passenger Count',	'Trip Distance', 'Fare Amount' ])], 
-					ignore_index=True)
+		taxi_data = pd.read_csv(os.path.join('..', 'data', '_'.join(['all_preprocessed', str(max_distance)]),
+												'destinations.csv'), header=0, index_col=False, usecols=usecols)
+		taxi_data = pd.concat([taxi_data, pd.read_csv(os.path.join('..', 'data',
+				'_'.join(['all_preprocessed', str(max_distance)]), 'starting_points.csv'),
+						header=0, index_col=False, usecols=usecols)], ignore_index=True)
 	else:
 		raise Exception('Expecting one of "pickups", "dropoffs", or "both" for command-line argument coord_type.')
 
@@ -249,7 +243,7 @@ if __name__ == '__main__':
 			taxi_data.loc[taxi_data['Hotel Name'] == hotel_name].iterrows() ])
 
 
-	print 'It took', timeit.default_timer() - start, 'to load the specified pre-processed taxicab data.'
+	print('Time: %.4f' % (timeit.default_timer() - start))
 
 	best_distance = optimize_distance(per_hotel_capacity_data, per_hotel_taxi_data, \
 												min_distance, max_distance, minimizee)
