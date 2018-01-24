@@ -21,30 +21,30 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 	distance which minimizes these differences. At the same time, we wish to remove hotels
 	from the optimization of the distance which are severe outliers.
 	'''
-	distances = np.linspace(min_distance, max_distance, 100)
+	distances = range(min_distance, max_distance, 25)
 	objective_evaluations = np.zeros(np.shape(distances))
 
-	capacity_hotel_names = set([ hotel_name.strip() for hotel_name in capacity_data.keys() ])
-	taxi_hotel_names = set([ hotel_name.strip() for hotel_name in taxi_data.keys() ])
+	capacity_hotel_names = set([ hotel_name for hotel_name in capacity_data.keys() ])
+	taxi_hotel_names = set([ hotel_name for hotel_name in taxi_data.keys() ])
 	hotel_names = capacity_hotel_names.intersection(taxi_hotel_names)
 
 	for backwards_stepwise_idx in xrange(len(hotel_names)):
-		capacity_sum = sum([ value for (hotel_name, value) in capacity_data.items() if hotel_name.strip() in hotel_names ])
+		capacity_sum = sum([ value for (hotel_name, value) in capacity_data.items() if hotel_name in hotel_names ])
 		capacity_distribution = { hotel_name : capacity / float(capacity_sum) \
-			for (hotel_name, capacity) in sorted(capacity_data.items()) if hotel_name.strip() in hotel_names }
+			for (hotel_name, capacity) in sorted(capacity_data.items()) if hotel_name in hotel_names }
 
 		taxi_distributions = []
 		for distance in distances:
 			taxi_subset = { hotel_name : len(data[data <= distance]) for \
-				(hotel_name, data) in sorted(taxi_data.items()) if hotel_name.strip() in hotel_names }
+				(hotel_name, data) in sorted(taxi_data.items()) if hotel_name in hotel_names }
 			taxi_sum = sum([ value for value in taxi_subset.values()])
 
 			if taxi_sum != 0:
-				taxi_distributions.append({ hotel_name.strip() : n_trips / float(taxi_sum) \
-					for (hotel_name, n_trips) in sorted(taxi_subset.items()) if hotel_name.strip() in hotel_names })
+				taxi_distributions.append({ hotel_name : n_trips / float(taxi_sum) \
+					for (hotel_name, n_trips) in sorted(taxi_subset.items()) if hotel_name in hotel_names })
 			else:
-				taxi_distributions.append({ hotel_name.strip() : 0.0 for hotel_name in \
-						sorted(taxi_subset.keys()) if hotel_name.strip() in hotel_names })
+				taxi_distributions.append({ hotel_name : 0.0 for hotel_name in \
+						sorted(taxi_subset.keys()) if hotel_name in hotel_names })
 
 		for idx, taxi_distribution in enumerate(taxi_distributions):
 			objective_evaluations[idx] = objective(capacity_distribution, taxi_distribution, minimizee)
@@ -85,9 +85,9 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 		fig2.suptitle('Absolute value of occupancy, taxicab distribution\n' + \
 				'differences per hotel, per distance criterion', fontsize=20)
 
-		for distance_idx, distance in enumerate(distances):
+		for idx, distance in enumerate(distances):
 			ax2.bar(np.arange(np.shape(absolute_differences)[1]), absolute_differences[distance_idx, :], 
-								zs=distance, zdir='y', alpha=0.8, color=cm(1.0 * idx / len(hotel_names)))
+								zs=idx, zdir='y', alpha=0.8, color=cm(1.0 * idx / len(hotel_names)))
 
 		ax2.set_yticks(xrange(0, len(distances), 10))
 		ax2.set_yticklabels([ distances[idx] for idx in xrange(0, len(distances), 10) ])
@@ -231,6 +231,7 @@ if __name__ == '__main__':
 	else:
 		raise Exception('Expecting one of "pickups", "dropoffs", or "both" for command-line argument coord_type.')
 
+	taxi_data['Hotel Name'] = taxi_data['Hotel Name'].apply(str.strip)
 	taxi_data['Pick-up Time'] = pd.to_datetime(taxi_data['Pick-up Time'], format='%Y-%m-%d')
 	taxi_data['Drop-off Time'] = pd.to_datetime(taxi_data['Drop-off Time'], format='%Y-%m-%d')
 	taxi_data = taxi_data.loc[(taxi_data['Pick-up Time'] >= start_date) & \
