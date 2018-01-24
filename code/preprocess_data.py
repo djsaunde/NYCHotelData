@@ -236,7 +236,7 @@ def preprocess(taxi_file, distance, n_jobs, n_hotels):
 		# Add columns for hotel names and IDs.
 		names = pd.DataFrame([hotel_names[idx]] * n_trips, index=starting_points.index, columns=['Hotel Name'])
 		IDs = pd.DataFrame([hotel_IDs[idx]] * n_trips, index=starting_points.index, columns=['Share ID'])
-		to_write = pd.concat([ID_frame, names, starting_points], axis=1)
+		to_write = pd.concat([IDs, names, starting_points], axis=1)
 		
 		# Write DataFrame to .csv file.
 		fname = os.path.join(processed_path, 'NPD_starting_points_' + taxi_file.split('.')[0] + '.csv')
