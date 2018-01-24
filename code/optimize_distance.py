@@ -40,10 +40,10 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 			taxi_sum = sum([ value for value in taxi_subset.values()])
 
 			if taxi_sum != 0:
-				taxi_distributions.append({ hotel_name : n_trips / float(taxi_sum) \
+				taxi_distributions.append({ hotel_name.strip() : n_trips / float(taxi_sum) \
 					for (hotel_name, n_trips) in sorted(taxi_subset.items()) if hotel_name.strip() in hotel_names })
 			else:
-				taxi_distributions.append({ hotel_name : 0.0 for hotel_name in \
+				taxi_distributions.append({ hotel_name.strip() : 0.0 for hotel_name in \
 						sorted(taxi_subset.keys()) if hotel_name.strip() in hotel_names })
 
 		for idx, taxi_distribution in enumerate(taxi_distributions):
@@ -70,7 +70,7 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 						'occupancy proportions and empirical taxicab distribution', fontsize=20)
 
 		fig1.savefig(os.path.join(plots_path, '_'.join(['relative_entropy', str(backwards_stepwise_idx)]) + '.png'))
-		
+
 		absolute_differences = np.zeros([len(distances), len(hotel_names)])
 		for distance_idx, distance in enumerate(distances):
 			for hotel_idx, hotel_name in enumerate(sorted(hotel_names)):
@@ -86,9 +86,13 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 				'differences per hotel, per distance criterion', fontsize=20)
 
 		for distance_idx, distance in enumerate(distances):
+			# print(np.shape(absolute_differences)[1])
+			# print(absolute_differences[distance_idx, :].shape)
+			# print(np.shape(absolute_differences)[0])
+
 			ax2.bar(np.arange(np.shape(absolute_differences)[1]), absolute_differences[distance_idx, :], 
-										zs=[ distance_idx ] * np.shape(absolute_differences)[0], zdir='y',
-														alpha=0.8, color=cm(1.0 * idx / len(hotel_names)))
+										zs=[distance_idx] * np.shape(absolute_differences)[0], zdir='z',
+													alpha=0.8, color=cm(1.0 * idx / len(hotel_names)))
 
 		ax2.set_yticks(xrange(0, len(distances), 10))
 		ax2.set_yticklabels([ distances[idx] for idx in xrange(0, len(distances), 10) ])
@@ -173,7 +177,7 @@ if __name__ == '__main__':
 		"abs_diffs", "weighted_abs_diffs", "inverse_weighted_abs_diffs", or "relative_entropy".')
 	parser.add_argument('--plot', dest='plot', action='store_true')
 	parser.add_argument('--no_plot', dest='plot', action='store_false')
-	parser.set_defaults(feature=False)
+	parser.set_defaults(plot=False)
 
 	args = parser.parse_args()
 	args = vars(args)
@@ -216,7 +220,7 @@ if __name__ == '__main__':
 	start = timeit.default_timer()
 
 	usecols = ['Share ID', 'Hotel Name', 'Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time',
-								'Drop-off Time', 'Passenger Count',	'Trip Distance', 'Fare Amount']
+								'Drop-off Time', 'Passenger Count', 'Trip Distance', 'Fare Amount']
 	if coord_type == 'pickups':
 		taxi_data = pd.read_csv(os.path.join('..', 'data', '_'.join(['all_preprocessed', str(max_distance)]),
 												'destinations.csv'), header=0, index_col=False, usecols=usecols)
