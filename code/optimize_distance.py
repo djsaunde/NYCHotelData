@@ -86,13 +86,8 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 				'differences per hotel, per distance criterion', fontsize=20)
 
 		for distance_idx, distance in enumerate(distances):
-			# print(np.shape(absolute_differences)[1])
-			# print(absolute_differences[distance_idx, :].shape)
-			# print(np.shape(absolute_differences)[0])
-
 			ax2.bar(np.arange(np.shape(absolute_differences)[1]), absolute_differences[distance_idx, :], 
-										zs=[distance_idx] * np.shape(absolute_differences)[0], zdir='z',
-													alpha=0.8, color=cm(1.0 * idx / len(hotel_names)))
+								zs=distance, zdir='y', alpha=0.8, color=cm(1.0 * idx / len(hotel_names)))
 
 		ax2.set_yticks(xrange(0, len(distances), 10))
 		ax2.set_yticklabels([ distances[idx] for idx in xrange(0, len(distances), 10) ])
