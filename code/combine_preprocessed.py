@@ -36,6 +36,7 @@ for idx, fname in enumerate(files):
 			first_destinations = False
 		else:
 			destinations.to_csv(os.path.join(data_path, 'destinations.csv'), mode='a', header=False, index=False)
+	
 	elif 'starting_points' in fname:
 		starting_points = pd.read_csv(os.path.join(data_path, fname), compression='gzip')
 		

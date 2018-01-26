@@ -33,9 +33,6 @@ elif coord_type == 'dropoffs':
 print('\nReading pre-processed taxi data (%d feet)' % distance); start = timeit.default_timer()
 df = pd.read_csv(fname); print('Time: %.4f' % (timeit.default_timer() - start))
 
-print(df)
-print(df['Hotel Name'].unique())
-
 start = timeit.default_timer()
 for hotel in map(str.strip, df['Hotel Name'].unique()):
 	print('... Plotting distance histogram for %s (Time: %.4f)' % (hotel, (timeit.default_timer() - start)))
