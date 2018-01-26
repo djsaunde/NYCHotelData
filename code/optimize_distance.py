@@ -28,6 +28,10 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 	taxi_hotel_names = set([ hotel_name for hotel_name in taxi_data.keys() ])
 	hotel_names = capacity_hotel_names.intersection(taxi_hotel_names)
 
+	print(len(hotel_names))
+	print(hotel_names)
+	sys.exit()
+
 	for backwards_stepwise_idx in xrange(len(hotel_names)):
 		capacity_sum = sum([ value for (hotel_name, value) in capacity_data.items() if hotel_name in hotel_names ])
 		capacity_distribution = { hotel_name : capacity / float(capacity_sum) \
@@ -179,9 +183,9 @@ if __name__ == '__main__':
 
 	locals().update(args)
 
-	plots_path = os.path.join('..', 'plots', 'distance_optimization', '_'.join(map(str, [min_distance, \
-												max_distance, coord_type, start_date[0], start_date[1], \
-												start_date[2], end_date[0], end_date[1], end_date[2], minimizee])))
+	plots_path = os.path.join('..', 'plots', 'distance_optimization', '_'.join(map(str, [min_distance,
+												max_distance, coord_type, start_date[0], start_date[1],
+										start_date[2], end_date[0], end_date[1], end_date[2], minimizee])))
 
 	if not os.path.exists(plots_path):
 		os.makedirs(plots_path)
@@ -245,5 +249,5 @@ if __name__ == '__main__':
 
 	print('Time: %.4f' % (timeit.default_timer() - start))
 
-	best_distance = optimize_distance(per_hotel_capacity_data, per_hotel_taxi_data, \
-												min_distance, max_distance, minimizee)
+	best_distance = optimize_distance(per_hotel_capacity_data, per_hotel_taxi_data,
+											min_distance, max_distance, minimizee)

@@ -45,6 +45,6 @@ for idx, fname in enumerate(files):
 		else:
 			starting_points.to_csv(os.path.join(data_path, 'starting_points.csv'), mode='a', header=False, index=False)
 
-	print('Time: %.4f\n' % timeit.default_timer() - start)
+	print('Time: %.4f\n' % (timeit.default_timer() - start))
 
 print('Finished merging all preprocessed data to "destinations.csv" and "starting_points.csv".')
