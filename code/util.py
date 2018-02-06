@@ -42,17 +42,17 @@ def load_data(to_plot, data_files, data_path):
 	elif to_plot == 'both':
 		dictnames = [ 'pickups', 'dropoffs' ]
 
-	print('\n... Loading taxicab trip data (pilot set of 24 hotels)')
+	print('\nLoading taxicab data.')
 
 	start_time = timeit.default_timer()
 
 	taxi_data = {}
 	for dname, data_file in zip(dictnames, data_files):
-		print('... Loading', dname, 'data from disk.')
+		print('Loading', dname, 'data from disk.')
 		taxi_data[dname] = dd.read_csv(os.path.join(data_path, data_file), parse_dates=['Pick-up Time', \
 											'Drop-off Time'], dtype={'Fare Amount' : 'object'}).dropna()
 
-	print('... It took', timeit.default_timer() - start_time, 'seconds to load the taxicab trip data\n')
+	print('Time: %.4f\n' % (timeit.default_timer() - start_time))
 
 	return taxi_data
 
@@ -63,14 +63,13 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	'''
 
 	if title == None:
-		print('- plotting scatter plot for', hotel_name, '\n')
+		print('Plotting heatmap for %s\n' % hotel_name)
 	else:
-		print('- plotting scatter plot for', title, '\n')
+		print('Plotting heatmap for %s\n' % title)
 
-	# size of figures in inches
 	plt.rcParams["figure.figsize"] = (18.5, 9.75)
 
-	# create Basemap object (bounds NYC) and draw high-resolution map of NYC on it
+	# Create Basemap object (bounds NYC) and draw map of NYC.
 	basemap = Basemap(llcrnrlon=-74.025, llcrnrlat=40.63, urcrnrlon=-73.76, urcrnrlat=40.85, epsg=4269)
 	basemap.arcgisimage(service=service, xpixels=xpixels, dpi=dpi)
 
@@ -80,33 +79,26 @@ def plot_arcgis_nyc_map(coords, hotel_name, directory, service='World_Street_Map
 	x, y = np.meshgrid(xedges, yedges)
 	to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.sum(bin_coords)
 
-	# plot binned coordinates onto the map, use colorbar
 	plt.pcolormesh(x, y, to_draw.T, cmap='rainbow', vmin=0.001, vmax=1.0)
 	plt.colorbar(norm=mcolors.NoNorm)
 
-	# title map and save it to disk
 	if title == None:
-		plt.title(hotel_name + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+		plt.title('%s (satisfying trips: %d)' % (hotel_name, len(coords[1])))
 	else:
-		plt.title(title + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+		plt.title('%s (satisfying trips: %d)' % (title, len(coords[1])))
 
 	if not os.path.isdir(directory):
 		os.makedirs(directory)
 
-	# save ARCGIS plot out to disk to inspect later
-	plt.savefig(os.path.join(directory, hotel_name + '.png'))
+	# Save ARCGIS plot.
+	plt.savefig(os.path.join(directory, hotel_name))
+	plt.clf(); plt.close()
 
-	# close out the plot to avoid multiple colorbar bug
-	plt.clf()
-	plt.close()
-
-	# setting zero-valued bins to small non-zero values (for KL divergence)
+	# Set zero-valued bins to small non-zero values and normalize.
 	bin_coords[np.where(bin_coords == 0)] = 1e-32
+	normed = (bin_coords / np.sum(bin_coords)).ravel()
 
-	normed_distro = bin_coords / np.sum(bin_coords)
-
-	# return normalized, binned coordinates in one-dimensional vector
-	return np.ravel(normed_distro)
+	return normed
 
 
 def plot_arcgis_nyc_scatter_plot(coords, hotel_name, directory, service='World_Street_Map', xpixels=800, dpi=150, title=None):
@@ -115,9 +107,9 @@ def plot_arcgis_nyc_scatter_plot(coords, hotel_name, directory, service='World_S
 	'''
 
 	if title == None:
-		print('- plotting scatter plot for', hotel_name)
+		print('Plotting scatter plot for %s\n' % hotel_name)
 	else:
-		print('- plotting scatter plot for', title)
+		print('Plotting scatter plot for %s\n' % title)
 
 	# size of figures in inches
 	plt.rcParams["figure.figsize"] = (18.5, 9.75)
@@ -132,32 +124,25 @@ def plot_arcgis_nyc_scatter_plot(coords, hotel_name, directory, service='World_S
 	x, y = np.meshgrid(xedges, yedges)
 	to_draw = np.ma.masked_array(bin_coords, bin_coords < 0.001) / np.sum(bin_coords)
 
-	# plot binned coordinates onto the map, use colorbar
 	plt.scatter(coords[1], coords[0], s=5)
 
-	# title map and save it to disk
 	if title == None:
-		plt.title(hotel_name + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+		plt.title('%s (satisfying trips: %d)' % (hotel_name, len(coords[1])))
 	else:
-		plt.title(title + ' (satisfying trips: ' + str(len(coords[1])) + ')')
+		plt.title('%s (satisfying trips: %d)' % (title, len(coords[1])))
 
 	if not os.path.isdir(directory):
 		os.makedirs(directory)
 
-	# save ARCGIS plot out to disk to inspect later
+	# Save ARCGIS plot.
 	plt.savefig(os.path.join(directory, hotel_name + '.png'))
-
-	# close out the plot to avoid multiple colorbar bug
-	plt.clf()
-	plt.close()
+	plt.clf(); plt.close()
 
 	# setting zero-valued bins to small non-zero values (for KL divergence)
 	bin_coords[np.where(bin_coords == 0)] = 1e-32
+	normed = (bin_coords / np.sum(bin_coords)).ravel()
 
-	normed_distro = bin_coords / np.sum(bin_coords)
-
-	# return normalized, binned coordinates in one-dimensional vector
-	return np.ravel(normed_distro)
+	return normed
 
 
 def get_nearby_pickups_times(args):
