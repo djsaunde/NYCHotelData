@@ -24,31 +24,27 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 	distances = range(min_distance, max_distance, 25)
 	objective_evaluations = np.zeros(np.shape(distances))
 
-	capacity_hotel_names = set([ hotel_name for hotel_name in capacity_data.keys() ])
-	taxi_hotel_names = set([ hotel_name for hotel_name in taxi_data.keys() ])
+	capacity_hotel_names = set([hotel_name for hotel_name in capacity_data.keys()])
+	taxi_hotel_names = set([hotel_name for hotel_name in taxi_data.keys()])
 	hotel_names = capacity_hotel_names.intersection(taxi_hotel_names)
 
-	print(len(hotel_names))
-	print(hotel_names)
-	sys.exit()
-
-	for backwards_stepwise_idx in xrange(len(hotel_names)):
-		capacity_sum = sum([ value for (hotel_name, value) in capacity_data.items() if hotel_name in hotel_names ])
-		capacity_distribution = { hotel_name : capacity / float(capacity_sum) \
-			for (hotel_name, capacity) in sorted(capacity_data.items()) if hotel_name in hotel_names }
+	for backwards_stepwise_idx in range(len(hotel_names)):
+		capacity_sum = sum([value for (hotel_name, value) in capacity_data.items() if hotel_name in hotel_names])
+		capacity_distribution = {hotel_name : capacity / float(capacity_sum) \
+			for (hotel_name, capacity) in sorted(capacity_data.items()) if hotel_name in hotel_names}
 
 		taxi_distributions = []
 		for distance in distances:
-			taxi_subset = { hotel_name : len(data[data <= distance]) for \
-				(hotel_name, data) in sorted(taxi_data.items()) if hotel_name in hotel_names }
-			taxi_sum = sum([ value for value in taxi_subset.values()])
+			taxi_subset = {hotel_name : len(data[data <= distance]) for \
+				(hotel_name, data) in sorted(taxi_data.items()) if hotel_name in hotel_names}
+			taxi_sum = sum([value for value in taxi_subset.values()])
 
 			if taxi_sum != 0:
-				taxi_distributions.append({ hotel_name : n_trips / float(taxi_sum) \
-					for (hotel_name, n_trips) in sorted(taxi_subset.items()) if hotel_name in hotel_names })
+				taxi_distributions.append({hotel_name : n_trips / float(taxi_sum) \
+					for (hotel_name, n_trips) in sorted(taxi_subset.items()) if hotel_name in hotel_names})
 			else:
-				taxi_distributions.append({ hotel_name : 0.0 for hotel_name in \
-						sorted(taxi_subset.keys()) if hotel_name in hotel_names })
+				taxi_distributions.append({hotel_name : 0.0 for hotel_name in \
+						sorted(taxi_subset.keys()) if hotel_name in hotel_names})
 
 		for idx, taxi_distribution in enumerate(taxi_distributions):
 			objective_evaluations[idx] = objective(capacity_distribution, taxi_distribution, minimizee)
@@ -93,9 +89,9 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 			ax2.bar(np.arange(np.shape(absolute_differences)[1]), absolute_differences[distance_idx, :], 
 								zs=idx, zdir='y', alpha=0.8, color=cm(1.0 * idx / len(hotel_names)))
 
-		ax2.set_yticks(xrange(0, len(distances), 10))
-		ax2.set_yticklabels([ distances[idx] for idx in xrange(0, len(distances), 10) ])
-		ax2.set_xticks(xrange(len(hotel_names)))
+		ax2.set_yticks(range(0, len(distances), 10))
+		ax2.set_yticklabels([ distances[idx] for idx in range(0, len(distances), 10) ])
+		ax2.set_xticks(range(len(hotel_names)))
 		ax2.set_xticklabels(sorted(hotel_names))
 		ax2.set_zlim([0, 1])
 		ax2.set_zticks(np.linspace(0, 1, 11))
@@ -104,17 +100,17 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 
 		fig3, [ax3, ax4] = plt.subplots(1, 2, sharey=True, figsize=(18, 9.5))
 
-		ax3.bar(xrange(len(hotel_names)), absolute_differences\
+		ax3.bar(range(len(hotel_names)), absolute_differences\
 			[np.argmin(objective_evaluations), :], label='Absolute differences')
 		ax3.set_title('Absolute differences between distributions')
-		ax3.set_xticks(xrange(len(hotel_names)))
+		ax3.set_xticks(range(len(hotel_names)))
 		ax3.set_yticks(np.linspace(0, 1, 11))
 		ax3.set_ylim([0, 1])
 
 		width = 0.25
 		
-		rects1 = ax4.bar(np.arange(len(hotel_names)), [ capacity_distribution[key] \
-											for key in sorted(capacity_distribution) ], 
+		rects1 = ax4.bar(np.arange(len(hotel_names)), [capacity_distribution[key] \
+											for key in sorted(capacity_distribution)], 
 											width, color='r', label='Capacity distribution')
 		rects2 = ax4.bar(np.arange(len(hotel_names)) + width, \
 			[ taxi_distributions[np.argmin(objective_evaluations)][key] for key in \
@@ -123,7 +119,7 @@ def optimize_distance(capacity_data, taxi_data, min_distance, max_distance, mini
 			'(distance =' + str(distances[np.argmin(objective_evaluations)]) + ')')
 
 		ax4.set_title('Capacity distribution, best taxi rides distribution')
-		ax4.set_xticks(xrange(len(hotel_names)))
+		ax4.set_xticks(range(len(hotel_names)))
 
 		fig3.savefig(os.path.join(plots_path, '_'.join(['distro_diffs', str(backwards_stepwise_idx)]) + '.png'))
 
@@ -149,18 +145,18 @@ def objective(capacity_distribution, taxi_distribution, minimizee):
 	coordinates (nearby pickups / dropoffs / both).
 	'''
 	if minimizee == 'relative_entropy':
-		return entropy(np.array(capacity_distribution.values()), np.array(taxi_distribution.values()))
+		return entropy(np.array(list(capacity_distribution.values())), np.array(list(taxi_distribution.values())))
 	elif minimizee == 'abs_diffs':
-		return np.sum(np.abs(np.array(capacity_distribution.values()) - \
-								np.array(taxi_distribution.values())))
+		return np.sum(np.abs(np.array(list(capacity_distribution.values())) - \
+								np.array(list(taxi_distribution.values()))))
 	elif minimizee == 'inverse_weighted_abs_diffs':
-		return np.sum(np.abs(np.array(capacity_distribution.values()) - \
-								np.array(taxi_distribution.values())) / \
-								np.array(capacity_distribution.values()))
+		return np.sum(np.abs(np.array(list(capacity_distribution.values())) - \
+								np.array(list(taxi_distribution.values()))) / \
+								np.array(list(capacity_distribution.values())))
 	elif minimizee == 'weighted_abs_diffs':
-		return np.sum(np.abs(np.array(capacity_distribution.values()) - \
-								np.array(taxi_distribution.values())) * \
-								np.array(capacity_distribution.values()))
+		return np.sum(np.abs(np.array(list(capacity_distribution.values())) - \
+								np.array(list(taxi_distribution.values()))) * \
+								np.array(list(capacity_distribution.values())))
 
 
 if __name__ == '__main__':
@@ -170,7 +166,7 @@ if __name__ == '__main__':
 	parser.add_argument('--coord_type', default='pickups', type=str)
 	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1], \
 				help='The day on which to start looking for satisfying coordinates.')
-	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 2, 1], \
+	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 1, 2], \
 				help='The day on which to stop looking for satisfying coordinates.')
 	parser.add_argument('--minimizee', type=str, default='weighted_abs_diffs', help='One of \
 		"abs_diffs", "weighted_abs_diffs", "inverse_weighted_abs_diffs", or "relative_entropy".')
