@@ -13,8 +13,13 @@ from datetime import date
 from scipy.stats import entropy
 from mpl_toolkits.mplot3d import Axes3D
 
+reports_path = os.path.join('..', 'data', 'optimization_reports')
 
-def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metric):
+if not os.path.isdir(reports_path):
+	os.makedirs(reports_path)
+
+
+def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metric, fname):
 	'''
 	Sweep a range of distance values and calculate the differences between the proportion
 	of nearby pickups / dropoffs / both (depending on command-line argument). We want the
@@ -29,6 +34,7 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 	hotel_capacities = {key : val for (key, val) in hotel_capacities.items() if key in hotels}
 	taxi_rides = {key : val for (key, val) in taxi_rides.items() if key in hotels}
 
+	removal_data = []
 	for idx in range(len(hotels)):
 		s = sum([value for (hotel, value) in hotel_capacities.items()])
 		
@@ -55,7 +61,7 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 		fig1 = plt.figure(figsize=(18, 9.5))
 		ax1 = fig1.add_subplot(111)
 
-		ax1.plot(distances, evals, label='Entropy as a function of distance')
+		ax1.plot(distances, evals)
 		ax1.set_xlim([0, max(distances)]); ax1.set_ylim([0, max(evals)])
 		ax1.axhline(np.min(evals), color='r', linestyle='--')
 
@@ -65,6 +71,8 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 		elif metric == 'abs_diffs':
 			fig1.suptitle('Sum of abs. diffs. between occupancy\n' + \
 					'proportions and empirical taxicab distribution', fontsize=20)
+		elif metric == 'rel_diffs':
+			fig1.suptitle('Sum of relative diffs. between distributions', fontsize=20)
 		elif metric == 'weighted_abs_diffs':
 			fig1.suptitle('Weighted (by magnitude) sum of absolute differences between\n' + \
 						'occupancy proportions and empirical taxicab distribution', fontsize=20)
@@ -72,57 +80,42 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 			fig1.suptitle('Inversely weighted (by magnitude) sum of absolute differences between\n' + \
 						'occupancy proportions and empirical taxicab distribution', fontsize=20)
 
-		fig1.savefig(os.path.join(plots_path, '_'.join(['relative_entropy', str(idx)]) + '.png'))
+		fig1.savefig(os.path.join(plots_path, '_'.join([metric, str(idx)]) + '.png'))
 
 		abs_diffs = np.zeros([len(distances), len(hotels)])
-		for idx, distance in enumerate(distances):
+		rel_diffs = np.zeros([len(distances), len(hotels)])
+		for i, distance in enumerate(distances):
 			for hotel_idx, hotel in enumerate(sorted(hotels)):
-				abs_diffs[idx, hotel_idx] = np.abs(capacity_distros[hotel] - taxi_distros[idx][hotel])
+				abs_diffs[i, hotel_idx] = np.abs(capacity_distros[hotel] - taxi_distros[i][hotel])
+				rel_diffs[i, hotel_idx] = taxi_distros[i][hotel] / capacity_distros[hotel]
 
 		cm = plt.get_cmap('gist_rainbow')
 
 		fig2 = plt.figure(figsize=(18, 9.5))
 		ax2 = fig2.add_subplot(111, projection='3d')
 
-		fig2.suptitle('Absolute value of occupancy, taxicab distribution\n' + \
-				'differences per hotel, per distance criterion', fontsize=20)
+		fig2.suptitle('Relative differences in distributions per hotel, distance', fontsize=18)
 
-		for idx, distance in enumerate(distances):
-			ax2.bar(np.arange(np.shape(abs_diffs)[1]), abs_diffs[idx, :], 
-												zs=idx, zdir='y', alpha=0.8,
-											color=cm(1.0 * idx / len(hotels)))
+		x = np.arange(np.shape(rel_diffs)[1])
+		for i, distance in enumerate(distances):
+			ax2.bar(x, rel_diffs[i], zs=i, zdir='y', alpha=0.8, color=cm(i / len(hotels)))
 
-		ax2.set_yticks(range(0, len(distances) + 1))
-		ax2.set_yticklabels(distances)
-		ax2.set_xticks(range(len(hotels)))
-		ax2.set_xticklabels(sorted(hotels))
-		ax2.set_zlim([0, 1])
-		ax2.set_zticks(np.linspace(0, 1, 11))
+		ax2.set_yticks(range(0, len(distances) + 1)); ax2.set_yticklabels(distances)
 
-		fig2.savefig(os.path.join(plots_path, '_'.join(['rel_diffs', str(idx)]) + '.png'))
+		fig2.savefig(os.path.join(plots_path, '_'.join(['3D_rel_diffs', str(idx)]) + '.png'))
 
-		fig3, [ax3, ax4] = plt.subplots(1, 2, sharey=True, figsize=(18, 9.5))
+		fig3, [ax3, ax4] = plt.subplots(1, 2, figsize=(18, 9.5))
 
-		ax3.bar(range(len(hotels)), abs_diffs[min_eval_idx, :], label='Absolute differences')
-		ax3.set_title('Absolute differences between distributions')
-		ax3.set_xticks(range(len(hotels)))
-		ax3.set_yticks(np.linspace(0, 1, 11))
-		ax3.set_ylim([0, 1])
+		ax3.bar(range(len(hotels)), rel_diffs[min_eval_idx, :], label='Relative differences')
+		ax3.set_title('Relative differences between distributions')
 
-		width = 0.25
-		
 		caps = [capacity_distros[key] for key in sorted(capacity_distros)]
-
-		rects1 = ax4.bar(np.arange(len(hotels)), caps, width, color='r', label='Capacity distribution')
+		ax4.bar(np.arange(len(hotels)), caps, 0.25, color='r', label='Capacity distribution')
 
 		taxis = [taxi_distros[min_eval_idx][key] for key in sorted(taxi_distros[min_eval_idx]) ]
-		rects2 = ax4.bar(np.arange(len(hotels)) + width, taxis, width, color='y',
-			label='Best taxi rides distr. (dist. = %d)' % distances[min_eval_idx])
-
+		ax4.bar(np.arange(len(hotels)) + 0.25, taxis, 0.25, color='y', label='Best taxi distribution (dist. = %d)' % distances[min_eval_idx])
 		ax4.set_title('Capacity distribution, best taxi rides distribution')
-		ax4.set_xticks(range(len(hotels)))
 
-		plt.ylim([0, 1])
 		plt.legend()
 		
 		fig3.savefig(os.path.join(plots_path, '_'.join(['distr_diffs', str(idx)]) + '.png'))
@@ -130,11 +123,16 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 		if plot:
 			plt.show()
 
-		to_remove = sorted(hotels)[np.argmax(abs_diffs[np.argmin(evals), :])]
-		
-		print('\nRemoving hotel %s' % to_remove)
-		
-		hotels.remove(sorted(hotels)[np.argmax(abs_diffs[np.argmin(evals), :])])
+		worst_idx = np.argmax(rel_diffs[min_eval_idx])
+		to_remove = sorted(hotels)[worst_idx]
+		hotels.remove(sorted(hotels)[worst_idx])
+
+		print('\nRemoved hotel %s' % to_remove)
+
+		removal_data.append([to_remove, abs_diffs[min_eval_idx][worst_idx], rel_diffs[min_eval_idx][worst_idx]])
+
+	df = pd.DataFrame(removal_data, columns=['Removed hotel', 'Abs. difference', 'Rel. difference'])
+	df.to_csv(os.path.join(reports_path, fname) + '.csv')
 
 	return distances[np.argmax(evals)]
 
@@ -145,20 +143,19 @@ def objective(capacity_distros, taxi_distribution, metric):
 	distribution of hotel capacities (occupancies?) and the distribution of taxicab
 	coordinates (nearby pickups / dropoffs / both).
 	'''
-	if metric == 'relative_entropy':
-		return entropy(np.array(list(capacity_distros.values())), np.array(list(taxi_distribution.values())))
-	elif metric == 'abs_diffs':
-		return np.sum(np.abs(np.array(list(capacity_distros.values())) - \
-								np.array(list(taxi_distribution.values()))))
-	elif metric == 'inverse_weighted_abs_diffs':
-		return np.sum(np.abs(np.array(list(capacity_distros.values())) - \
-								np.array(list(taxi_distribution.values()))) / \
-								np.array(list(capacity_distros.values())))
-	elif metric == 'weighted_abs_diffs':
-		return np.sum(np.abs(np.array(list(capacity_distros.values())) - \
-								np.array(list(taxi_distribution.values()))) * \
-								np.array(list(capacity_distros.values())))
+	capacity_distros = np.array(list(capacity_distros.values()))
+	taxi_distribution = np.array(list(taxi_distribution.values()))
 
+	if metric == 'relative_entropy':
+		return entropy(capacity_distros, taxi_distribution)
+	elif metric == 'abs_diffs':
+		return np.sum(np.abs(capacity_distros - taxi_distribution))
+	elif metric == 'rel_diffs':
+		return np.sum(taxi_distribution / capacity_distros)
+	elif metric == 'inverse_weighted_abs_diffs':
+		return np.sum(np.abs(capacity_distros - taxi_distribution) / capacity_distros)
+	elif metric == 'weighted_abs_diffs':
+		return np.sum(np.abs(capacity_distros - taxi_distribution) * capacity_distros)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -167,8 +164,8 @@ if __name__ == '__main__':
 	parser.add_argument('--step', default=25, type=int)
 	parser.add_argument('--coord_type', default='pickups', type=str)
 	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
-	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 1, 2])
-	parser.add_argument('--metric', type=str, default='weighted_abs_diffs')
+	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 1, 7])
+	parser.add_argument('--metric', type=str, default='rel_diffs')
 	parser.add_argument('--plot', dest='plot', action='store_true')
 	parser.add_argument('--no_plot', dest='plot', action='store_false')
 	parser.set_defaults(plot=False)
@@ -212,13 +209,13 @@ if __name__ == '__main__':
 	usecols = ['Share ID', 'Hotel Name', 'Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time',
 								'Drop-off Time', 'Passenger Count', 'Trip Distance', 'Fare Amount']
 	if coord_type == 'pickups':
-		fname = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(maximum)]), 'destinations.csv')
+		filename = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(maximum)]), 'destinations.csv')
 	elif coord_type == 'dropoffs':
-		fname = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(maximum)]), 'all_preprocessed.csv')
+		filename = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(maximum)]), 'all_preprocessed.csv')
 	else:
 		raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument coord_type.')
 
-	taxi_rides = pd.read_csv(fname, header=0, usecols=usecols)
+	taxi_rides = pd.read_csv(filename, header=0, usecols=usecols)
 
 	taxi_rides['Hotel Name'] = taxi_rides['Hotel Name'].apply(str.strip)
 	taxi_rides['Pick-up Time'] = pd.to_datetime(taxi_rides['Pick-up Time'], format='%Y-%m-%d')
@@ -233,4 +230,4 @@ if __name__ == '__main__':
 
 	print('Time: %.4f' % (timeit.default_timer() - start))
 
-	best_distance = optimize_distance(hotel_capacities, rides_by_hotel, minimum, maximum, step, metric)
+	best_distance = optimize_distance(hotel_capacities, rides_by_hotel, minimum, maximum, step, metric, fname)
