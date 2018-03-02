@@ -277,10 +277,6 @@ if __name__ == '__main__':
 	if not os.path.isdir(processed_path):
 		os.makedirs(processed_path)
 
-	processed_path = os.path.join('..', 'data', 'all_preprocessed_' + str(distance))
-	if not os.path.isdir(processed_path):
-		os.makedirs(processed_path)
-
 	if file_name == '':
 		# taxi data files to preprocess
 		taxi_files = [ filename for filename in os.listdir(os.path.join('..', 'data', \
