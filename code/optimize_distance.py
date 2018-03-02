@@ -129,9 +129,9 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 
 		print('\nRemoved hotel %s' % to_remove)
 
-		removal_data.append([to_remove, abs_diffs[min_eval_idx][worst_idx], rel_diffs[min_eval_idx][worst_idx]])
+		removal_data.append([to_remove, distances[min_eval_idx], abs_diffs[min_eval_idx][worst_idx], rel_diffs[min_eval_idx][worst_idx]])
 
-	df = pd.DataFrame(removal_data, columns=['Removed hotel', 'Abs. difference', 'Rel. difference'])
+	df = pd.DataFrame(removal_data, columns=['Removed hotel', 'Best distance', 'Abs. difference', 'Rel. difference'])
 	df.to_csv(os.path.join(reports_path, fname) + '.csv')
 
 	return distances[np.argmax(evals)]
@@ -164,7 +164,7 @@ if __name__ == '__main__':
 	parser.add_argument('--step', default=25, type=int)
 	parser.add_argument('--coord_type', default='pickups', type=str)
 	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
-	parser.add_argument('--end_date', type=int, nargs=3, default=[2013, 1, 7])
+	parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 	parser.add_argument('--metric', type=str, default='rel_diffs')
 	parser.add_argument('--plot', dest='plot', action='store_true')
 	parser.add_argument('--no_plot', dest='plot', action='store_false')
@@ -195,6 +195,8 @@ if __name__ == '__main__':
 	print('\nOrganizing data into per-hotel, per-day dictionary structure.')
 	start = timeit.default_timer()
 	
+	print(len(capacities['Share ID'].unique()))
+	
 	hotel_capacities = {}
 	for hotel in capacities['Share ID'].unique():
 		hotel_capacities[hotel] = sum([row['Room Demand'] for (_, row) in \
@@ -211,7 +213,7 @@ if __name__ == '__main__':
 	if coord_type == 'pickups':
 		filename = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(maximum)]), 'destinations.csv')
 	elif coord_type == 'dropoffs':
-		filename = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(maximum)]), 'all_preprocessed.csv')
+		filename = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(maximum)]), 'starting_points.csv')
 	else:
 		raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument coord_type.')
 
