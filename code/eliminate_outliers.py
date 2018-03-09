@@ -15,32 +15,32 @@ from scipy.stats          import entropy
 from mpl_toolkits.mplot3d import Axes3D
 
 
-def objective(capacity_distros, taxi_distribution, metric):
+def objective(occupancy, taxi, metric):
 	'''
 	The objective function captures how "close" we are to a perfect match between the
 	distribution of hotel capacities (occupancies?) and the distribution of taxicab
 	coordinates (nearby pickups / dropoffs / both).
 	'''
-	capacity_distros = np.array(list(capacity_distros.values()))
-	taxi_distribution = np.array(list(taxi_distribution.values()))
+	occupancy = np.array(list(occupancy.values()))
+	taxi = np.array(list(taxi.values()))
 
 	if metric == 'relative_entropy':
-		return entropy(capacity_distros, taxi_distribution)
+		return entropy(occupancy, taxi)
 	elif metric == 'abs_diffs':
-		return np.sum(np.abs(capacity_distros - taxi_distribution))
+		return np.sum(np.abs(occupancy - taxi))
 	elif metric == 'rel_diffs':
-		return np.sum(taxi_distribution / capacity_distros)
+		return np.sum(taxi / occupancy)
 	elif metric == 'inverse_weighted_abs_diffs':
-		return np.sum(np.abs(capacity_distros - taxi_distribution) / capacity_distros)
+		return np.sum(np.abs(occupancy - taxi) / occupancy)
 	elif metric == 'weighted_abs_diffs':
-		return np.sum(np.abs(capacity_distros - taxi_distribution) * capacity_distros)
+		return np.sum(np.abs(occupancy - taxi) * occupancy)
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--distance', default=25, type=int)
 parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
-parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 1, 1])
+parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--metric', type=str, default='rel_diffs')
 parser.add_argument('--plot', dest='plot', action='store_true')
 parser.add_argument('--no_plot', dest='plot', action='store_false')
@@ -62,18 +62,9 @@ start_date, end_date = date(*start_date), date(*end_date)
 # Load daily capacity data.
 print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-capacities = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
-capacities['Date'] = pd.to_datetime(capacities['Date'], format='%Y-%m-%d')
-capacities = capacities.loc[(capacities['Date'] >= start_date) & (capacities['Date'] <= end_date)]
-
-print('Time: %.4f' % (default_timer() - start))
-
-# Create a dictionary which contains per-hotel daily capacity data.
-print('\nOrganizing data into per-hotel, per-day dictionary structure.'); start = default_timer()
-
-hotel_capacities = {}
-for hotel in capacities['Share ID'].unique():
-	hotel_capacities[hotel] = sum([row['Room Demand'] for (_, row) in capacities.loc[capacities['Share ID'] == hotel].iterrows()])
+occupancy = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
+occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
 
 print('Time: %.4f' % (default_timer() - start))
 
@@ -97,19 +88,38 @@ taxi_rides['Drop-off Time'] = pd.to_datetime(taxi_rides['Drop-off Time'], format
 taxi_rides = taxi_rides.loc[(taxi_rides['Pick-up Time'] >= start_date) & \
 								(taxi_rides['Drop-off Time'] <= end_date)]
 
+print('Time: %.4f' % (default_timer() - start))
+
+hotels = set(occupancy['Share ID'].unique()) & set(taxi_rides['Hotel Name'].unique())
+
+# Calculate number of taxi rides per hotel.
+print('\nComputing number of rides per hotel.'); start = default_timer()
+
 rides_by_hotel = {}
-for hotel in taxi_rides['Hotel Name'].unique():
+for hotel in hotels:
 	hotel_rows = taxi_rides.loc[taxi_rides['Hotel Name'] == hotel]
-	rides_by_hotel[hotel] = np.array([row['Distance From Hotel'] for (_, row) in hotel_rows.iterrows()])
+	rides = [row['Distance From Hotel'] for (_, row) in hotel_rows.iterrows()]
+	rides_by_hotel[hotel] = len(rides)
 
 print('Time: %.4f' % (default_timer() - start))
 
-capacity_distribution = {}
-for (hotel, capacity) in sorted(hotel_capacities.items()):
-	capacity_distribution[hotel] = capacity / sum(hotel_capacities.values())
+# Create a dictionary which contains per-hotel daily capacity data.
+print('\nOrganizing data into per-hotel, per-day dictionary structure.'); start = default_timer()
 
-taxi_distribution = {hotel : n_trips / sum(rides_by_hotel.values()) for (hotel, n_trips) in sorted(rides_by_hotel.items())}
+occupancies = {}
+for hotel in hotels:
+	occupancies[hotel] = sum([row['Room Demand'] for (_, row) in occupancy.loc[occupancy['Share ID'] == hotel].iterrows()])
 
-objective_evals = objective(capacity_distribution, taxi_distribution, metric)
+print('Time: %.4f' % (default_timer() - start))
+
+occupancy_distribution = {}
+for (hotel, capacity) in sorted(occupancies.items()):
+	occupancy_distribution[hotel] = capacity / sum(occupancies.values())
+
+total_trips = sum(rides_by_hotel.values())
+for (hotel, n_trips) in sorted(rides_by_hotel.items()):
+	taxi_distribution = {hotel : n_trips / total_trips for (hotel, n_trips) in sorted(rides_by_hotel.items())}
+
+objective_evals = objective(occupancy_distribution, taxi_distribution, metric)
 
 print(objective_evals)
