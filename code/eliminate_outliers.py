@@ -6,20 +6,18 @@ import timeit
 import argparse
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
-from util                 import *
-from timeit               import default_timer
-from datetime             import date
-from scipy.stats          import entropy
-from mpl_toolkits.mplot3d import Axes3D
+from util        import *
+from datetime    import date
+from scipy.stats import entropy
+from timeit      import default_timer
 
 
-def objective(occupancy, taxi, metric):
+def divergence(occupancy, taxi, metric):
 	'''
-	The objective function captures how "close" we are to a perfect match between the
-	distribution of hotel capacities (occupancies?) and the distribution of taxicab
-	coordinates (nearby pickups / dropoffs / both).
+	Compute some divergence function to capture how "close" we are to a perfect
+	match between the distribution of hotel occupancy and the distribution of
+	taxicab coordinates (nearby pickups, dropoffs, or both).
 	'''
 	occupancy = np.array(list(occupancy.values()))
 	taxi = np.array(list(taxi.values()))
@@ -27,13 +25,13 @@ def objective(occupancy, taxi, metric):
 	if metric == 'relative_entropy':
 		return entropy(occupancy, taxi)
 	elif metric == 'abs_diffs':
-		return np.sum(np.abs(occupancy - taxi))
+		return np.abs(occupancy - taxi)
 	elif metric == 'rel_diffs':
-		return np.sum(taxi / occupancy)
+		return taxi / occupancy
 	elif metric == 'inverse_weighted_abs_diffs':
-		return np.sum(np.abs(occupancy - taxi) / occupancy)
+		return np.abs(occupancy - taxi) / occupancy
 	elif metric == 'weighted_abs_diffs':
-		return np.sum(np.abs(occupancy - taxi) * occupancy)
+		return np.abs(occupancy - taxi) * occupancy
 
 
 parser = argparse.ArgumentParser()
@@ -42,20 +40,11 @@ parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--metric', type=str, default='rel_diffs')
-parser.add_argument('--plot', dest='plot', action='store_true')
-parser.add_argument('--no_plot', dest='plot', action='store_false')
-parser.set_defaults(plot=False)
+parser.add_argument('--nrows', type=int, default=None)
 
 locals().update(vars(parser.parse_args()))
 
 fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], metric]))
-
-plots_path = os.path.join('..', 'plots', 'outlier_elimination', fname)
-reports_path = os.path.join('..', 'data', 'outlier_reports')
-
-for path in [reports_path, plots_path]:
-	if not os.path.isdir(path):
-		os.makedirs(path)
 
 start_date, end_date = date(*start_date), date(*end_date)
 
@@ -80,7 +69,7 @@ elif trip_type == 'dropoffs':
 else:
 	raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument "trip_type".')
 
-taxi_rides = pd.read_csv(filename, header=0, usecols=usecols)
+taxi_rides = pd.read_csv(filename, header=0, usecols=usecols, nrows=nrows)
 
 taxi_rides['Hotel Name'] = taxi_rides['Hotel Name'].apply(str.strip)
 taxi_rides['Pick-up Time'] = pd.to_datetime(taxi_rides['Pick-up Time'], format='%Y-%m-%d')
@@ -103,14 +92,14 @@ for hotel in hotels:
 
 print('Time: %.4f' % (default_timer() - start))
 
-# Create a dictionary which contains per-hotel daily capacity data.
+# Create a dictionary which contains per-hotel daily occupancy data.
 print('\nOrganizing data into per-hotel, per-day dictionary structure.'); start = default_timer()
 
 occupancies = {}
 for hotel in hotels:
 	occupancies[hotel] = sum([row['Room Demand'] for (_, row) in occupancy.loc[occupancy['Share ID'] == hotel].iterrows()])
 
-print('Time: %.4f' % (default_timer() - start))
+print('Time: %.4f\n' % (default_timer() - start))
 
 occupancy_distribution = {}
 for (hotel, capacity) in sorted(occupancies.items()):
@@ -120,6 +109,32 @@ total_trips = sum(rides_by_hotel.values())
 for (hotel, n_trips) in sorted(rides_by_hotel.items()):
 	taxi_distribution = {hotel : n_trips / total_trips for (hotel, n_trips) in sorted(rides_by_hotel.items())}
 
-objective_evals = objective(occupancy_distribution, taxi_distribution, metric)
+# Evaluate objective.
+d_evaluation = divergence(occupancy_distribution, taxi_distribution, metric)
+d_evaluation, hotels = zip(*sorted(zip(d_evaluation, hotels), key=lambda x : x[0]))  # Get order statistics
 
-print(objective_evals)
+d_evaluation = np.array(d_evaluation)
+hotels = np.array(hotels)
+
+# Calculate median and interquartile range (IQR).
+median = np.median(d_evaluation); print('Objective evaluation median:', median)
+iqr = np.subtract(*np.percentile(d_evaluation, [75, 25])); print('IQR:', iqr)
+low, high = median - 1.5 * iqr, median + 1.5 * iqr; print('Low:', low, '; High:', high)
+
+# Remove all hotels with divergence outside of
+# the mean plus or minus 1.5 times the IQR.
+keep_idxs = (d_evaluation <= high) & (d_evaluation >= low) 
+d_evaluation = d_evaluation[keep_idxs]
+hotels = hotels[keep_idxs]
+
+# Save the dataset with outlier hotels
+# removed to disk for further processing.
+taxi_rides = taxi_rides[taxi_rides['Hotel Name'].isin(hotels)]
+
+data_path = os.path.join('..', 'data', 'removed_outliers')
+if not os.path.isdir(data_path):
+	os.makedirs(data_path)
+
+taxi_rides.to_csv(os.path.join(data_path, fname + '.csv'))
+
+print()

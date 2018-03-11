@@ -30,7 +30,7 @@ Amherst, Massachusetts}
 \label{firstpage}
 
 \begin{abstract}
-A method for fast distributed processing of New York City taxicab trip records in relation to a secondary dataset of hotel information is presented. An algorithm used to select an optimal distance threshold for capturing relevant trip records is developed. We show exploratory visualization of taxicab trip records in relation to hotel locations. We suggest and preliminarily investigate applications of the New York City taxicab trip records and its unification with hotel occupancy information.
+A method for fast distributed processing of New York City taxicab trip records with respect to a secondary dataset of hotel occupancy data is presented. An algorithm used to select an optimal distance threshold for capturing relevant trips is motivated and developed. We show exploratory visualization of taxicab trip records in relation to hotel locations. We investigate the effect of predicting daily hotel occupany rates and pricing with and without conditioning on daily nearby taxi traffic. Suggestions are made for additional applications of the taxi trip data and other auxiliary information.
 \end{abstract}
 
 \begin{keywords}
@@ -42,13 +42,13 @@ Applied economics; Data analysis; Distributed computing.
 \section{Introduction}
 \label{s:intro}
 
-The availability of various forms of empirical commercial and industrial data is crucial for the evaluation and solution of real-world economics problems. At the scale of cities and nations, however, certain data present major data processing challenges. With the advent of massively parallel and relatively cheap distributed computing, however, methods for the processing and analysis of such datasets are not entirely out of reach.
+The availability of various forms of empirical commercial and industrial data is crucial for the solution of real-world economics problems. At the scale of cities and nations, however, certain data present major data processing challenges. With the advent of massively parallel and relatively cheap distributed computing, however, methods for the processing and analysis of such datasets are not entirely out of reach.
 
-The New York City (NYC) Taxi \& Limousine Commission (TLC) Trip Record Data consists in part of yellow and green taxicab trip records spanning the years 2009-2017. Recorded attributes include pick-up and drop-off date and time of day, pick-up and drop-off geospatial or zone-coded location, trip distances, fares, and others.
+The New York City (NYC) Taxi \& Limousine Commission (TLC) Trip Record Data consists in part of yellow and green taxicab trip records spanning the years 2009-2017. Recorded attributes include pick-up and drop-off date and time of day, pick-up and drop-off geospatial or zone-coded location, trip distances, fares, and others. Careful exploration and analysis of such a massive observational dataset may result in powerful insights in transportation issues in NYC. Methods developed on this particular dataset may be generalized to other urban settings in which such data is or becomes available.
 
-Although interesting studies have been done on the taxi trip records dataset on its own, combining it with additional relevant datasets may allow for more powerful economics studies. We study a unification of the taxi data with the occupancy rates of 178 NYC hotels from the years 2013 to 2016. We are interested in trips which \textit{begin or end within distance} $d$ of at least one hotel in the dataset. To find the best choice of $d$ over all hotels, we demonstrate an optimization procedure motivated from a simple distribution matching approach. Hotels with abnormal amounts of taxicab traffic may be eliminated from consideration during or after the optimization process.
+Although interesting studies have been done on the NYC taxi records data, combining it with additional relevant datasets should allow researchers to propose and test more powerful economic hypotheses. We study a unification of the taxi data with the occupancy rates of 178 NYC hotels from the years 2013 to 2016. We are interested in trips which \textit{begin or end within distance} $d$ of at least one hotel in the dataset. To find the best choice of $d$ over all hotels, we demonstrate an optimization procedure motivated from a simple distribution matching approach. Hotels with abnormal amounts of taxicab traffic may be eliminated from consideration during or after the optimization process.
 
-We hypothesize that both hotel occupancy rates and pricing can be predicted from daily nearby taxicab pick-up and drop-off distributions. We hope that hotel occupancy and (indirectly) pricing will be a simple stochastic function of the proportion of nearby taxicab density. Indeed, our data analysis demonstrates this on a subset of hotels within a tolerable error.
+We hypothesize that both hotel occupancy rates and pricing can be predicted from the density of daily nearby taxicab pick-up and drop-off rides, combined with other relevant attributes. We hypothesize that hotel occupancy and, indirectly, pricing may be more accurately predicted as a function of daily nearby taxi ride density along with more generic attributes than without the nearby taxi rides information.
 
 \section{Related Work}
 \label{s:related}
@@ -76,9 +76,9 @@ Pre-processing a month of yellow taxi data using the aforementioned Python proce
 
 A crucial assumption in the analyses of the taxi dataset is that taxi trips that originate or culminate near a hotel is likely to indicate that a guest is arriving or leaving the hotel. With this in mind, we can use the locations to which the guest travels, or where the guest has traveled from, to draw conclusions about typical patrons per hotel.
 
-The distance criterion $d$ should be selected such that it maximizes economic predictability in some sense. We compare a dataset of occupancy rates with proportions of nearby taxi trips, per hotel. We are interested in finding a setting of $d$ such that some divergence measure $\mathcal{D}$ between empirically observed distributions $\hat{p}_{\mathrm{occupancy}}$ and $\hat{p}_{\mathrm{taxi}}$ is minimized. We consider relative entropy, total variance distance, and total relative difference.
+The distance criterion $d$ should be selected such that it maximizes economic predictability in some sense. We compare a dataset of hotel occupancy information with proportions of nearby taxi trips, per hotel. We are interested in finding a setting of $d$ such that some divergence measure $\mathcal{D}$ between empirically observed distributions $\hat{p}_{\mathrm{occ}}$ and $\hat{p}_{\mathrm{taxi}}$ is minimized. We consider relative entropy $\left( \sum_x \hat{p}_{\mathrm{occ}} (x) \log \frac{\hat{p}_{\mathrm{occ}} (x)}{\hat{p}_{\mathrm{taxi}} (x)} \right)$, total variation distance $\left( \frac{1}{2} \sum_x | \hat{p}_{\mathrm{occ}} (x) - \hat{p}_{\mathrm{taxi}} (x) | \right)$, and summed relative differences $\left( \sum_x \frac{\hat{p}_{\mathrm{occ}} (x)}{\hat{p}_{\mathrm{taxi}} (x)} \right)$. Of these, only relative entropy constitutes a true $f$-divergence.
 
-After pre-processing using a suitably large distance criterion (e.g., $d = 300$ft.), a range of candidate distance criterions are considered (e.g., $d \in [25 \mathrm{ft.}, 50 \mathrm{ft.}, ..., 275 \mathrm{ft.}, 300 \mathrm{ft.}]$). The empirical distribution $\hat{p}_{\mathrm{taxi}}$ is computed from the data for each choice of $d$, and we calculate the selected divergence measure with respect to the fixed $\hat{p}_{\mathrm{occupancy}}$. The criterion $d$ giving the minimal divergence value is said to be the ``best'', and the dataset obtained from this choice of $d$ can be used for downstream analyses.
+After pre-processing using a suitably large distance criterion (e.g., $d = 300$ft.), a range of candidate distance criterions are considered (e.g., $d \in [25 \mathrm{ft.}, 50 \mathrm{ft.}, ..., 275 \mathrm{ft.}, 300 \mathrm{ft.}]$). The empirical distribution $\hat{p}_{\mathrm{taxi}}$ is computed from the data for each choice of $d$, and we calculate the selected divergence measure with respect to the fixed $\hat{p}_{\mathrm{occ}}$. The criterion $d$ giving the minimal divergence value is said to be the ``best'', and the dataset obtained from this choice of $d$ can be used for downstream analyses.
 
 \subsection{Removing outlier hotels}
 
@@ -88,11 +88,17 @@ Using the same divergence measures as listed above, we propose two methods for t
 
 \begin{itemize}
 
-\item [1.] Iteratively remove hotels from the occupancy dataset during the distance optimization process until the divergence measure between distributions, $\mathcal{D} (p_{\mathrm{occupancy}} || p_{\mathrm{taxi}})$, is below some threshold. Picking the threshold is a hyper-parameter choice, and may be difficult to select \textit{a priori}.
+\item [1.] Iteratively remove hotels from the occupancy dataset during the distance optimization process until the divergence measure between distributions, $\mathcal{D} (\hat{p}_{\mathrm{occ}} || \hat{p}_{\mathrm{taxi}})$, is below some threshold. Picking the threshold is a hyper-parameter choice, and may be difficult to select \textit{a priori}.
 
 \item [2.] After running the distance optimization procedure, restore any hotels that may have been removed from the dataset, and apply a outlier-detection algorithm based on the per-hotel divergence measure values.
 
 \end{itemize}
+
+\subsection{Predicting hotel occupancy and room pricing}
+
+We establish a simple estimation baseline using only information from the hotel occupancy dataset to predict daily hotel room demand. In particular, we fit an ordinary least squares (OLS) regression model to the hotel occupany data, in which we assume the room demand is a linear function of the hotel, day of the week, and the date. This information allows the model to discriminate typical per-hotel room demand rates, as well as to capture the weekly and yearly trends in occupancy rates. A simple multi-layer perceptron (MLP) is also fit to this data, with parameters (hidden layer sizes and regularization constant) selected by random hyper-parameter search. This model is able to learn non-linear interactions between the three chosen observational features. The data is partitioned into 80\% train, 10\% validation, and 10\% test, and $R^2$ and mean-squared error (MSE) of both models are reported in \ref{s:results}.
+
+To evaluate the effect of conditioning hotel occupany predictions on available nearby taxi trip densities, we include both nearby pick-up and drop-off trips as separate features in both the OLS and MLP models, as described above. Hyper-parameters are re-selected according to a random hyper-parameter search, and the dataset is partitioned into train, validation, and test subsets as before. 
 
 \section{Results}
 \label{s:results}
@@ -104,7 +110,7 @@ Using the same divergence measures as listed above, we propose two methods for t
 
 \section*{Acknowledgements}
 
-The authors would like to thank the College of Computer and Information Sciences for the gracious allowance of supercomputing resources.
+The authors would like to thank the College of Computer and Information Sciences for the gracious allowance of supercomputing time.
 
 \bibliographystyle{biom} 
 \bibliography{nyctaxi}

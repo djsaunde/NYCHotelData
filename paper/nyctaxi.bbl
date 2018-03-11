@@ -1,0 +1,68 @@
+\begin{thebibliography}{}
+
+\bibitem[\protect\citeauthoryear{Arabie and Carroll}{Arabie and
+  Carroll}{2016}]{dask}
+Arabie, P. and Carroll, J.~D. (2016).
+\newblock {\em Dask: Library for dynamic task scheduling}.
+
+\bibitem[\protect\citeauthoryear{Bessel, Karney, and Deakin}{Bessel
+  et~al.}{2010}]{bessel_calculation_2010}
+Bessel, F.~W., Karney, C. F.~F., and Deakin, R.~E. (2010).
+\newblock The calculation of longitude and latitude from geodesic measurements.
+\newblock {\em Astronomische Nachrichten} {\bf 331,} 852--861.
+\newblock arXiv: 0908.1824.
+
+\bibitem[\protect\citeauthoryear{Chu, Sheets, Zhao, Wu, Yang, Zheng, and
+  Chen}{Chu et~al.}{2014}]{Chu2014VisualizingHT}
+Chu, D., Sheets, D.~A., Zhao, Y., Wu, Y., Yang, J., Zheng, M., and Chen, G.~Z.
+  (2014).
+\newblock Visualizing hidden themes of taxi movement with semantic
+  transformation.
+\newblock {\em 2014 IEEE Pacific Visualization Symposium} pages 137--144.
+
+\bibitem[\protect\citeauthoryear{Doraiswamy, Ferreira, Damoulas, Freire, and
+  Silva}{Doraiswamy et~al.}{2014}]{Doraiswamy2014UsingTA}
+Doraiswamy, H., Ferreira, N., Damoulas, T., Freire, J., and Silva, C.~T.
+  (2014).
+\newblock Using topological analysis to support event-guided exploration in
+  urban data.
+\newblock {\em IEEE Transactions on Visualization and Computer Graphics} {\bf
+  20,} 2634--2643.
+
+\bibitem[\protect\citeauthoryear{Doraiswamy, Vo, Silva, and Freire}{Doraiswamy
+  et~al.}{2016}]{Doraiswamy2016AGI}
+Doraiswamy, H., Vo, H.~T., Silva, C.~T., and Freire, J. (2016).
+\newblock A gpu-based index to support interactive spatio-temporal queries over
+  historical data.
+\newblock {\em 2016 IEEE 32nd International Conference on Data Engineering
+  (ICDE)} pages 1086--1097.
+
+\bibitem[\protect\citeauthoryear{Ferreira, Poco, Vo, Freire, and
+  Silva}{Ferreira et~al.}{2013}]{Ferreira2013VisualEO}
+Ferreira, N., Poco, J., Vo, H.~T., Freire, J., and Silva, C.~T. (2013).
+\newblock Visual exploration of big spatio-temporal urban data: A study of new
+  york city taxi trips.
+\newblock {\em IEEE Transactions on Visualization and Computer Graphics} {\bf
+  19,} 2149--2158.
+
+\bibitem[\protect\citeauthoryear{Huang, Zhao, Ma, Yang, Ye, and Zhang}{Huang
+  et~al.}{2016}]{Huang2016TrajGraphAG}
+Huang, X., Zhao, Y., Ma, C., Yang, J., Ye, X., and Zhang, C. (2016).
+\newblock Trajgraph: A graph-based visual analytics approach to studying urban
+  network centralities using taxi trajectory data.
+\newblock {\em IEEE Transactions on Visualization and Computer Graphics} {\bf
+  22,} 160--169.
+
+\bibitem[\protect\citeauthoryear{Stoyanovich, Gilbride, and
+  Moffitt}{Stoyanovich et~al.}{2017}]{Stoyanovich2017ZoomingIO}
+Stoyanovich, J., Gilbride, M., and Moffitt, V.~Z. (2017).
+\newblock Zooming in on nyc taxi data with portal.
+\newblock {\em CoRR} {\bf abs/1709.06176,}.
+
+\bibitem[\protect\citeauthoryear{Wu, Wang, and Li}{Wu
+  et~al.}{2016}]{Wu2016InterpretingTD}
+Wu, F., Wang, H., and Li, Z. (2016).
+\newblock Interpreting traffic dynamics using ubiquitous urban data.
+\newblock In {\em SIGSPATIAL/GIS}.
+
+\end{thebibliography}
