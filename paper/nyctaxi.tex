@@ -9,7 +9,10 @@
 
 %\usepackage[figuresright]{rotating}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{amsfonts}
+\usepackage{caption}
+
+\listfiles
 
 \title{Unifying NYC Taxicab Records and Hotel Occupancy Data}
 
@@ -30,7 +33,7 @@ Amherst, Massachusetts}
 \label{firstpage}
 
 \begin{abstract}
-A method for fast distributed processing of New York City taxicab trip records with respect to a secondary dataset of hotel occupancy data is presented. An algorithm used to select an optimal distance threshold for capturing relevant trips is motivated and developed. We show exploratory visualization of taxicab trip records in relation to hotel locations. We investigate the effect of predicting daily hotel occupany rates and pricing with and without conditioning on daily nearby taxi traffic. Suggestions are made for additional applications of the taxi trip data and other auxiliary information.
+A method for fast distributed processing of New York City taxicab trip records with respect to a secondary dataset of daily hotel information is presented. An algorithm used to select an optimal distance threshold for capturing taxi trips relevant to predicting hotel metrics is motivated and developed. Two hotel outlier removal techniques based on distribution matching and simple outlier detection are discussed, and used to reduce prediction error. We show visualizations of taxicab trips in NYC in relation to hotel locations. We investigate the effect of predicting daily hotel occupany rates and pricing with and without conditioning on daily nearby taxi traffic. Potential applications of the taxi trip records database and other data sources are discussed as avenues of potential future work.
 \end{abstract}
 
 \begin{keywords}
@@ -76,9 +79,9 @@ Pre-processing a month of yellow taxi data using the aforementioned Python progr
 
 A crucial assumption in the analyses of the taxi dataset is that taxi trips that originate or culminate near a hotel is likely to indicate that a guest is arriving or leaving the hotel. With this in mind, we can use the locations to which the guest travels, or where the guest has traveled from, to draw conclusions about typical patrons per hotel.
 
-The distance criterion $d$ should be selected such that it maximizes economic predictability in some sense. We compare a dataset of hotel occupancy information with proportions of nearby taxi trips, per hotel. We are interested in finding a setting of $d$ such that some divergence measure $\mathcal{D}$ between empirically observed distributions $\hat{p}_{\mathrm{occ}}$ and $\hat{p}_{\mathrm{taxi}}$ is minimized. We consider relative entropy $\left( \sum_x \hat{p}_{\mathrm{occ}} (x) \log \frac{\hat{p}_{\mathrm{occ}} (x)}{\hat{p}_{\mathrm{taxi}} (x)} \right)$, total variation distance $\left( \frac{1}{2} \sum_x | \hat{p}_{\mathrm{occ}} (x) - \hat{p}_{\mathrm{taxi}} (x) | \right)$, and summed relative differences $\left( \sum_x \frac{\hat{p}_{\mathrm{occ}} (x)}{\hat{p}_{\mathrm{taxi}} (x)} \right)$. Of these, only relative entropy constitutes a true $f$-divergence.
+The distance criterion $d$ should be selected such that it maximizes economic predictability in some sense. We compare a dataset of hotel occupancy information with proportions of nearby taxi trips, per hotel. We are interested in finding a setting of $d$ such that some divergence measure $\mathcal{D}$ between empirically observed distributions $\hat{p}_{\mathrm{occ}}$ and $\hat{p}_{\mathrm{taxi}}$ is minimized. We consider relative entropy $\left( \sum_x \hat{p}_{\mathrm{occ}} (x) \log \frac{\hat{p}_{\mathrm{occ}} (x)}{\hat{p}_{\mathrm{taxi}} (x)} \right)$, summed absolute differences $\left( \sum_x | \hat{p}_{\mathrm{occ}} (x) - \hat{p}_{\mathrm{taxi}} (x) | \right)$, and summed relative differences, in which the smaller-valued proportion is used as the base in the quotient $\left( \sum_x \frac{\min \{ \hat{p}_{\mathrm{taxi}} (x), \hspace*{0.1cm} \hat{p}_{\mathrm{occ}} (x) \}}{\max \{ \hat{p}_{\mathrm{taxi}} (x), \hspace*{0.1cm} \hat{p}_{\mathrm{occ}} (x) \}} \right)$. Note that the divergence measures used are not necessarily true $f$-divergences, but were selected as a result of the properties combined taxi trip records and hotel occupany datasets. 
 
-After pre-processing using a suitably large distance criterion (e.g., $d = 300$ft.), a range of candidate distance criterions are considered (e.g., $d \in [25 \mathrm{ft.}, 50 \mathrm{ft.}, ..., 275 \mathrm{ft.}, 300 \mathrm{ft.}]$). The empirical distribution $\hat{p}_{\mathrm{taxi}}$ is computed from the data for each choice of $d$, and we calculate the selected divergence measure with respect to the fixed $\hat{p}_{\mathrm{occ}}$. The criterion $d$ giving the minimal divergence value is said to be the ``best'', and the dataset obtained from this choice of $d$ can be used for downstream analyses.
+After pre-processing the NYC taxi data using a suitably large distance criterion (e.g., $d = 300$ft.), a range of candidate distance criterions are considered (e.g., $d \in [25 \mathrm{ft.}, 50 \mathrm{ft.}, ..., 275 \mathrm{ft.}, 300 \mathrm{ft.}]$). The empirical per-hotel proportions of nearby pick-up and / or drop-off taxi trips $\hat{p}_{\mathrm{taxi}}$ is computed from the data for each choice of $d$, and we calculate the selected divergence measure with respect to the fixed $\hat{p}_{\mathrm{occ}}$; that is, the observed per-hotel proportions of rented rooms over all hotels over the same time period. The criterion $d$ giving the minimal divergence value is said to be the ``best'', and the dataset obtained from this choice of $d$ can be used for downstream analyses.
 
 \subsection{Removing outlier hotels}
 
@@ -90,13 +93,13 @@ Using the same divergence measures as listed above, we propose two methods for t
 
 \item [1.] Iteratively remove hotels from the occupancy dataset during the distance optimization process until the divergence measure between distributions, $\mathcal{D} (\hat{p}_{\mathrm{occ}} || \hat{p}_{\mathrm{taxi}})$, is below some threshold. Picking the threshold is a hyper-parameter choice, and may be difficult to select \textit{a priori}.
 
-\item [2.] After running the distance optimization procedure, restore any hotels that may have been removed from the dataset, and apply a outlier-detection algorithm based on the per-hotel divergence measure values.
+\item [2.] After selecting a distance criterion $d$, apply a standard outlier-detection algorithm based on the per-hotel divergence measure values. \textbf{TODO}
 
 \end{itemize}
 
 \subsection{Predicting hotel occupancy and pricing}
 
-We establish a simple estimation baseline using only information from the hotel occupancy dataset to predict daily hotel room demand. In particular, we fit an ordinary least squares (OLS) regression model to the hotel occupany data, in which we assume the room demand is a linear function of the hotel, day of the week, and the date. This information allows the model to discriminate typical per-hotel room demand rates, as well as to capture the weekly and yearly trends in occupancy rates. A simple multi-layer perceptron (MLP) is also fit to this data, with parameters (hidden layer sizes and regularization constant) selected by random hyper-parameter search. This model is able to learn non-linear interactions between the three chosen observational features. The data is partitioned into 80\% train, 10\% validation, and 10\% test, and $R^2$ and mean-squared error (MSE) of both models are reported in \ref{s:results}.
+We establish a simple estimation baseline using only information from the hotel occupancy dataset to predict daily hotel room demand. In particular, we fit an ordinary least squares (OLS) regression model to the hotel occupany data, in which we assume the room demand is a linear function of the hotel identity, the day of the week, and the date (\textbf{TODO}: should the baseline include the year, month, day, and day of week instead?). This information allows the model to discriminate typical per-hotel room demand rates, as well as to capture the weekly and yearly trends in occupancy rates. A simple multi-layer perceptron (MLP) is also fit to this data, with parameters (hidden layer sizes and regularization constant) selected by random hyper-parameter search. This model is able to learn non-linear interactions between the three chosen observational features. The data is partitioned into 80\% train, 10\% validation, and 10\% test, and $R^2$ and mean-squared error (MSE) of both models are reported in \ref{s:results}.
 
 To evaluate the effect of conditioning hotel occupany predictions on available nearby taxi trip densities, we include both nearby pick-up and drop-off trips as separate features in both the OLS and MLP models, as described above. Hyper-parameters are re-selected according to a random hyper-parameter search, and the dataset is partitioned into train, validation, and test subsets as before. We train and test models using a range of nearby taxi distance thresholds $d \in \{25 \mathrm{ft.}, 50 \mathrm{ft.} ..., 300 \mathrm{ft.} \}$, in order to validate the choice of distance criterion established by the optimization method described above.
 
@@ -105,7 +108,34 @@ To evaluate the effect of conditioning hotel occupany predictions on available n
 
 \subsection{Outlier removal}
 
+Using the first outlier removal method, as part of the distance criterion optimization procedure, we present tables of the order of hotel removals from the dataset for each divergence measure. Included also are the removed hotel's value of the calculated divergence measure, as well as the optimal distance criterion $d$ for that particular iteration. Though there are 178 hotels, we truncate each table after just 10 iterations in order to give an idea of the removal behavior given a particular divergence measure.
 
+\begin{table}
+\caption{Order of hotel removals using the relative divergence divergence measure. Optimal distance criterion, per-hotel observed occupancy and nearby taxi trip proportions, and calculated divergence value also included.}
+\label{t:relative_divergence}
+\begin{center}
+ \begin{tabular}{||c|c|c|c|c|c||}
+ \hline
+ Removal & Hotel & $\hat{p}_{\mathrm{occ}}$ & $\hat{p}_{\mathrm{taxi}}$ & Best $d$ & Rel. diff. \\ [0.5ex] 
+ \hline
+ 1 & Res. Inn ... Trade Center & $6 \times 10^{-7}$ & $2.6 \times 10^{-3}$ & 300 & 4,549 \\
+ 2 & Hotel Gansevoort & $3 \times 10^{-3}$ & $2 \times 10^{-2}$ & 190 & 6.33 \\
+ 3 & Courtyard ... Herald Square & $2.2 \times 10^{-3}$ & $1.3 \times 10^{-2}$ & 180 & 5.93 \\
+ 4 & Hilton ... Park Avenue & $5.7 \times 10^{-4}$ & $3.3 \times 10^{-3}$ & 180 & 5.74 \\
+ 5 & Hotel On Rivington & $1.7 \times 10^{-3}$ & $9.6 \times 10^{-3}$ & 195 & 5.62 \\
+ 6 & Holiday Inn Express ... & $4.3 \times 10^{-3}$ & $8 \times 10^{-4}$ & 195 & 5.28 \\
+ 7 & Hilton New York Midtown & $3.6 \times 10^{-2}$ & $7.4 \times 10^{-3}$ & 195 & 4.91 \\
+ 8 & Doubletree ... Fin. District & $7 \times 10^{-3}$ & $1.6 \times 10^{-3}$ & 190 & 4.27 \\
+ 9 & Sohotel & $9 \times 10^{-4}$ & $3.8 \times 10^{-3}$ & 190 & 4.2 \\
+ 10 & Res. Inn ... Central Park & $2 \times 10^{-3}$ & $8.1 \times 10^{-3}$ & 180 & 4.02 \\
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\subsection{Predicting hotel occupancy and pricing}
+
+\textbf{TODO}
 
 \section{Conclusion}
 \label{s:conclusion}
