@@ -117,7 +117,7 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 		ax4.set_title('Capacity distribution, best taxi rides distribution')
 
 		plt.legend()
-		
+
 		fig3.savefig(os.path.join(plots_path, '_'.join(['distr_diffs', str(idx)]) + '.png'))
 
 		if plot:
@@ -129,9 +129,11 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 
 		print('\nRemoved hotel %s' % to_remove)
 
-		removal_data.append([to_remove, distances[min_eval_idx], abs_diffs[min_eval_idx][worst_idx], rel_diffs[min_eval_idx][worst_idx]])
+		removal_data.append([to_remove, distances[min_eval_idx], capacity_distros[worst_idx],
+					taxi_distros[min_eval_idx][worst_idx], abs_diffs[min_eval_idx][worst_idx],
+														 rel_diffs[min_eval_idx][worst_idx]])
 
-	df = pd.DataFrame(removal_data, columns=['Removed hotel', 'Best distance', 'Abs. difference', 'Rel. difference'])
+	df = pd.DataFrame(removal_data, columns=['Removed hotel', 'Best distance', 'Capacity share', 'Taxi share', 'Abs. difference', 'Rel. difference'])
 	df.to_csv(os.path.join(reports_path, fname) + '.csv')
 
 	return distances[np.argmax(evals)]
@@ -194,8 +196,6 @@ if __name__ == '__main__':
 	# Create a dictionary which contains per-hotel daily capacity data.
 	print('\nOrganizing data into per-hotel, per-day dictionary structure.')
 	start = timeit.default_timer()
-	
-	print(len(capacities['Share ID'].unique()))
 	
 	hotel_capacities = {}
 	for hotel in capacities['Share ID'].unique():

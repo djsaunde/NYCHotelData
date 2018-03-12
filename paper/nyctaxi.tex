@@ -66,11 +66,11 @@ The efficient processing of spatio-temporal datasets (e.g, NYC taxi trip records
 
 The dataset of hotel occupancy rates contains information from January 2013 until present day. The dataset of NYC hotel taxi records contains data from January 2009 until present day; however, geospatial coordinates of pick-up and drop-off locations are only recorded from January 2009 until June 2016. Given these constraints, our experiments consider only those records which lie in the date range of January 2013 until June 2016, approximately 3.5 years of joint data. Our analyses are concerned only with the yellow and green taxi services in NYC, and we discard all data concerning ``for-hire vehicle'' services (e.g., Uber, Lyft, and others).
 
-We use a supercomputing cluster in which users are provisioned with a maximum of 40 CPU compute nodes. On each node, a Python process is dispatched to \textit{pre-process} a single month's worth of taxicab trip data with respect to the set of NYC hotels of interest. In particular, upon specifying a \textit{distance criterion} $d$, each process will extract trips from its month worth of data which begin or end with $d$ feet of any of the hotels under consideration. Geospatial distance calculations are accomplished using Vincenty's formula \citep{bessel_calculation_2010}. Loading and pre-processing of the taxi trip records is accomplished using the Dask parallel computation and task scheduling Python library \cite{dask}.
+We use a supercomputing cluster in which users are provisioned with a maximum of 40 CPU compute nodes. On each node, a Python program is dispatched to \textit{pre-process} a single month's worth of taxicab trip data with respect to the set of NYC hotels of interest. In particular, upon specifying a \textit{distance criterion} $d$, each process will extract trips from its month worth of data which begin or end with $d$ feet of any of the hotels under consideration. Geospatial distance calculations are accomplished using Vincenty's formula \citep{bessel_calculation_2010}. Loading and pre-processing of the taxi trip records is accomplished using the Dask parallel computation and task scheduling Python library \cite{dask}.
 
 Prior to pre-processing, each month of yellow and green taxi trip data amounts to approximately 2.5Gb and 300Mb, respectively, totalling $\approx$115Gb over the course of the experimental date range. Pre-processing the dataset using a distance criterion $d = 300$ feet reduces this to two files of size $\approx$20Gb each, one of trips beginning near hotels of interest (\textit{destinations}), and another ending nearby (\textit{origins}).
 
-Pre-processing a month of yellow taxi data using the aforementioned Python process and distance criterion $d = 300$ requires \textit{at most} 40 minutes and 50Gb of random-access memory. Using the super-computing cluster with a 40-node per-user allotment, processing all 42 months of taxi trip date requires only $\approx$80 minutes. If equipped with more than 42 nodes, the processing time would be cut in half.
+Pre-processing a month of yellow taxi data using the aforementioned Python program and distance criterion $d = 300$ requires \textit{at most} 40 minutes and 50Gb of random-access memory. Using the super-computing cluster with a 40-node per-user allotment, processing all 42 months of taxi trip date requires only $\approx$80 minutes. If equipped with more than 42 nodes, the processing time would be cut in half.
 
 \subsection{Distance criterion optimization}
 
@@ -94,14 +94,18 @@ Using the same divergence measures as listed above, we propose two methods for t
 
 \end{itemize}
 
-\subsection{Predicting hotel occupancy and room pricing}
+\subsection{Predicting hotel occupancy and pricing}
 
 We establish a simple estimation baseline using only information from the hotel occupancy dataset to predict daily hotel room demand. In particular, we fit an ordinary least squares (OLS) regression model to the hotel occupany data, in which we assume the room demand is a linear function of the hotel, day of the week, and the date. This information allows the model to discriminate typical per-hotel room demand rates, as well as to capture the weekly and yearly trends in occupancy rates. A simple multi-layer perceptron (MLP) is also fit to this data, with parameters (hidden layer sizes and regularization constant) selected by random hyper-parameter search. This model is able to learn non-linear interactions between the three chosen observational features. The data is partitioned into 80\% train, 10\% validation, and 10\% test, and $R^2$ and mean-squared error (MSE) of both models are reported in \ref{s:results}.
 
-To evaluate the effect of conditioning hotel occupany predictions on available nearby taxi trip densities, we include both nearby pick-up and drop-off trips as separate features in both the OLS and MLP models, as described above. Hyper-parameters are re-selected according to a random hyper-parameter search, and the dataset is partitioned into train, validation, and test subsets as before. 
+To evaluate the effect of conditioning hotel occupany predictions on available nearby taxi trip densities, we include both nearby pick-up and drop-off trips as separate features in both the OLS and MLP models, as described above. Hyper-parameters are re-selected according to a random hyper-parameter search, and the dataset is partitioned into train, validation, and test subsets as before. We train and test models using a range of nearby taxi distance thresholds $d \in \{25 \mathrm{ft.}, 50 \mathrm{ft.} ..., 300 \mathrm{ft.} \}$, in order to validate the choice of distance criterion established by the optimization method described above.
 
 \section{Results}
 \label{s:results}
+
+\subsection{Outlier removal}
+
+
 
 \section{Conclusion}
 \label{s:conclusion}
