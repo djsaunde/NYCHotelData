@@ -10,7 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--distance', default=25, type=int)
 parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
-parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
+parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--metric', type=str, default='rel_diffs')
 parser.add_argument('--nrows', type=int, default=None)
 parser.add_argument('--n', type=int, default=1000)
@@ -25,8 +25,8 @@ start_date, end_date = date(*start_date), date(*end_date)
 
 predictions_path = os.path.join('..', 'data', '%s_predictions' % model, fname)
 
-predictions = np.load(os.path.join(predictions_path, 'predictions.npy'))
-targets = np.load(os.path.join(predictions_path, 'targets.npy'))
+predictions = np.load(os.path.join(predictions_path, 'test_predictions.npy'))
+targets = np.load(os.path.join(predictions_path, 'test_targets.npy'))
 
 if plot_type == 'plot':
 	if n == -1:
