@@ -26,17 +26,16 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 	distance which minimizes these differences. At the same time, we wish to remove hotels
 	from the optimization of the distance which are severe outliers.
 	'''
-	step = 25
 	distances = range(minimum, maximum + step, step)
 	evals = np.zeros(np.shape(distances))
-
+	
 	hotels = set(hotel_capacities.keys()) & set(taxi_rides.keys())
 	hotel_capacities = {key : val for (key, val) in hotel_capacities.items() if key in hotels}
 	taxi_rides = {key : val for (key, val) in taxi_rides.items() if key in hotels}
 
 	removal_data = []
 	for idx in range(len(hotels)):
-		s = sum([value for (hotel, value) in hotel_capacities.items()])
+		s = sum([value for (hotel, value) in hotel_capacities.items() if hotel in hotels])
 		
 		capacity_distros = {}
 		for (hotel, capacity) in sorted(hotel_capacities.items()):
@@ -62,23 +61,19 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 		ax1 = fig1.add_subplot(111)
 
 		ax1.plot(distances, evals)
-		ax1.set_xlim([0, max(distances)]); ax1.set_ylim([0, max(evals)])
+		ax1.set_xlim([0, max(distances)]); ax1.set_ylim([0, max(evals[~np.isinf(evals)])])
 		ax1.axhline(np.min(evals), color='r', linestyle='--')
 
 		if metric == 'relative_entropy':
-			fig1.suptitle('Relative entropy between occupancy\n' + \
-					'proportions and empirical taxicab distribution', fontsize=20)
+			fig1.suptitle('Relative entropy', fontsize=16)
 		elif metric == 'abs_diffs':
-			fig1.suptitle('Sum of abs. diffs. between occupancy\n' + \
-					'proportions and empirical taxicab distribution', fontsize=20)
+			fig1.suptitle('Sum of absolute differences', fontsize=16)
 		elif metric == 'rel_diffs':
-			fig1.suptitle('Sum of relative diffs. between distributions', fontsize=20)
+			fig1.suptitle('Sum of relative differences', fontsize=16)
 		elif metric == 'weighted_abs_diffs':
-			fig1.suptitle('Weighted (by magnitude) sum of absolute differences between\n' + \
-						'occupancy proportions and empirical taxicab distribution', fontsize=20)
+			fig1.suptitle('Sum of weighted (by magnitude) absolute differences', fontsize=16)
 		elif metric == 'inverse_weighted_abs_diffs':
-			fig1.suptitle('Inversely weighted (by magnitude) sum of absolute differences between\n' + \
-						'occupancy proportions and empirical taxicab distribution', fontsize=20)
+			fig1.suptitle('Sum of inversely weighted (by magnitude) absolute differences', fontsize=16)
 
 		fig1.savefig(os.path.join(plots_path, '_'.join([metric, str(idx)]) + '.png'))
 
@@ -94,11 +89,18 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 		fig2 = plt.figure(figsize=(18, 9.5))
 		ax2 = fig2.add_subplot(111, projection='3d')
 
-		fig2.suptitle('Relative differences in distributions per hotel, distance', fontsize=18)
+		if metric == 'rel_diffs':
+			fig2.suptitle('Relative differences per distance, hotel', fontsize=16)
+		else:
+			fig2.suptitle('Absolute differences per distance, hotel', fontsize=16)
 
 		x = np.arange(np.shape(rel_diffs)[1])
-		for i, distance in enumerate(distances):
-			ax2.bar(x, rel_diffs[i], zs=i, zdir='y', alpha=0.8, color=cm(i / len(hotels)))
+		if metric == 'rel_diffs':
+			for i, distance in enumerate(distances):
+				ax2.bar(x, rel_diffs[i], zs=i, zdir='y', alpha=0.8, color=cm(i / len(hotels)))
+		else:
+			for i, distance in enumerate(distances):
+				ax2.bar(x, abs_diffs[i], zs=i, zdir='y', alpha=0.8, color=cm(i / len(hotels)))
 
 		ax2.set_yticks(range(0, len(distances) + 1)); ax2.set_yticklabels(distances)
 
@@ -123,17 +125,32 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 		if plot:
 			plt.show()
 
-		worst_idx = np.argmax(rel_diffs[min_eval_idx])
+		plt.close('all')
+
+		if metric == 'rel_diffs':
+			divergences = []
+			for x in rel_diffs[min_eval_idx]:
+				if x >= 1:
+					divergences.append(x)
+				elif x > 0 and x < 1:
+					divergences.append(1 / x)
+				elif x == 0:
+					divergences.append(np.inf)
+					
+			worst_idx = np.argmax(divergences)
+		else:
+			worst_idx = np.argmax(abs_diffs[min_eval_idx])
+
 		to_remove = sorted(hotels)[worst_idx]
-		hotels.remove(sorted(hotels)[worst_idx])
+		hotels.remove(to_remove)
+		
+		print('Removed hotel %s (%d remaining)' % (to_remove, len(hotels)))
+		
+		removal_data.append([to_remove, distances[min_eval_idx], capacity_distros[to_remove],
+					taxi_distros[min_eval_idx][to_remove], abs_diffs[min_eval_idx][worst_idx],
+																	divergences[worst_idx]])
 
-		print('\nRemoved hotel %s' % to_remove)
-
-		removal_data.append([to_remove, distances[min_eval_idx], capacity_distros[worst_idx],
-					taxi_distros[min_eval_idx][worst_idx], abs_diffs[min_eval_idx][worst_idx],
-														 rel_diffs[min_eval_idx][worst_idx]])
-
-	df = pd.DataFrame(removal_data, columns=['Removed hotel', 'Best distance', 'Capacity share', 'Taxi share', 'Abs. difference', 'Rel. difference'])
+	df = pd.DataFrame(removal_data, columns=['Removed hotel', 'Best distance', 'Capacity share', 'Taxi share', 'Abs. difference', 'Rel. divergence'])
 	df.to_csv(os.path.join(reports_path, fname) + '.csv')
 
 	return distances[np.argmax(evals)]
@@ -153,7 +170,18 @@ def objective(capacity_distros, taxi_distribution, metric):
 	elif metric == 'abs_diffs':
 		return np.sum(np.abs(capacity_distros - taxi_distribution))
 	elif metric == 'rel_diffs':
-		return np.sum(taxi_distribution / capacity_distros)
+		rel_diffs= taxi_distribution / capacity_distros
+		
+		divergences = []
+		for x in rel_diffs:
+			if x >= 1:
+				divergences.append(x)
+			elif x > 0 and x < 1:
+				divergences.append(1 / x)
+			elif x == 0:
+				divergences.append(np.inf)
+		
+		return np.sum(divergences)
 	elif metric == 'inverse_weighted_abs_diffs':
 		return np.sum(np.abs(capacity_distros - taxi_distribution) / capacity_distros)
 	elif metric == 'weighted_abs_diffs':
@@ -173,7 +201,7 @@ if __name__ == '__main__':
 	parser.set_defaults(plot=False)
 
 	locals().update(vars(parser.parse_args()))
-
+	
 	fname = '_'.join(map(str, [minimum, maximum, coord_type, start_date[0], start_date[1],
 							start_date[2], end_date[0], end_date[1], end_date[2], metric]))
 	plots_path = os.path.join('..', 'plots', 'distance_optimization', fname)
