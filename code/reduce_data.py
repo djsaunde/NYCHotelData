@@ -3,8 +3,11 @@ from __future__ import print_function
 import os
 import argparse
 import pandas as pd
+import dask.dataframe as dd
 
-from util import *
+from util             import *
+from dask.diagnostics import Profiler
+from timeit           import default_timer
 
 
 parser = argparse.ArgumentParser()
@@ -24,10 +27,15 @@ if not os.path.isdir(processed_path):
 	os.makedirs(processed_path)
 
 print(); print('Loading pre-processed taxi data with distance criterion d = %d.' % old_distance)
-df = pd.read_csv(os.path.join(large_distance_path, trip_type + '.csv'))
+df = dd.read_csv(os.path.join(large_distance_path, trip_type + '.csv'), dtype={'Fare Amount' : 'object'})
 
 print('Reducing by distance criterion d = %d.' % distance)
-df = df[df['Distance From Hotel'] <= distance]
+start = default_timer()
+
+df = df.where(df['Distance From Hotel'] <= distance).dropna().drop(['Unnamed: 0'], axis=1)
+df = df.compute()
+
+print('Time: %.4f' % (default_timer() - start))
 
 print('Writing to disk.'); print()
-df.to_csv(os.path.join(processed_path, trip_type + '.csv'))
+df.to_csv(os.path.join(processed_path, trip_type + '.csv'), index=False)
