@@ -20,12 +20,13 @@ parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
 
 locals().update(vars(parser.parse_args()))
 
+disk_fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], metric]))
 fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], metric, hidden_layer_sizes]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 
 data_path = os.path.join('..', 'data', 'all_preprocessed_%d' % distance)
-taxi_occupancy_path = os.path.join('..', 'data', 'taxi_occupancy', fname)
+taxi_occupancy_path = os.path.join('..', 'data', 'taxi_occupancy', disk_fname)
 predictions_path = os.path.join('..', 'data', 'taxi_mlp_predictions', fname)
 
 for path in [data_path, taxi_occupancy_path, predictions_path]:
@@ -77,7 +78,8 @@ if not os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy coun
 
 	# Count number of rides per hotel and date.
 	df = df.groupby(['Hotel Name', 'Date', 'Room Demand']).count().reset_index()
-	df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'}) 
+	df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'})
+	df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
 	# Save occupancy and taxi counts to disk.
 	print('\nSaving counts to disk.'); start = default_timer()
@@ -92,16 +94,15 @@ else:
 	
 	df = pd.read_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
 	df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
-	df['Date'] = df['Date'].dt.date
 	
 	print('Time: %.4f' % (default_timer() - start))
 
 hotels = np.array(df['Hotel Name'])
 trips = np.array(df['No. Nearby Trips']).reshape([-1, 1])
-weekdays = np.array(occupancy['Date'].dt.weekday).reshape([-1, 1])
-months = np.array(occupancy['Date'].dt.month).reshape([-1, 1])
-years = np.array(occupancy['Date'].dt.year).reshape([-1, 1])
-targets = np.array(occupancy['Room Demand'])
+weekdays = np.array(df['Date'].dt.weekday).reshape([-1, 1])
+months = np.array(df['Date'].dt.month).reshape([-1, 1])
+years = np.array(df['Date'].dt.year).reshape([-1, 1])
+targets = np.array(df['Room Demand'])
 
 # Randomly permute the data to remove sequence biasing.
 p = np.random.permutation(targets.shape[0])
@@ -109,9 +110,6 @@ hotels, trips, weekdays, months, years, targets = hotels[p], trips[p], weekdays[
 
 _, hotels = np.unique(hotels, return_inverse=True)
 hotels = hotels.reshape([-1, 1])
-
-_, dates = np.unique(dates, return_inverse=True)
-dates = dates.reshape([-1, 1])
 
 # Split the data into (training, test) subsets.
 split = int(0.8 * len(targets))

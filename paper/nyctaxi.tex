@@ -158,12 +158,38 @@ We train and evaluate all models using nearby taxi trip data using distances $d 
 \caption{MSE and $R^2$ values for OLS and MLP regression models trained without relevant taxi data.}
 \label{t:baseline_performance}
 \begin{center}
- \begin{tabular}{||c|c|c||}
+ \begin{tabular}{||c|c|c|c|c||}
  \hline
- Model & MSE & $R^2$ \\
+ Model & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
  \hline
- OLS &  &  \\
+ OLS & 106,317 & 0.0168 & 105,955 & 0.0160 \\
  MLP &  &  \\
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}
+\caption{MSE and $R^2$ values for OLS and MLP regression models trained with relevant taxi data with a range of distance thresholds $d$.}
+\label{t:taxi_performance}
+\begin{center}
+ \begin{tabular}{||c|c|c|c|c|c||}
+ \hline
+ Model & $d$ (ft.) & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
+ \hline
+ OLS & 25 & 117,392 & 0.0187 & 116,641 & 0.0216 \\
+  & 50 & 108,550 & 0.0161 & 105,108 & 0.0146 \\
+  & 75 & 106,275 & 0.0167 & 107,219 & 0.0166 \\
+  & 100 & 106,702 & 0.0170 & 104,822 & 0.0166 \\
+  & 125 &  &  &  &  \\
+  & 150 &  &  &  &  \\
+  & 175 &  &  &  &  \\
+  & 200 &  &  &  &  \\
+  & 225 &  &  &  &  \\
+  & 250 &  &  &  &  \\
+  & 275 &  &  &  &  \\
+  & 300 &  &  &  &  \\
+ MLP &  &  &  &  &  \\
  \hline
 \end{tabular}
 \end{center}
