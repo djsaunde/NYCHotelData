@@ -14,7 +14,6 @@ parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--metric', type=str, default='rel_diffs')
 parser.add_argument('--nrows', type=int, default=None)
 parser.add_argument('--n', type=int, default=1000)
-parser.add_argument('--model', type=str, default='lr')
 parser.add_argument('--plot_type', type=str, default='plot')
 
 locals().update(vars(parser.parse_args()))
@@ -23,7 +22,7 @@ fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2]
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-predictions_path = os.path.join('..', 'data', '%s_predictions' % model, fname)
+predictions_path = os.path.join('..', 'data', 'lr_predictions', fname)
 
 predictions = np.load(os.path.join(predictions_path, 'test_predictions.npy'))
 targets = np.load(os.path.join(predictions_path, 'test_targets.npy'))

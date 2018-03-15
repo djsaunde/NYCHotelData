@@ -19,7 +19,7 @@ parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
 
 locals().update(vars(parser.parse_args()))
 
-fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], metric]))
+fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], metric, hidden_layer_sizes]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 

@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--distance', default=25, type=int)
 parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
-parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
+parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--metric', type=str, default='rel_diffs')
 parser.add_argument('--nrows', type=int, default=None)
 
@@ -31,54 +31,76 @@ for path in [data_path, taxi_occupancy_path, predictions_path]:
 	if not os.path.isdir(path):
 		os.makedirs(path)
 
-# Load daily capacity data.
-print('\nLoading daily per-hotel capacity data.'); start = default_timer()
+if not os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv')):
+	# Load daily capacity data.
+	print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-occupancy = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
-occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
-occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
-occupancy['Date'] = occupancy['Date'].dt.date
-occupancy = occupancy.rename(index=str, columns={'Share ID': 'Hotel Name'})
-occupancy = occupancy.drop('Unnamed: 0', axis=1)
+	occupancy = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+	occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
+	occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
+	occupancy['Date'] = occupancy['Date'].dt.date
+	occupancy = occupancy.rename(index=str, columns={'Share ID': 'Hotel Name'})
+	occupancy = occupancy.drop('Unnamed: 0', axis=1)
 
-print('Time: %.4f' % (default_timer() - start))
+	print('Time: %.4f' % (default_timer() - start))
 
-# Load preprocessed data according to command-line "distance" parameter.
-print('\nReading in the pre-processed taxicab data.'); start = default_timer()
+	# Load preprocessed data according to command-line "distance" parameter.
+	print('\nReading in the pre-processed taxicab data.'); start = default_timer()
 
-usecols = ['Hotel Name', 'Pick-up Time', 'Drop-off Time', 'Distance From Hotel']
-if trip_type == 'pickups':
-	filename = os.path.join(data_path, 'destinations.csv')
-elif trip_type == 'dropoffs':
-	filename = os.path.join(data_path, 'starting_points.csv')
+	usecols = ['Hotel Name', 'Pick-up Time', 'Drop-off Time', 'Distance From Hotel']
+	if trip_type == 'pickups':
+		filename = os.path.join(data_path, 'destinations.csv')
+	elif trip_type == 'dropoffs':
+		filename = os.path.join(data_path, 'starting_points.csv')
+	else:
+		raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument "trip_type".')
+
+	taxi_rides = pd.read_csv(filename, header=0, usecols=usecols, nrows=nrows)
+
+	taxi_rides['Hotel Name'] = taxi_rides['Hotel Name'].apply(str.strip)
+	taxi_rides['Pick-up Time'] = pd.to_datetime(taxi_rides['Pick-up Time'], format='%Y-%m-%d')
+	taxi_rides['Drop-off Time'] = pd.to_datetime(taxi_rides['Drop-off Time'], format='%Y-%m-%d')
+	taxi_rides = taxi_rides.loc[(taxi_rides['Pick-up Time'] >= start_date) & \
+									(taxi_rides['Drop-off Time'] <= end_date)]
+	taxi_rides['Date'] = taxi_rides['Pick-up Time'].dt.date
+	taxi_rides = taxi_rides.drop(['Pick-up Time', 'Drop-off Time'], axis=1)
+
+	print('Time: %.4f' % (default_timer() - start))
+
+	# Build the dataset of ((hotel, taxi density), occupancy) input, output pairs.
+	print('\nMerging dataframes on Date and Hotel Name attributes.'); start = default_timer()
+
+	df = pd.merge(occupancy, taxi_rides, on=['Date', 'Hotel Name'])
+
+	print('Time: %.4f' % (default_timer() - start))
+
+	# Save merged occupancy and taxi data to disk.
+	print('\nSaving merged dataframes to disk.'); start = default_timer()
+
+	df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'))
+	
+	print('Time: %.4f' % (default_timer() - start))
+	
+	# Count number of rides per hotel and date.
+	df = df.groupby(['Hotel Name', 'Date', 'Room Demand']).count().reset_index()
+	df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'}) 
+
+	# Save occupancy and taxi counts to disk.
+	print('\nSaving counts to disk.'); start = default_timer()
+
+	df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
+    
+	print('Time: %.4f' % (default_timer() - start))
+	
 else:
-	raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument "trip_type".')
-
-taxi_rides = pd.read_csv(filename, header=0, usecols=usecols, nrows=nrows)
-
-taxi_rides['Hotel Name'] = taxi_rides['Hotel Name'].apply(str.strip)
-taxi_rides['Pick-up Time'] = pd.to_datetime(taxi_rides['Pick-up Time'], format='%Y-%m-%d')
-taxi_rides['Drop-off Time'] = pd.to_datetime(taxi_rides['Drop-off Time'], format='%Y-%m-%d')
-taxi_rides = taxi_rides.loc[(taxi_rides['Pick-up Time'] >= start_date) & \
-								(taxi_rides['Drop-off Time'] <= end_date)]
-taxi_rides['Date'] = taxi_rides['Pick-up Time'].dt.date
-taxi_rides = taxi_rides.drop(['Pick-up Time', 'Drop-off Time'], axis=1)
-
-print('Time: %.4f' % (default_timer() - start))
-
-# Build the dataset of ((hotel, taxi density), occupancy) input, output pairs.
-print('\nMerging dataframes on Date and Hotel Name attributes.'); start = default_timer()
-
-df = pd.merge(occupancy, taxi_rides, on=['Date', 'Hotel Name'])
-
-print('Time: %.4f' % (default_timer() - start))
-
-# Save merged occupancy and taxi data to disk.
-print('\nSaving merged dataframes to disk.'); start = default_timer()
-
-df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'))
-
-print('Time: %.4f' % (default_timer() - start))
+	# Load merged occupancy and taxi data from disk.
+	print('\nLoading occupancy and taxi counts from disk.'); start = default_timer()
+	
+	df = pd.read_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
+	df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
+	df['Date'] = df['Date'].dt.date
+	
+	print('Time: %.4f' % (default_timer() - start))
 
 # Count number of rides per hotel and date.
 df = df.groupby(['Hotel Name', 'Date', 'Room Demand']).count().reset_index()
@@ -96,18 +118,43 @@ hotels = hotels.reshape([-1, 1])
 _, dates = np.unique(dates, return_inverse=True)
 dates = dates.reshape([-1, 1])
 
-features = np.concatenate([hotels, trips, hotels * trips, trips ** 2 * hotels,
-						trips ** 2, dates, dates * trips, trips ** 3 * hotels,
-						trips ** 3, weekdays, trips * weekdays], axis=1)
+# Split the data into (training, test) subsets.
+split = int(0.8 * len(targets))
 
-model = LinearRegression().fit(features, targets)
-score = model.score(features, targets)
+train_features = [hotels[:split], trips[:split], dates[:split], weekdays[:split]]
+train_features = np.concatenate(train_features, axis=1)
 
-predictions = model.predict(features)
-mse = mean_squared_error(targets, predictions)
+test_features = [hotels[split:], trips[split:], dates[split:], weekdays[split:]]
+test_features = np.concatenate(test_features, axis=1)
 
-np.save(os.path.join(predictions_path, 'targets.npy'), targets)
-np.save(os.path.join(predictions_path, 'predictions.npy'), predictions)
+train_targets = targets[:split]
+test_targets = targets[split:]
 
-print('\n'); print('R^2:', score)
-print('MSE:', mse); print('\n')
+print('\nCreating and training multi-layer perceptron regression model.\n')
+
+model = LinearRegression().fit(train_features, train_targets)
+
+print('\nTraining complete. Getting predictions and calculating R^2, MSE.')
+
+train_score = model.score(train_features, train_targets)
+test_score = model.score(test_features, test_targets)
+
+train_predictions = model.predict(train_features)
+train_mse = mean_squared_error(train_targets, train_predictions)
+
+test_predictions = model.predict(test_features)
+test_mse = mean_squared_error(test_targets, test_predictions)
+
+np.save(os.path.join(predictions_path, 'train_targets.npy'), train_targets)
+np.save(os.path.join(predictions_path, 'train_predictions.npy'), train_predictions)
+
+np.save(os.path.join(predictions_path, 'test_targets.npy'), test_targets)
+np.save(os.path.join(predictions_path, 'test_predictions.npy'), test_predictions)
+
+print('\n')
+print('Training R^2:', train_score)
+print('Training MSE:', train_mse)
+print('\n')
+print('Test R^2:', test_score)
+print('Test MSE:', test_mse)
+print('\n')
