@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--distance', default=25, type=int)
 parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
-parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
+parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--metric', type=str, default='rel_diffs')
 parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
 
@@ -39,27 +39,25 @@ occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date']
 print('Time: %.4f' % (default_timer() - start))
 
 hotels = np.array(occupancy['Share ID'])
-weekdays = np.array(occupancy['Date'].apply(date.weekday)).reshape([-1, 1])
-dates = np.array(occupancy['Date'].apply(str)).reshape([-1, 1])
+weekdays = np.array(occupancy['Date'].dt.weekday).reshape([-1, 1])
+months = np.array(occupancy['Date'].dt.month).reshape([-1, 1])
+years = np.array(occupancy['Date'].dt.year).reshape([-1, 1])
 targets = np.array(occupancy['Room Demand'])
 
 # Randomly permute the data to remove sequence biasing.
 p = np.random.permutation(targets.shape[0])
-hotels, weekdays, dates, targets = hotels[p], weekdays[p], dates[p], targets[p]
+hotels, weekdays, months, years, targets = hotels[p], weekdays[p], months[p], years[p], targets[p]
 
 _, hotels = np.unique(hotels, return_inverse=True)
 hotels = hotels.reshape([-1, 1])
 
-_, dates = np.unique(dates, return_inverse=True)
-dates = dates.reshape([-1, 1])
-
 # Split the data into (training, test) subsets.
 split = int(0.8 * len(targets))
 
-train_features = [hotels[:split], dates[:split], weekdays[:split]]
+train_features = [hotels[:split], years[:split], months[:split], weekdays[:split]]
 train_features = np.concatenate(train_features, axis=1)
 
-test_features = [hotels[split:], dates[split:], weekdays[split:]]
+test_features = [hotels[split:], years[split:], months[split:], weekdays[split:]]
 test_features = np.concatenate(test_features, axis=1)
 
 train_targets = targets[:split]

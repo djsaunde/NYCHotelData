@@ -86,9 +86,14 @@ df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'})
 
 hotels = np.array(df['Hotel Name'])
 trips = np.array(df['No. Nearby Trips']).reshape([-1, 1])
-weekdays = np.array(df['Date'].apply(date.weekday)).reshape([-1, 1])
-dates = np.array(df['Date'].apply(str)).reshape([-1, 1])
-targets = np.array(df['Room Demand'])
+weekdays = np.array(occupancy['Date'].dt.weekday).reshape([-1, 1])
+months = np.array(occupancy['Date'].dt.month).reshape([-1, 1])
+years = np.array(occupancy['Date'].dt.year).reshape([-1, 1])
+targets = np.array(occupancy['Room Demand'])
+
+# Randomly permute the data to remove sequence biasing.
+p = np.random.permutation(targets.shape[0])
+hotels, trips, weekdays, months, years, targets = hotels[p], trips[p], weekdays[p], months[p], years[p], targets[p]
 
 _, hotels = np.unique(hotels, return_inverse=True)
 hotels = hotels.reshape([-1, 1])
@@ -96,18 +101,43 @@ hotels = hotels.reshape([-1, 1])
 _, dates = np.unique(dates, return_inverse=True)
 dates = dates.reshape([-1, 1])
 
-features = np.concatenate([hotels, trips, hotels * trips, trips ** 2 * hotels,
-						trips ** 2, dates, dates * trips, trips ** 3 * hotels,
-						trips ** 3, weekdays, trips * weekdays], axis=1)
+# Split the data into (training, test) subsets.
+split = int(0.8 * len(targets))
 
-model = LinearRegression().fit(features, targets)
-score = model.score(features, targets)
+train_features = [hotels[:split], trips[:split], years[:split], months[:split], weekdays[:split]]
+train_features = np.concatenate(train_features, axis=1)
 
-predictions = model.predict(features)
-mse = mean_squared_error(targets, predictions)
+test_features = [hotels[split:], trips[split:], years[split:], months[split:], weekdays[split:]]
+test_features = np.concatenate(test_features, axis=1)
 
-np.save(os.path.join(predictions_path, 'targets.npy'), targets)
-np.save(os.path.join(predictions_path, 'predictions.npy'), predictions)
+train_targets = targets[:split]
+test_targets = targets[split:]
 
-print('\n'); print('R^2:', score)
-print('MSE:', mse); print('\n')
+print('\nCreating and training multi-layer perceptron regression model.\n')
+
+model = LinearRegression().fit(train_features, train_targets)
+
+print('\nTraining complete. Getting predictions and calculating R^2, MSE.')
+
+train_score = model.score(train_features, train_targets)
+test_score = model.score(test_features, test_targets)
+
+train_predictions = model.predict(train_features)
+train_mse = mean_squared_error(train_targets, train_predictions)
+
+test_predictions = model.predict(test_features)
+test_mse = mean_squared_error(test_targets, test_predictions)
+
+np.save(os.path.join(predictions_path, 'train_targets.npy'), train_targets)
+np.save(os.path.join(predictions_path, 'train_predictions.npy'), train_predictions)
+
+np.save(os.path.join(predictions_path, 'test_targets.npy'), test_targets)
+np.save(os.path.join(predictions_path, 'test_predictions.npy'), test_predictions)
+
+print('\n')
+print('Training R^2:', train_score)
+print('Training MSE:', train_mse)
+print('\n')
+print('Test R^2:', test_score)
+print('Test MSE:', test_mse)
+print('\n')
