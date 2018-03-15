@@ -81,7 +81,7 @@ A crucial assumption in the analyses of the taxi dataset is that taxi trips that
 
 The distance criterion $d$ should be selected such that it maximizes economic predictability in some sense. We compare a dataset of hotel occupancy information with proportions of nearby taxi trips, per hotel. We are interested in finding a setting of $d$ such that some divergence measure $\mathcal{D}$ between empirically observed distributions $\hat{p}_{\mathrm{occ}}$ and $\hat{p}_{\mathrm{taxi}}$ is minimized. We consider relative entropy $\left( \sum_x \hat{p}_{\mathrm{occ}} (x) \log \frac{\hat{p}_{\mathrm{occ}} (x)}{\hat{p}_{\mathrm{taxi}} (x)} \right)$, summed absolute differences $\left( \sum_x | \hat{p}_{\mathrm{occ}} (x) - \hat{p}_{\mathrm{taxi}} (x) | \right)$, and summed relative differences, in which the smaller-valued proportion is used as the base in the quotient $\left( \sum_x \frac{\min \{ \hat{p}_{\mathrm{taxi}} (x), \hspace*{0.1cm} \hat{p}_{\mathrm{occ}} (x) \}}{\max \{ \hat{p}_{\mathrm{taxi}} (x), \hspace*{0.1cm} \hat{p}_{\mathrm{occ}} (x) \}} \right)$. Note that the divergence measures used are not necessarily true $f$-divergences, but were selected as a result of the properties combined taxi trip records and hotel occupany datasets. 
 
-After pre-processing the NYC taxi data using a suitably large distance criterion (e.g., $d = 300$ft.), a range of candidate distance criterions are considered (e.g., $d \in [25 \mathrm{ft.}, 50 \mathrm{ft.}, ..., 275 \mathrm{ft.}, 300 \mathrm{ft.}]$). The empirical per-hotel proportions of nearby pick-up and / or drop-off taxi trips $\hat{p}_{\mathrm{taxi}}$ is computed from the data for each choice of $d$, and we calculate the selected divergence measure with respect to the fixed $\hat{p}_{\mathrm{occ}}$; that is, the observed per-hotel proportions of rented rooms over all hotels over the same time period. The criterion $d$ giving the minimal divergence value is said to be the ``best'', and the dataset obtained from this choice of $d$ can be used for downstream analyses.
+After pre-processing the NYC taxi data using a suitably large distance criterion (e.g., $d = 300$ft.), a range of candidate distance criterions are considered (e.g., $d \in [25 \mathrm{ft.}, 50 \mathrm{ft.},$ ..., $275 \mathrm{ft.}, 300 \mathrm{ft.}]$). The empirical per-hotel proportions of nearby pick-up and / or drop-off taxi trips $\hat{p}_{\mathrm{taxi}}$ is computed from the data for each choice of $d$, and we calculate the selected divergence measure with respect to the fixed $\hat{p}_{\mathrm{occ}}$; that is, the observed per-hotel proportions of rented rooms over all hotels over the same time period. The criterion $d$ giving the minimal divergence value is said to be the ``best'', and the dataset obtained from this choice of $d$ can be used for downstream analyses.
 
 \subsection{Removing outlier hotels}
 
@@ -106,12 +106,14 @@ To evaluate the effect of conditioning hotel occupany predictions on available n
 \section{Results}
 \label{s:results}
 
-\subsection{Outlier removal}
+We first
 
-Using the first outlier removal method, as part of the distance criterion optimization procedure, we present tables of the order of hotel removals from the dataset for each divergence measure. Included also are the removed hotel's value of the calculated divergence measure, as well as the optimal distance criterion $d$ for that particular iteration. Though there are 178 hotels, we truncate each table after just 10 iterations in order to give an idea of the removal behavior given a particular divergence measure.
+\subsection{Outlier removal: choosing optimal distance threshold}
+
+Using the first outlier removal method, as part of the distance criterion optimization procedure, we may create tables of the order of hotel removals from the dataset for each divergence measure. We include one such table, in which the absolute differences measure is used to decide the hotel removal order. Included also are the removed hotels' absolute difference values, as well as the optimal distance criterion $d$ for that particular iteration of the removal algorithm. Though there are 178 hotels in the dataset, we truncate the table after just 15 iterations in order to give an idea of the removal behavior using the relative difference measure.
 
 \begin{table}
-\caption{Order of hotel removals and corresponding data using the relative divergence divergence measure.}
+\caption{Order of hotel removals and corresponding data using the relative difference divergence measure.}
 \label{t:relative_divergence}
 \begin{center}
  \begin{tabular}{||c|c|c|c|c|c||}
@@ -120,22 +122,52 @@ Using the first outlier removal method, as part of the distance criterion optimi
  \hline
  1 & Res. Inn ... Trade Center & $6 \times 10^{-7}$ & $2.6 \times 10^{-3}$ & 300 & 4,549 \\
  2 & Hotel Gansevoort & $3 \times 10^{-3}$ & $2 \times 10^{-2}$ & 190 & 6.33 \\
- 3 & Courtyard ... Herald Square & $2.2 \times 10^{-3}$ & $1.3 \times 10^{-2}$ & 180 & 5.93 \\
+ 3 & Courtyard ... Herald Sqr. & $2.2 \times 10^{-3}$ & $1.3 \times 10^{-2}$ & 180 & 5.93 \\
  4 & Hilton ... Park Avenue & $5.7 \times 10^{-4}$ & $3.3 \times 10^{-3}$ & 180 & 5.74 \\
  5 & Hotel On Rivington & $1.7 \times 10^{-3}$ & $9.6 \times 10^{-3}$ & 195 & 5.62 \\
  6 & Holiday Inn Express ... & $4.3 \times 10^{-3}$ & $8 \times 10^{-4}$ & 195 & 5.28 \\
- 7 & Hilton New York Midtown & $3.6 \times 10^{-2}$ & $7.4 \times 10^{-3}$ & 195 & 4.91 \\
- 8 & Doubletree ... Fin. District & $7 \times 10^{-3}$ & $1.6 \times 10^{-3}$ & 190 & 4.27 \\
+ 7 & Hilton NY Midtown & $3.6 \times 10^{-2}$ & $7.4 \times 10^{-3}$ & 195 & 4.91 \\
+ 8 & Doubletree ... Fin. Distr. & $7 \times 10^{-3}$ & $1.6 \times 10^{-3}$ & 190 & 4.27 \\
  9 & Sohotel & $9 \times 10^{-4}$ & $3.8 \times 10^{-3}$ & 190 & 4.2 \\
  10 & Res. Inn ... Central Park & $2 \times 10^{-3}$ & $8.1 \times 10^{-3}$ & 180 & 4.02 \\
+ 11 & Hilton ... Square Central & $9.2 \times 10^{-4} $ & $3.6 \times 10^{-3}$ & 180 & 3.87 \\
+ 12 & Marriott NY Marquis & $3.8 \times 10^{-2}$ & $9.9 \times 10^{-3}$ & 180 & 3.8 \\
+ 13 & Sheraton ... Times Square & $3.5 \times 10^{-2}$ & $9.5 \times 10^{-3}$ & 190 & 3.72 \\
+ 14 & Fairfield ... Penn Station & $4.2 \times 10^{-3}$ & $1.1 \times 10^{-3}$ & 195 & 3.65 \\
+ 15 & Holiday Inn ... 57th St. & $1.2 \times 10^{-2}$ & $3.5 \times 10^{-3}$ & 195 & 3.5 \\
  \hline
 \end{tabular}
 \end{center}
 \end{table}
 
+Throughout the rest of the optimization, the optimal distances $d$ produced on each iteration typically fell in the range $[175, 250]$. We may check whether these choice of distances produces subsets of taxi trip data which, when used as features in a machine learning algorithm, give better hotel occupancy and pricing prediction accuracy. The same may be investigated for the range of distances given by the other considered divergence measures. In this context, the most useful divergence measure will yield subsets of taxi data which, when used as observations in a machine learning model, reliably produce the most accurate predictions.
+
+\subsection{Outlier removal: outlier detection algorithm}
+
+\textbf{TODO}.
+
 \subsection{Predicting hotel occupancy and pricing}
 
-\textbf{TODO}
+We first establish a baseline hotel occupancy and pricing learning setup using only the day of the week, the date, and the identity of the hotel. Given these observations, a model is trained to output the daily hotel occupancy and room pricing, both integer targets. The data is randomly shuffled to avoid leaving hotels out of the training or test subsets, and split into 80\% / 10\% / 10\% training, validation, and test subsets. An OLS model is fit to the training data and evaluated on the test data. A multi-layer perceptron regression model is also fit to the training data, where network hyper-parameters are chosen via random search according to the best predictive accuracy on the validation data, and is evaluated on the test data.
+
+To compare, the same regression models are fit to the same observations, albeit with the counts of nearby pick-up and / or drop-off taxi trips per hotel and per day.
+
+We train and evaluate all models using nearby taxi trip data using distances $d \in [25 \mathrm{ft.}, 50 \mathrm{ft.},$ ..., $275 \mathrm{ft.}, 300 \mathrm{ft.}]$, in order to test predictions from the distance optimization. In all experiments, we report the values of both (training and test) mean squared error (MSE) and the coefficient of determination, $R^2$. Using recommendations from both outlier detection approaches, we investigate whether removing certain hotels from the dataset produces qualitatively better predictions, as measured by $R^2$ values.
+
+\begin{table}
+\caption{MSE and $R^2$ values for OLS and MLP regression models trained without relevant taxi data.}
+\label{t:baseline_performance}
+\begin{center}
+ \begin{tabular}{||c|c|c||}
+ \hline
+ Model & MSE & $R^2$ \\
+ \hline
+ OLS &  &  \\
+ MLP &  &  \\
+ \hline
+\end{tabular}
+\end{center}
+\end{table}
 
 \section{Conclusion}
 \label{s:conclusion}
@@ -144,7 +176,7 @@ Using the first outlier removal method, as part of the distance criterion optimi
 
 \section*{Acknowledgements}
 
-The authors would like to thank the College of Computer and Information Sciences for the gracious allowance of supercomputing time.
+The authors would like to thank the College of Computer and Information Sciences for their gracious allowance of supercomputing resources.
 
 \bibliographystyle{biom} 
 \bibliography{nyctaxi}
