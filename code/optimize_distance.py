@@ -138,7 +138,7 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 					divergences.append(np.inf)
 					
 			worst_idx = np.argmax(divergences)
-		else:
+		elif metric == 'abs_diffs':
 			worst_idx = np.argmax(abs_diffs[min_eval_idx])
 
 		to_remove = sorted(hotels)[worst_idx]
