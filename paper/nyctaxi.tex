@@ -1,5 +1,5 @@
 \documentclass[useAMS, referee, usenatbib]{biom}
-%documentclass[useAMS]{biom}
+%\documentclass[useAMS, usenatbib]{biom}
 
 %%%%% PLACE YOUR OWN MACROS HERE %%%%%
 
@@ -11,6 +11,14 @@
 
 \usepackage{amsfonts}
 \usepackage{caption}
+\usepackage{rotating}
+
+\newcommand\blfootnote[1]{%
+  \begingroup
+  \renewcommand\thefootnote{}\footnote{#1}%
+  \addtocounter{footnote}{-1}%
+  \endgroup
+}
 
 \listfiles
 
@@ -20,11 +28,8 @@
 {Daniel J. Saunders \emailx{djsaunde@cs.umass.edu} \\
 College of Computer and Information Sciences, University of Massachusetts, Amherst, Massachusetts
 \and
-Christian Rojas \emailx{rojas@resecon.umass.edu} \\
-Department of Resource Economics, University of Massachusetts, 
-Amherst, Massachusetts
-\and
-Debi Mohapatra \emailx{dmohapatra@umass.edu} \\
+Christian Rojas$^{*}$\email{rojas@resecon.umass.edu} and
+Debi Mohapatra$^{**}$\email{dmohapatra@umass.edu} \\
 Department of Resource Economics, University of Massachusetts, 
 Amherst, Massachusetts}
 
@@ -33,7 +38,7 @@ Amherst, Massachusetts}
 \label{firstpage}
 
 \begin{abstract}
-A method for fast distributed processing of New York City taxicab trip records with respect to a secondary dataset of daily hotel occupancy and pricing information is presented. We motivate and develop an algorithm used to select an optimal distance threshold for capturing taxi trips relevant to predicting hotel occupancy and pricing rates. Two hotel outlier removal techniques based on distribution matching and simple outlier detection are discussed, and used to reduce prediction error by removing noisy examples from the taxi trips data. We show supporting visualizations of taxicab trips in NYC in relation to hotel locations. The effect of predicting daily hotel occupany rates and pricing with and without conditioning on daily nearby taxi traffic is demonstrated. Further applications of the taxi trip records dataset and other data sources are discussed as sources of potential future work.
+A method for fast distributed processing of New York City taxicab trip records with respect to a secondary dataset of daily hotel occupancy and pricing information is presented. We motivate and develop an algorithm used to select an optimal distance threshold for capturing taxi trips relevant to predicting hotel occupancy and pricing rates. Two hotel outlier removal techniques based on distribution matching and simple outlier detection are discussed, and used to reduce prediction error by removing noisy examples from the taxi trips data. We show supporting visualizations of taxicab trips in NYC in relation to hotel locations. The effect of predicting daily hotel occupany rates and pricing with and without conditioning on daily nearby taxi traffic is demonstrated. Further applications of the taxi trip records dataset and other data sources are discussed as sources of potential future work. \blfootnote{Code for this paper can be found at \texttt{https://github.com/djsaunde/nyctaxi}.}
 \end{abstract}
 
 \begin{keywords}
@@ -164,7 +169,7 @@ We train and evaluate all models using nearby taxi trip data using distances $d 
  \hline
  Model & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
  \hline
- OLS & 106,317 & 0.0168 & 105,955 & 0.0160 \\
+ OLS & 106,552 $\pm$ 481 & 0.0166 & 105,463 $\pm$ 1,923 & 0.0165 \\
  MLP &  &  \\
  \hline
 \end{tabular}
