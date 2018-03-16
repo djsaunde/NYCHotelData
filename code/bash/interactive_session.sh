@@ -1,2 +1,2 @@
 module add stubl
-fisbatch --mem 50000 --time 3:00:00 --ntasks 32 --partition defq
+fisbatch --mem 70000 --time 2:00:00 --ntasks 8 --partition defq --account rkozma
