@@ -20,8 +20,8 @@ distance = args.distance
 trip_type = args.trip_type
 
 large_distance_path = os.path.join('..', 'data', 'all_preprocessed_%d' % old)
-
 processed_path = os.path.join('..', 'data', 'all_preprocessed_%d' % distance)
+
 if not os.path.isdir(processed_path):
 	os.makedirs(processed_path)
 

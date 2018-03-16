@@ -33,7 +33,7 @@ for path in [data_path, taxi_occupancy_path, predictions_path]:
 	if not os.path.isdir(path):
 		os.makedirs(path)
 
-if not os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv')):
+if not is_counts_file and not is_data_file:
 	# Load daily capacity data.
 	print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
@@ -57,7 +57,7 @@ if not os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy coun
 	else:
 		raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument "trip_type".')
 
-	taxi_rides = pd.read_csv(filename, header=0, usecols=usecols, nrows=nrows)
+	taxi_rides = pd.read_csv(filename, header=0, usecols=usecols)
 
 	taxi_rides['Hotel Name'] = taxi_rides['Hotel Name'].apply(str.strip)
 	taxi_rides['Pick-up Time'] = pd.to_datetime(taxi_rides['Pick-up Time'], format='%Y-%m-%d')
@@ -76,6 +76,33 @@ if not os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy coun
 
 	print('Time: %.4f' % (default_timer() - start))
 
+	# Save merged occupancy and taxi data to disk.
+	print('\nSaving merged dataframes to disk.'); start = default_timer()
+
+	df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'))
+	
+	print('Time: %.4f' % (default_timer() - start))
+	
+	# Count number of rides per hotel and date.
+	df = df.groupby(['Hotel Name', 'Date', 'Room Demand']).count().reset_index()
+	df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'})
+	df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
+
+	# Save occupancy and taxi counts to disk.
+	print('\nSaving counts to disk.'); start = default_timer()
+
+	df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
+    
+	print('Time: %.4f' % (default_timer() - start))
+
+elif is_data_file and not is_counts_file:
+	# Load merged occupancy and taxi data to disk.
+	print('\nLoading merged taxi and occupancy dataframes from disk.'); start = default_timer()
+
+	df = pd.read_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'))
+	
+	print('Time: %.4f' % (default_timer() - start))
+	
 	# Count number of rides per hotel and date.
 	df = df.groupby(['Hotel Name', 'Date', 'Room Demand']).count().reset_index()
 	df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'})
@@ -89,7 +116,7 @@ if not os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy coun
 	print('Time: %.4f' % (default_timer() - start))
 
 else:
-    # Load merged occupancy and taxi data from disk.
+	# Load merged occupancy and taxi data from disk.
 	print('\nLoading occupancy and taxi counts from disk.'); start = default_timer()
 	
 	df = pd.read_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
