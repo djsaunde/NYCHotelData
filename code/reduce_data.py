@@ -6,27 +6,26 @@ import pandas as pd
 import dask.dataframe as dd
 
 from util             import *
-from dask.diagnostics import Profiler
 from timeit           import default_timer
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--old_distance', type=int, default=100)
+parser.add_argument('--old', type=int, default=100)
 parser.add_argument('--distance', type=int, default=25)
 parser.add_argument('--trip_type', type=str, default='destinations')
 
 args = parser.parse_args()
-old_distance = args.old_distance
+old = args.old
 distance = args.distance
 trip_type = args.trip_type
 
-large_distance_path = os.path.join('..', 'data', 'all_preprocessed_%d' % old_distance)
+large_distance_path = os.path.join('..', 'data', 'all_preprocessed_%d' % old)
 
 processed_path = os.path.join('..', 'data', 'all_preprocessed_%d' % distance)
 if not os.path.isdir(processed_path):
 	os.makedirs(processed_path)
 
-print(); print('Loading pre-processed taxi data with distance criterion d = %d.' % old_distance)
+print(); print('Loading pre-processed taxi data with distance criterion d = %d.' % old)
 df = dd.read_csv(os.path.join(large_distance_path, trip_type + '.csv'), dtype={'Fare Amount' : 'object'})
 
 print('Reducing by distance criterion d = %d.' % distance)

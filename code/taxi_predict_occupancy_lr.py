@@ -15,7 +15,6 @@ parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--metric', type=str, default='rel_diffs')
-parser.add_argument('--nrows', type=int, default=None)
 
 locals().update(vars(parser.parse_args()))
 
@@ -55,7 +54,7 @@ if not os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy coun
 	else:
 		raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument "trip_type".')
 
-	taxi_rides = pd.read_csv(filename, header=0, usecols=usecols, nrows=nrows)
+	taxi_rides = pd.read_csv(filename, header=0, usecols=usecols)
 
 	taxi_rides['Hotel Name'] = taxi_rides['Hotel Name'].apply(str.strip)
 	taxi_rides['Pick-up Time'] = pd.to_datetime(taxi_rides['Pick-up Time'], format='%Y-%m-%d')
