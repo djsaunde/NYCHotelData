@@ -12,18 +12,15 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.metrics        import mean_squared_error
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--distance', default=25, type=int)
-parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
-parser.add_argument('--metric', type=str, default='rel_diffs')
 parser.add_argument('--trials', type=int, default=5)
 parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
 parser.add_argument('--alpha', type=float, default=1e-4)
 
 locals().update(vars(parser.parse_args()))
 
-fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], metric, hidden_layer_sizes]))
+fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], hidden_layer_sizes, alpha]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 
@@ -98,13 +95,13 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	np.save(os.path.join(predictions_path, 'test_predictions_%d.npy' % i), test_predictions)
 
 print('\n')
-print('Mean training MSE:', np.mean(train_mses))
-print('Standard deviation training MSE:', np.std(train_mses))
-print('Mean training R^2:', np.mean(train_scores))
-print('Standard deviation training R^2:', np.std(train_scores))
+print('Mean training MSE: %.4f' % np.mean(train_mses))
+print('Standard deviation training MSE: %.4f' % np.std(train_mses))
+print('Mean training R^2: %.4f' % np.mean(train_scores))
+print('Standard deviation training R^2: %.4f' % np.std(train_scores))
 print('\n')
-print('Mean test MSE:', np.mean(test_mses))
-print('Standard deviation test MSE:', np.std(test_mses))
-print('Mean test R^2:', np.mean(test_scores))
-print('Standard deviation test R^2:', np.std(test_scores))
+print('Mean test MSE: %.4f' % np.mean(test_mses))
+print('Standard deviation test MSE: %.4f' % np.std(test_mses))
+print('Mean test R^2: %.4f' % np.mean(test_scores))
+print('Standard deviation test R^2: %.4f' % np.std(test_scores))
 print('\n')
