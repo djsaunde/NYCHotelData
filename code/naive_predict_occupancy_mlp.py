@@ -19,6 +19,7 @@ parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--metric', type=str, default='rel_diffs')
 parser.add_argument('--trials', type=int, default=5)
 parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
+parser.add_argument('--alpha', type=float, default=1e-4)
 
 locals().update(vars(parser.parse_args()))
 
@@ -76,7 +77,8 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 
 	print('Creating and training multi-layer perceptron regression model.')
 
-	model = MLPRegressor(verbose=True, hidden_layer_sizes=hidden_layer_sizes).fit(train_features, train_targets)
+	model = MLPRegressor(verbose=True, hidden_layer_sizes=hidden_layer_sizes,
+								 alpha=alpha).fit(train_features, train_targets)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')
 

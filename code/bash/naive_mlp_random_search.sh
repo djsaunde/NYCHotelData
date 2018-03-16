@@ -4,7 +4,7 @@ trip_type=${2:-'pickups'}
 dir='../../data/naive_mlp_results'
 file='../../data/naive_mlp_results/results.csv'
 
-if [ -f $file]
+if [ -f $file ]
 then
 	rm $file
 else
