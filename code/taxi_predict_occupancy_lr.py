@@ -16,12 +16,11 @@ parser.add_argument('--distance', default=100, type=int)
 parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
-parser.add_argument('--metric', type=str, default='rel_diffs')
 parser.add_argument('--trials', type=int, default=5)
 
 locals().update(vars(parser.parse_args()))
 
-fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], metric]))
+fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2]]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 
