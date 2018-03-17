@@ -53,6 +53,17 @@ Huang, X., Zhao, Y., Ma, C., Yang, J., Ye, X., and Zhang, C. (2016).
 \newblock {\em IEEE Transactions on Visualization and Computer Graphics} {\bf
   22,} 160--169.
 
+\bibitem[\protect\citeauthoryear{Pedregosa, Varoquaux, Gramfort, Michel,
+  Thirion, Grisel, Blondel, Prettenhofer, Weiss, Dubourg, Vanderplas, Passos,
+  Cournapeau, Brucher, Perrot, and Duchesnay}{Pedregosa
+  et~al.}{2011}]{scikit-learn}
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel,
+  O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J.,
+  Passos, A., Cournapeau, D., Brucher, M., Perrot, M., and Duchesnay, E.
+  (2011).
+\newblock Scikit-learn: Machine learning in {P}ython.
+\newblock {\em Journal of Machine Learning Research} {\bf 12,} 2825--2830.
+
 \bibitem[\protect\citeauthoryear{Stoyanovich, Gilbride, and
   Moffitt}{Stoyanovich et~al.}{2017}]{Stoyanovich2017ZoomingIO}
 Stoyanovich, J., Gilbride, M., and Moffitt, V.~Z. (2017).

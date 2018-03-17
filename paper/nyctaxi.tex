@@ -1,5 +1,5 @@
-\documentclass[useAMS, referee, usenatbib]{biom}
-%\documentclass[useAMS, usenatbib]{biom}
+%\documentclass[useAMS, referee, usenatbib]{biom}
+\documentclass[useAMS, usenatbib]{biom}
 
 %%%%% PLACE YOUR OWN MACROS HERE %%%%%
 
@@ -74,9 +74,9 @@ The efficient processing of spatio-temporal datasets (e.g, NYC taxi trip records
 
 The dataset of hotel occupancy rates contains information from January 2013 until present day. The dataset of NYC hotel taxi records contains data from January 2009 until present day; however, geospatial coordinates of pick-up and drop-off locations are only recorded from January 2009 until June 2016. Given these constraints, our experiments consider only those records which lie in the date range of January 2013 until June 2016, approximately 3.5 years of joint data. Our analyses are concerned only with the yellow and green taxi services in NYC, and we discard all data concerning ``for-hire vehicle'' services (e.g., Uber, Lyft, and others).
 
-We use a supercomputing cluster in which users are provisioned with a maximum of 40 CPU compute nodes. On each node, a Python program is dispatched to \textit{pre-process} a single month's worth of taxicab trip data with respect to the set of NYC hotels of interest. In particular, upon specifying a \textit{distance criterion} $d$, each process will extract trips from its month worth of data which begin or end with $d$ feet of any of the hotels under consideration. Geospatial distance calculations are accomplished using Vincenty's formula \citep{bessel_calculation_2010}. Loading and pre-processing of the taxi trip records is accomplished using the Dask parallel computation and task scheduling Python library \cite{dask}.
+We use a supercomputing cluster in which users are provisioned with a maximum of 40 CPU compute nodes. On each node, a Python program is dispatched to \textit{pre-process} a single month's worth of taxicab trip data with respect to the set of NYC hotels of interest. In particular, upon specifying a \textit{distance criterion} $d$, each process will extract trips from its month worth of data which begin or end with $d$ feet of any of the hotels under consideration. Geospatial distance calculations are accomplished using Vincenty's formula \citep{bessel_calculation_2010}. Fast loading and pre-processing of the taxi trip records is accomplished using the \texttt{dask} parallel computation and task scheduling Python library \cite{dask}.
 
-Prior to pre-processing, each month of yellow and green taxi trip data amounts to approximately 2.5Gb and 300Mb, respectively, totalling $\approx$115Gb over the course of the experimental date range. Pre-processing the dataset using a distance criterion $d = 300$ feet reduces this to two files of size $\approx$20Gb each, one of trips beginning near hotels of interest (\textit{destinations}), and another ending nearby (\textit{origins}).
+Prior to pre-processing, each month of yellow and green taxi trip data amounts to approximately 2.5Gb and 300Mb, respectively, totalling $\approx$115Gb over the course of the experimental date range. Pre-processing the dataset using a distance criterion $d = 300$ feet reduces this to two files of size $\approx$20Gb each, one of trips beginning near hotels of interest (\textit{nearby pick-ups}), and another ending nearby (\textit{nearby drop-offs}).
 
 Pre-processing a month of yellow taxi data using the aforementioned Python program and distance criterion $d = 300$ requires \textit{at most} 40 minutes and 50Gb of random-access memory. Using the super-computing cluster with a 40-node per-user allotment, processing all 42 months of taxi trip date requires only $\approx$80 minutes. If equipped with 42 or more nodes with the same computing resources, the processing time would be cut in half.
 
@@ -112,6 +112,8 @@ To evaluate the effect of conditioning hotel occupany predictions on available n
 
 The data is partitioned into 80\% training, 10\% validation, and 10\% test subsets. Both models are trained and test on the training and test subsets, and MLP hyperparameters are selected based on the best model accuracy on the validation subset. All data samples are randomly permuted to avoid leaving any hotels out of any of the subsets, and 5 independent realizations of each model are trained. Averaged $R^2$ and mean-squared error (MSE) of both models are reported in \ref{s:results}.
 
+All machine learning models are fit and evaluated using the \texttt{scikit-learn} machine learning library \citep{scikit-learn}.
+
 \section{Results}
 \label{s:results}
 
@@ -123,6 +125,8 @@ Using the first outlier removal method, as part of the distance criterion optimi
 \caption{Order of hotel removals and corresponding data using the relative difference divergence measure.}
 \label{t:relative_divergence}
 \begin{center}
+\resizebox{\columnwidth}{!}
+{
  \begin{tabular}{||c|c|c|c|c|c||}
  \hline
  Removal & Hotel & $\hat{p}_{\mathrm{occ}}$ & $\hat{p}_{\mathrm{taxi}}$ & Best $d$ & Rel. diff. \\ [0.5ex] 
@@ -144,6 +148,7 @@ Using the first outlier removal method, as part of the distance criterion optimi
  15 & Holiday Inn ... 57th St. & $1.2 \times 10^{-2}$ & $3.5 \times 10^{-3}$ & 195 & 3.5 \\
  \hline
 \end{tabular}
+}
 \end{center}
 \end{table}
 
@@ -165,6 +170,8 @@ We train and evaluate all models using nearby taxi trip data using distances $d 
 \caption{MSE and $R^2$ values for OLS and MLP regression models trained without relevant taxi data.}
 \label{t:baseline_performance}
 \begin{center}
+\resizebox{\columnwidth}{!}
+{
  \begin{tabular}{||c|c|c|c|c||}
  \hline
  Model & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
@@ -173,32 +180,63 @@ We train and evaluate all models using nearby taxi trip data using distances $d 
  MLP &  &  \\
  \hline
 \end{tabular}
+}
 \end{center}
 \end{table}
 
 \begin{table}
-\caption{MSE and $R^2$ values for OLS and MLP regression models trained with relevant taxi data with a range of distance thresholds $d$.}
+\caption{MSE and $R^2$ values for OLS regression model trained with relevant taxi data with a range of distance thresholds $d$.}
 \label{t:taxi_performance}
 \begin{center}
- \begin{tabular}{||c|c|c|c|c|c||}
+\resizebox{\columnwidth}{!}
+{
+ \begin{tabular}{||c|c|c|c|c||}
  \hline
- Model & $d$ (ft.) & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
+ $d$ (ft.) & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
  \hline
- OLS & 25 & 117,392 & 0.0187 & 116,641 & 0.0216 \\
-  & 50 & 108,550 & 0.0161 & 105,108 & 0.0146 \\
-  & 75 & 106,275 & 0.0167 & 107,219 & 0.0166 \\
-  & 100 & 106,702 & 0.0170 & 104,822 & 0.0166 \\
-  & 125 &  &  &  &  \\
-  & 150 &  &  &  &  \\
-  & 175 &  &  &  &  \\
-  & 200 &  &  &  &  \\
-  & 225 &  &  &  &  \\
-  & 250 &  &  &  &  \\
-  & 275 &  &  &  &  \\
-  & 300 &  &  &  &  \\
- MLP &  &  &  &  &  \\
+ 25 & 117,339 $\pm$ 499 & 0.0193 & 116,856 $\pm$ 1,990 & 0.0193 \\
+ 50 & 108,431 $\pm$ 631 & 0.0160 & 105,588 $\pm$ 2,524 & 0.0154 \\
+ 75 & 106,501 $\pm$ 258 & 0.0167 & 106,314 $\pm$ 1,030 & 0.0167 \\
+ 100 & 108,146 $\pm$ 454 & 0.0211 & 106,199 $\pm$ 1,818 & 0.0211 \\
+ 125 & 107,166 $\pm$ 549 & 0.0215 & 107,298 $\pm$ 2,196 & 0.0217 \\
+ 150 & 107,491 $\pm$ 693 & 0.0213 & 105,996 $\pm$ 2,779 & 0.0223 \\
+ 175 & 107,277 $\pm$ 684 & 0.0212 & 106,929 $\pm$ 2,740 & 0.0228 \\
+ 200 & 107,378 $\pm$ 495 & 0.0214 & 106,525 $\pm$ 1,979 & 0.0220 \\
+ 225 & 107,256 $\pm$ 525 & 0.0212 & 106,999 $\pm$ 2,098 & 0.0226 \\
+ 250 & 107,251 $\pm$ 411 & 0.0213 & 107,006 $\pm$ 1,643 & 0.0223 \\
+ 275 & 106,844 $\pm$ 506 & 0.0218 & 108,628 $\pm$ 2,023 & 0.0205 \\
+ 300 & 107,212 $\pm$ 634 & 0.0214 & 107,157 $\pm$ 2,538 & 0.0220 \\
  \hline
 \end{tabular}
+}
+\end{center}
+\end{table}
+
+\begin{table}
+\caption{MSE and $R^2$ values for MLP regression model trained with relevant taxi data with a range of distance thresholds $d$.}
+\label{t:taxi_performance}
+\begin{center}
+\resizebox{\columnwidth}{!}
+{
+ \begin{tabular}{||c|c|c|c|c||}
+ \hline
+ $d$ (ft.) & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
+ \hline
+ 25 &  &  &  &  \\
+ 50 &  &  &  &  \\
+ 75 &  &  &  &  \\
+ 100 &  &  &  &  \\
+ 125 &  &  &  &  \\
+ 150 &  &  &  &  \\
+ 175 &  &  &  &  \\
+ 200 &  &  &  &  \\
+ 225 &  &  &  &  \\
+ 250 &  &  &  &  \\
+ 275 &  &  &  &  \\
+ 300 &  &  &  &  \\
+ \hline
+\end{tabular}
+}
 \end{center}
 \end{table}
 
