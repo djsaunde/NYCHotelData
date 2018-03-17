@@ -107,3 +107,9 @@ tlc_statistics/*
 
 # API Key!
 key.txt
+
+# Not sure what this is
+*.nfs*
+
+# Vim swap files.
+.*.swp
