@@ -160,10 +160,9 @@ test_targets = targets[split:]
 
 print('Creating and training multi-layer perceptron regression model.')
 
-param_grid = {'hidden_layer_sizes' : [[64], [128], [256], [512],
-									  [128, 64], [256, 128], [512, 256],
-									  [256, 128, 64], [512, 256, 128],
-									  [512, 256, 128, 64]],
+param_grid = {'hidden_layer_sizes' : [[512, 256, 128], [512, 512, 256], [512, 256, 256], 
+									  [1024, 512, 256], [512, 512, 512], [1024, 512, 512],
+									  [512, 256, 128, 64], [1024, 512, 256, 128], [1024, 512, 512, 256]],
 			  'alpha' : [1e-5, 5e-5, 1e-4, 5e-4, 1e-3]}
 
 model = GridSearchCV(MLPRegressor(), param_grid=param_grid, verbose=5, n_jobs=-1)
