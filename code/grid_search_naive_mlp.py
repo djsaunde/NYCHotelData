@@ -23,6 +23,9 @@ fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2], end_date
 
 start_date, end_date = date(*start_date), date(*end_date)
 
+print()
+print(start_date, end_date, trials)
+
 predictions_path = os.path.join('..', 'data', 'grid_search_taxi_mlp_predictions', fname)
 
 for path in [predictions_path]:
@@ -77,6 +80,7 @@ model = GridSearchCV(MLPRegressor(), param_grid=param_grid, verbose=5, n_jobs=-1
 model.fit(train_features, train_targets)
 model = model.best_estimator_
 
+print(); print('Best model hyper-parameters:', model.best_params_); print()
 print('Training complete. Running multiple train / test iterations with best hyper-parameters.')
 
 train_scores = []
