@@ -168,9 +168,11 @@ param_grid = {'hidden_layer_sizes' : [[64], [128], [256], [512],
 
 model = GridSearchCV(MLPRegressor(), param_grid=param_grid, verbose=5, n_jobs=-1)
 model.fit(train_features, train_targets)
-model = model.best_estimator_
 
 print(); print('Best model hyper-parameters:', model.best_params_); print()
+
+model = model.best_estimator_
+
 print('Training complete. Running multiple train / test iterations with best hyper-parameters.')
 
 train_scores = []
