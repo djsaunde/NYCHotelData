@@ -2,6 +2,8 @@
 \caption{Order of hotel removals and corresponding data using the relative difference divergence measure.}
 \label{t:relative_divergence}
 \begin{center}
+\resizebox{\columnwidth}{!}
+{
  \begin{tabular}{||c|c|c|c|c|c||}
  \hline
  Removal & Hotel & $\hat{p}_{\mathrm{occ}}$ & $\hat{p}_{\mathrm{taxi}}$ & Best $d$ & Rel. diff. \\ [0.5ex]
@@ -23,6 +25,7 @@
  15 & Holiday Inn ... 57th St. & $1.2 \times 10^{-2}$ & $3.5 \times 10^{-3}$ & 195 & 3.5 \\
  \hline
 \end{tabular}
+}
 \end{center}
 \end{table}
 \efloatseparator
@@ -31,14 +34,17 @@
 \caption{MSE and $R^2$ values for OLS and MLP regression models trained without relevant taxi data.}
 \label{t:baseline_performance}
 \begin{center}
+\resizebox{\columnwidth}{!}
+{
  \begin{tabular}{||c|c|c|c|c||}
  \hline
  Model & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
  \hline
  OLS & 106,552 $\pm$ 481 & 0.0166 & 105,463 $\pm$ 1,923 & 0.0165 \\
- MLP &  &  \\
+ MLP & 79,592 $\pm$ 3,382 & 0.2620 & 80718 $\pm$ 5113 & 0.2610 \\
  \hline
 \end{tabular}
+}
 \end{center}
 \end{table}
 \efloatseparator
@@ -47,50 +53,40 @@
 \caption{MSE and $R^2$ values for OLS regression model trained with relevant taxi data with a range of distance thresholds $d$.}
 \label{t:taxi_performance}
 \begin{center}
- \begin{tabular}{||c|c|c|c|c||}
+\resizebox{\columnwidth}{!}
+{
+ \begin{tabular}{||c|c|c|c|c|c||}
  \hline
- $d$ (ft.) & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
+ Model & $d$ (ft.) & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
  \hline
- 25 & 117,339 $\pm$ 499 & 0.0193 & 116,856 $\pm$ 1,990 & 0.0193 \\
- 50 & 108,431 $\pm$ 631 & 0.0160 & 105,588 $\pm$ 2,524 & 0.0154 \\
- 75 & 106,501 $\pm$ 258 & 0.0167 & 106,314 $\pm$ 1,030 & 0.0167 \\
- 100 & 108,146 $\pm$ 454 & 0.0211 & 106,199 $\pm$ 1,818 & 0.0211 \\
- 125 & 107,166 $\pm$ 549 & 0.0215 & 107,298 $\pm$ 2,196 & 0.0217 \\
- 150 & 107,491 $\pm$ 693 & 0.0213 & 105,996 $\pm$ 2,779 & 0.0223 \\
- 175 & 107,277 $\pm$ 684 & 0.0212 & 106,929 $\pm$ 2,740 & 0.0228 \\
- 200 & 107,378 $\pm$ 495 & 0.0214 & 106,525 $\pm$ 1,979 & 0.0220 \\
- 225 & 107,256 $\pm$ 525 & 0.0212 & 106,999 $\pm$ 2,098 & 0.0226 \\
- 250 & 107,251 $\pm$ 411 & 0.0213 & 107,006 $\pm$ 1,643 & 0.0223 \\
- 275 & 106,844 $\pm$ 506 & 0.0218 & 108,628 $\pm$ 2,023 & 0.0205 \\
- 300 & 107,212 $\pm$ 634 & 0.0214 & 107,157 $\pm$ 2,538 & 0.0220 \\
+ OLS & 25 & 117,339 $\pm$ 499 & 0.0193 & 116,856 $\pm$ 1,990 & 0.0193 \\
+ & 50 & 108,431 $\pm$ 631 & 0.0160 & 105,588 $\pm$ 2,524 & 0.0154 \\
+ & 75 & 106,501 $\pm$ 258 & 0.0167 & 106,314 $\pm$ 1,030 & 0.0167 \\
+ & 100 & 108,146 $\pm$ 454 & 0.0211 & 106,199 $\pm$ 1,818 & 0.0211 \\
+ & 125 & 107,166 $\pm$ 549 & 0.0215 & 107,298 $\pm$ 2,196 & 0.0217 \\
+ & 150 & 107,491 $\pm$ 693 & 0.0213 & 105,996 $\pm$ 2,779 & 0.0223 \\
+ & 175 & 107,277 $\pm$ 684 & 0.0212 & 106,929 $\pm$ 2,740 & 0.0228 \\
+ & 200 & 107,378 $\pm$ 495 & 0.0214 & 106,525 $\pm$ 1,979 & 0.0220 \\
+ & 225 & 107,256 $\pm$ 525 & 0.0212 & 106,999 $\pm$ 2,098 & 0.0226 \\
+ & 250 & 107,251 $\pm$ 411 & 0.0213 & 107,006 $\pm$ 1,643 & 0.0223 \\
+ & 275 & 106,844 $\pm$ 506 & 0.0218 & 108,628 $\pm$ 2,023 & 0.0205 \\
+ & 300 & 107,212 $\pm$ 634 & 0.0214 & 107,157 $\pm$ 2,538 & 0.0220 \\
  \hline
-\end{tabular}
-\end{center}
-\end{table}
-\efloatseparator
- 
-\begin{table}
-\caption{MSE and $R^2$ values for MLP regression model trained with relevant taxi data with a range of distance thresholds $d$.}
-\label{t:taxi_performance}
-\begin{center}
- \begin{tabular}{||c|c|c|c|c||}
- \hline
- $d$ (ft.) & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
- \hline
- 25 &  &  &  &  \\
- 50 &  &  &  &  \\
- 75 &  &  &  &  \\
- 100 &  &  &  &  \\
- 125 &  &  &  &  \\
- 150 &  &  &  &  \\
- 175 &  &  &  &  \\
- 200 &  &  &  &  \\
- 225 &  &  &  &  \\
- 250 &  &  &  &  \\
- 275 &  &  &  &  \\
- 300 &  &  &  &  \\
+ MLP & 25 & 60,384 $\pm$ 8,877 & 0.4994 & 60,428 $\pm$ 9,796 & 0.4967 \\
+ & 50 & 50,176 $\pm$ 5,267 & 0.5476 & 50,122 $\pm$ 5,589 & 0.5530 \\
+ & 75 & 43,835 $\pm$ 4,942 & 0.6014 & 44,454 $\pm$ 4,662 & 0.5985 \\
+ & 100 & 45,588 $\pm$ 5,509 & 0.5851 & 45,779 $\pm$ 5,020 & 0.5872 \\
+ & 125 & 47,437 $\pm$ 4,877 & 0.5673 & 47,630 $\pm$ 5,204 & 0.5637 \\
+ & 150 & 50,678 $\pm$ 10,050 & 0.5379 & 50,648 $\pm$ 9,794 & 0.5355 \\
+ & 175 & 46,218 $\pm$ 6,021 & 0.5788 & 46,501 $\pm$ 6,034 & 0.5730 \\
+ & 200 & 50,535 $\pm$ 12,527 & 0.5372 & 51,004 $\pm$ 13,138 & 0.5402 \\
+ & 225 & 37,277 $\pm$ 6,933 & 0.6603 & 37,064 $\pm$ 6,297 & 0.6593 \\
+ & 250 & 47,705 $\pm$ 13,422 & 0.5650 & 47,548 $\pm$ 11,538 & 0.5642 \\
+ & 275 & 35,077 $\pm$ 1,456 & 0.6809 & 35,401 $\pm$ 1,668 & 0.6727 \\
+ & 300 & 38,173 $\pm$ 5,142 & 0.6514 & 38,251 $\pm$ 4,996 & 0.6513 \\
  \hline
 \end{tabular}
+}
 \end{center}
 \end{table}
 \efloatseparator

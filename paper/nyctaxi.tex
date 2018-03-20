@@ -42,7 +42,7 @@ A method for fast distributed processing of New York City taxicab trip records w
 \end{abstract}
 
 \begin{keywords}
-Applied economics; Data analysis; Distributed computing.
+Applied economics; Data science; Distributed computing; Machine learning.
 \end{keywords}
 
 \maketitle
@@ -115,9 +115,9 @@ Using the same divergence measures as listed above, we propose two methods for t
 
 \item [2.] Using a trained machine learning model, hotels may be removed from consideration on the basis of which cause the most prediction error. We may iterate this process until $R^2$ scores have stabilized, or until the model has reached a satisfactory mean-squared error value. In this case, we are simply throwing away hotels whose occupancy rates are hardest to predict, which depends on the \textit{a posteriori} knowledge gained by trying to fit a predictive model to the data.
 
-Of the two methods, the first seems more desirable, since we are still relying on observational data to fit a model to a well-behaved subset of hotel outcomes. On the other hand, using a fitted model to indicate the least variable data samples is common practice in the machine learning literature, and is quite feasible in the regime of fast-training models and reasonably-sized datasets.
-
 \end{itemize}
+
+Of the two methods, the first seems more desirable, since we are still relying on observational data to fit a model to what we hope is a well-behaved subset of hotel occupancy data. On the other hand, using a fitted model to indicate the least variable data samples is common machine learning practice, and is quite feasible with smaller models and reasonably-sized datasets.
 
 \subsection{Predicting hotel occupancy}
 
@@ -178,7 +178,7 @@ We first establish a baseline hotel occupancy learning setup using only the day 
 The results for both models are given in Table \ref{t:baseline_performance}.
 
 \begin{table}
-\caption{MSE and $R^2$ values for OLS and MLP regression models trained without relevant taxi data.}
+\caption{MSE and $R^2$ values for OLS and MLP regression models trained without taxi data.}
 \label{t:baseline_performance}
 \begin{center}
 \resizebox{\columnwidth}{!}
@@ -250,6 +250,51 @@ The results for the MLP regression models with the considered range of distances
 
 Using recommendations from both outlier detection approaches, we investigate whether removing certain hotels from the dataset produces qualitatively better predictions, as measured by test data $R^2$ values.
 
+\textbf{Outlier removal - distance optimization}: \textbf{TODO}. \\
+
+\textbf{Outlier removal - predictive power}: Mean-squared error and coefficient of determination results are plotted for the OLS regression model for $d = 300$ and the iterative removal of 50 hotels in Figure \textbf{TODO}.
+
+\begin{table}
+\caption{Train, test MSE and $R^2$ values for OLS regression model with nearby taxi data ($d = 300$). Hotels with the highest test MSE are iteratively removed.}
+\label{t:lr_removals}
+\begin{center}
+\resizebox{\columnwidth}{!}
+{
+ \begin{tabular}{||c|l|c|c|c||}
+\hline
+Removal & Hotel & Hotel Test MSE & Test MSE & Test $R^2 $ \\
+\hline
+1 & The Roosevelt Hotel & 1.92e+06 & 85392 &  0.23 \\
+2 & Holiday Inn ... Chelsea & 1.84e+06 & 70182 &  0.27 \\
+3 & Warwick NY Hotel & 1.38e+06 & 57105 &  0.29 \\
+4 & 11 Howard & 7.72e+05 & 46962 &  0.31 \\
+5 & Andaz Wall Street & 5.96e+05 & 40924 &  0.33 \\
+6 & Marriott NY East Side & 4.22e+05 & 37320 &  0.34 \\
+7 & Millennium One UN & 3.36e+05 & 34888 &  0.35 \\
+8 & Courtyard NY ... Central Park & 2.35e+05 & 32516 &  0.33 \\
+9 & Courtyard NY ... Times Square ... & 1.83e+05 & 30655 &  0.35 \\
+10 & W Hotel Union Square & 2.45e+05 & 29613 &  0.33 \\
+11 & Autograph Collection ... NYC & 1.57e+05 & 27732 &  0.34 \\
+12 & Courtyard NY ... Herald Square & 1.92e+05 & 26174 &  0.16 \\
+13 & Hampton Inn ... Garden Area & 1.78e+05 & 25686 &  0.14 \\
+14 & JW Marriott ... NY & 1.60e+05 & 23468 &  0.14 \\
+15 & Residence Inn ... Times Square & 1.67e+05 & 22258 &  0.14 \\
+16 & Paramount Hotel & 1.45e+05 &  21739 &  0.13 \\
+17 & Le Meridien Parker NY & 1.55e+05 & 20600 &  0.14 \\
+18 & Courtyard NY Manhattan SoHo & 1.23e+05 & 20007 &  0.15 \\
+19 & InterContinental NY Times Square & 1.04e+05 & 18679 &  0.14 \\
+20 & Shelburne NYC ... Affinia ... & 1.31e+05 & 18448 &  0.16 \\
+21 & Hilton Millenium Hotel & 1.23e+05 & 17428 &  0.16 \\
+22 & Edison Hotel & 9.09e+04 & 16138 &  0.17 \\
+23 & Novotel New York & 9.09e+04 & 15277 &  0.17 \\
+24 & Courtyard NY ... Chelsea & 6.35e+04 & 14785 &  0.18 \\
+25 & Fairfield ... NY Midtown & 7.78e+04 & 14232 &  0.22 \\
+\hline
+\end{tabular}
+}
+\end{center}
+\end{table}
+
 \section{Conclusion}
 \label{s:conclusion}
 
@@ -257,7 +302,7 @@ Using recommendations from both outlier detection approaches, we investigate whe
 
 \section*{Acknowledgements}
 
-The authors would like to thank the College of Computer and Information Sciences for their gracious allowance of supercomputing resources.
+The authors would like to thank the College of Computer and Information Sciences for their gracious allowance of supercomputing resources. \textbf{Grant information goes here}.
 
 \bibliographystyle{biom} 
 \bibliography{nyctaxi}
