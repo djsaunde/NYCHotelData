@@ -38,7 +38,7 @@ Amherst, Massachusetts}
 \label{firstpage}
 
 \begin{abstract}
-A method for fast distributed processing of New York City taxicab trip records with respect to a secondary dataset of daily hotel occupancy and pricing information is presented. We motivate and develop an algorithm used to select an optimal distance threshold for capturing taxi trips relevant to predicting hotel occupancy and pricing rates. Two hotel outlier removal techniques based on distribution matching and simple outlier detection are discussed, and used to reduce prediction error by removing noisy examples from the taxi trips data. The effect of predicting daily hotel occupany rates and pricing with and without conditioning on daily nearby taxi traffic is demonstrated. The strength of this effect after removing hotels with atypical numbers of nearby taxi traffic is also assessed. Further applications of the taxi trip records dataset and other data sources are discussed as sources of potential future work. \blfootnote{Code for this paper can be found at \texttt{https://github.com/djsaunde/nyctaxi}.}
+A method for fast distributed processing of New York City taxicab trip records with respect to a secondary dataset of daily hotel occupancy rates is presented. We motivate and develop an algorithm used to select an optimal distance threshold for capturing taxi trips relevant to predicting per-hotel occupancy rates. Two hotel outlier removal techniques based on distribution matching and simple outlier detection are discussed, and used to reduce prediction error by removing noisy examples from the taxi trips data. The accuracy of predicting daily hotel occupany rates with and without conditioning on daily nearby taxi traffic is compared. The strength of this conditioning after removing hotels with atypical numbers of nearby taxi traffic is also assessed. Further applications of the taxi trip records dataset and other data sources are discussed as sources of potential future work.
 \end{abstract}
 
 \begin{keywords}
@@ -56,7 +56,9 @@ The New York City (NYC) Taxi \& Limousine Commission (TLC) Trip Record Data cons
 
 Several interesting studies have recently been carried out on the NYC taxi trips dataset. However, combining daily city-wide taxi trajectories with related NYC datasets should allow researchers to propose and test more powerful economic hypotheses. We study a unification of the taxi records with the occupancy rates of 178 NYC hotels from the years 2013 to 2016. We are interested in trips which \textit{begin} or \textit{end} within distance $d$ of at least one hotel in the dataset. To find the best choice of distance threshold $d$ over all hotels, we develop an optimization procedure motivated from a simple distribution matching approach. Hotels with abnormal amounts of nearby taxi traffic may be eliminated from consideration during or after the optimization process.
 
-We hypothesize that both hotel occupancy rates and pricing can be more accurately predicted from the density of daily nearby taxicab pick-up and drop-off rides combined with information from the hotel occupancy data than from the hotel occupancy dataset alone. This effect should be strengthened as hotels with atypical nearby taxi trip density are eliminated from consideration. Assuming these is true, we argue that many other hotel metrics may be better estimated conditioned on observed per-day nearby taxi trips. Estimated values may be used as economic evidence for urban policy-making in the hotel and taxi industries, and others besides, depending on the availability of relevant and timely data.
+We hypothesize that hotel occupancy rates can be more accurately predicted from the density of daily nearby taxicab pick-up and drop-off rides combined with information from the hotel occupancy data than from the hotel occupancy dataset alone. This effect should be strengthened as hotels with unusually high or low densities of nearby taxi trips are eliminated from consideration. With this in mind, we argue that many other urban economic data may be better predicted conditioned on observed per-day nearby taxi trips. Estimated values may be used as evidence for policy-making in the hotel and taxi industries, and others besides, depending on the availability of relevant and timely data.
+
+Code for this work can be found at \texttt{https://github.com/djsaunde/nyctaxi}.
 
 \section{Related Work}
 \label{s:related}
@@ -82,7 +84,7 @@ Pre-processing a month of yellow taxi data using the aforementioned Python progr
 
 \subsection{Distance criterion optimization}
 
-A crucial assumption in the analyses of the taxi dataset is that taxi trips that originate or culminate near a hotel are likely to indicate that guests are arriving or leaving the hotel. With this in mind, we can use the per-hotel densities of nearby taxi trip pick-ups or drop-offs to make predictions about hotel room demand, pricing, or other variables of interest. We additionally assume that some unknown distance threshold $d$ maximizes the likelihood, over all hotels, that the nearby taxi traffic does indeed indicate they are hotel guests. If $d$ is too small, too few guests are captured in the trip coordinates data; if $d$ is too large, too many taxi customers are mis-classified as hotel guests.
+A crucial assumption in the analyses of the taxi dataset is that taxi trips that originate or culminate near a hotel are likely to indicate that guests are arriving or leaving the hotel. With this in mind, we can use the per-hotel densities of nearby taxi trip pick-ups or drop-offs to make predictions about future hotel room demand or other quantities of interest. We additionally assume that some unknown distance threshold $d$ maximizes the likelihood, over all hotels, that the nearby taxi traffic does indeed indicate they are hotel guests. If $d$ is too small, too few guests are captured in the trip coordinates data; if $d$ is too large, too many taxi customers are mis-classified as hotel guests.
 
 We suggest that the distance criterion $d$ should be selected such that it maximizes the predictability of some quantity of interest. We compare a dataset of hotel occupancy information with counts of nearby taxi trips, per hotel and per day. We denote the observed per-hotel distribution of hotel occupancy as $\hat{p}_{\mathrm{occ}}$ and the observed per-hotel distribution of nearby taxi trips as $\hat{p}_{\mathrm{taxi}}$. In our experiments, these distributions are estimated using per-hotel proportions of aggregated hotel occupancy and taxi data from January 1st, 2013 until June 30th, 2016, and the distribution of nearby taxi trips depends on the choice of distance criterion $d$.
 
@@ -98,7 +100,7 @@ and summed relative differences, in which the smaller-valued proportion is used 
 
 $$\sum_x \frac{\min \{ \hat{p}_{\mathrm{taxi}} (x), \hspace*{0.1cm} \hat{p}_{\mathrm{occ}} (x) \}}{\max \{ \hat{p}_{\mathrm{taxi}} (x), \hspace*{0.1cm} \hat{p}_{\mathrm{occ}} (x) \}}.$$
 
-Note that the divergence measures used are not necessarily true $f$-divergences. These measures are considered useful on the basis of their predictive power in modeling hotel room demand and pricing.
+Note that the divergence measures used are not necessarily true $f$-divergences. These measures are considered useful on the basis of their predictive power in modeling hotel occupancy rates.
 
 After pre-processing the NYC taxi data using a suitably large distance criterion (e.g., $d = 300$ft.), a range of candidate distance criterions are considered (e.g., $d \in [25 \mathrm{ft.}, 50 \mathrm{ft.},$ ..., $275 \mathrm{ft.}, 300 \mathrm{ft.}]$), whose corresponding datasets are subsets of the pre-processed 300ft. dataset. The empirical per-hotel distribution of nearby pick-up and / or drop-off taxi trips $\hat{p}_{\mathrm{taxi}}$ is computed from the data for each choice of $d$, and we calculate the selected divergence measure with respect to the fixed $\hat{p}_{\mathrm{occ}}$; that is, the observed per-hotel distribution of rented rooms from the same time period. The criterion $d$ giving the minimal divergence value is said to be the ``best'', and the dataset obtained from this choice of $d$ can be used for downstream analyses.
 
@@ -203,7 +205,7 @@ We train and evaluate all models using nearby taxi trip data using distances $d 
 
 The results for the OLS regression model and all considered settings of $d$ are given in Table \ref{t:taxi_performance}. Although OLS models fit along with taxi data demonstrate a better fit in terms of $R^2$ values, there is no improvement in mean-squared error, and even a significant increase when $d$ is sufficiently small.
 
-The results for the MLP regression models with the considered range of distances $d$ are also given in Table \ref{t:taxi_performance}. Even with the smallest considered subset of taxi data given by choosing the distance threshold $d$ = 25ft. produces a significant decrease in training and test mean-squared error, and a significantly higher value of $R^2$. Though there is some variability in the estimator goodness of fit as $d$ is increased, MSE values tend to decrease while $R^2$ values increase. With all hotels included, best candidate distance criterions include $d$ = 225ft., 275ft., and 300ft.
+The results for the MLP regression models with the considered range of distances $d$ are also given in Table \ref{t:taxi_performance}. Even with the smallest considered subset of taxi data given by choosing the distance threshold $d$ = 25ft. produces a significant decrease in training and test mean-squared error, and a significantly higher value of $R^2$. Though there is some variability in the estimator goodness of fit as $d$ is increased, MSE values tend to decrease while $R^2$ values increase. With all hotels included, best candidate distance criterions (according to modeling on the full hotel data) include $d$ = 225ft., 275ft., and 300ft.
 
 \begin{table}
 \caption{MSE and $R^2$ values for OLS regression model trained with relevant taxi data with a range of distance thresholds $d$.}
@@ -237,7 +239,7 @@ The results for the MLP regression models with the considered range of distances
  & 175 & 46,218 $\pm$ 6,021 & 0.5788 & 46,501 $\pm$ 6,034 & 0.5730 \\
  & 200 & 50,535 $\pm$ 12,527 & 0.5372 & 51,004 $\pm$ 13,138 & 0.5402 \\
  & 225 & 37,277 $\pm$ 6,933 & 0.6603 & 37,064 $\pm$ 6,297 & 0.6593 \\
- & 250 & 47,705 $\pm$ 13,422 & 0.5650 & 47,548 $\pm$ 11,538 & 0.5642 \\
+ & 250 & 44,971 $\pm$ 10,325 & 0.5896 & 43,966 $\pm$ 9,011 & 0.5895 \\
  & 275 & 35,077 $\pm$ 1,456 & 0.6809 & 35,401 $\pm$ 1,668 & 0.6727 \\
  & 300 & 38,173 $\pm$ 5,142 & 0.6514 & 38,251 $\pm$ 4,996 & 0.6513 \\
  \hline
@@ -246,16 +248,13 @@ The results for the MLP regression models with the considered range of distances
 \end{center}
 \end{table}
 
-\subsubsection{With hotel outlier removal}
+\subsubsection{Outlier removal: distance optimization}
 
-Using recommendations from both outlier detection approaches, we investigate whether removing certain hotels from the dataset produces qualitatively better predictions, as measured by test data $R^2$ values.
 
-\textbf{Outlier removal - distance optimization}: \textbf{TODO}. \\
-
-\textbf{Outlier removal - predictive power}: Mean-squared error and coefficient of determination results are plotted for the OLS regression model for $d = 300$ and the iterative removal of 50 hotels in Figure \textbf{TODO}.
+\subsubsection{Outlier removal - predictive power}: Mean-squared error and coefficient of determination results are plotted for the OLS regression model for $d = 300$ and the iterative removal of 25 hotels in Table \ref{lr_removals}.
 
 \begin{table}
-\caption{Train, test MSE and $R^2$ values for OLS regression model with nearby taxi data ($d = 300$). Hotels with the highest test MSE are iteratively removed.}
+\caption{Train, test MSE and $R^2$ values for OLS regression model with nearby taxi data ($d = 300$). Hotels with the highest test MSE are iteratively removed, and the OLS regression model is fit again.}
 \label{t:lr_removals}
 \begin{center}
 \resizebox{\columnwidth}{!}
