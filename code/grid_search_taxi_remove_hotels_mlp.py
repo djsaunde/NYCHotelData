@@ -18,11 +18,13 @@ parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--trials', type=int, default=5)
-parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
-parser.add_argument('--alpha', type=float, default=1e-4)
 parser.add_argument('--removals', type=int, default=25)
 
 locals().update(vars(parser.parse_args()))
+
+print('Distance: %d' % distance)
+print('Trip type: %s' % trip_type)
+print('Removals: %d' % removals)
 
 fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2]]))
 
