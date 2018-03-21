@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 #SBATCH --partition=longq
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --mem=64000
 #SBATCH --account=rkozma
 #SBATCH --output=/mnt/nfs/work1/rkozma/djsaunde/nyctaxi/job_reports/remove_hotels_taxi_mlp_grid_search_%j.out
@@ -9,7 +9,7 @@
 
 distance=${1:-100}
 trip_type=${2:-pickups}
-removals=${3:-25}
+removals=${3:-15}
 
 cd ..
 
