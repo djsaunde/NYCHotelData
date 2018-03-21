@@ -79,10 +79,17 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 
 		abs_diffs = np.zeros([len(distances), len(hotels)])
 		rel_diffs = np.zeros([len(distances), len(hotels)])
+		rel_entropies = np.zeros([len(distances), len(hotels)])
 		for i, distance in enumerate(distances):
 			for hotel_idx, hotel in enumerate(sorted(hotels)):
 				abs_diffs[i, hotel_idx] = np.abs(capacity_distros[hotel] - taxi_distros[i][hotel])
 				rel_diffs[i, hotel_idx] = taxi_distros[i][hotel] / capacity_distros[hotel]
+				
+				if capacity_distros[hotel] == 0 or taxi_distros[i][hotel] == 0:
+					rel_entropies[i, hotel_idx] = 0
+				else:
+					rel_entropies[i, hotel_idx] = capacity_distros[hotel] * \
+						np.log(capacity_distros[hotel] / taxi_distros[i][hotel])
 
 		cm = plt.get_cmap('gist_rainbow')
 
@@ -139,17 +146,10 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 					
 			worst_idx = np.argmax(divergences)
 		elif metric == 'abs_diffs':
-			divergences = []
-			for x in rel_diffs[min_eval_idx]:
-				if x >= 1:
-					divergences.append(x)
-				elif x > 0 and x < 1:
-					divergences.append(1 / x)
-				elif x == 0:
-					divergences.append(np.inf)
-			
 			worst_idx = np.argmax(abs_diffs[min_eval_idx])
-
+		elif metric == 'relative_entropy':
+			worst_idx = np.argmax(rel_entropies[min_eval_idx])
+			
 		to_remove = sorted(hotels)[worst_idx]
 		hotels.remove(to_remove)
 		
@@ -157,9 +157,9 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 		
 		removal_data.append([to_remove, distances[min_eval_idx], capacity_distros[to_remove],
 					taxi_distros[min_eval_idx][to_remove], abs_diffs[min_eval_idx][worst_idx],
-																	divergences[worst_idx]])
+								divergences[worst_idx], rel_entropies[min_eval_idx][worst_idx]])
 
-	df = pd.DataFrame(removal_data, columns=['Removed hotel', 'Best distance', 'Capacity share', 'Taxi share', 'Abs. difference', 'Rel. divergence'])
+	df = pd.DataFrame(removal_data, columns=['Removed hotel', 'Best distance', 'Capacity share', 'Taxi share', 'Abs. difference', 'Rel. divergence', 'Rel. entropy'])
 	df.to_csv(os.path.join(reports_path, fname) + '.csv')
 
 	return distances[np.argmax(evals)]
