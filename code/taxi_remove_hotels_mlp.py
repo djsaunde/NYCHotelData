@@ -270,7 +270,7 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	np.save(os.path.join(predictions_path, 'test_predictions_%d.npy' % i), test_predictions)
 
 print()
-print('*** Multiple averaged results after %d / %d removals ***' % (trials, trials))
+print('*** Multiple averaged results after %d / %d removals ***' % (removals, removals))
 print()
 print('Mean, standard deviation of training MSE: %.0f $\pm$ %.0f' % (np.mean(train_mses), np.std(train_mses)))
 print('Mean, standard deviation of training R^2: %.4f' % np.mean(train_scores))

@@ -6,11 +6,10 @@ import argparse
 import numpy as  np
 import pandas as pd
 
-from datetime                import date
-from timeit                  import default_timer
-from sklearn.neural_network  import MLPRegressor
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics         import mean_squared_error
+from datetime             import date
+from timeit               import default_timer
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics      import mean_squared_error
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
@@ -24,8 +23,8 @@ fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2], end_date
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-predictions_path = os.path.join('..', 'data', 'grid_search_naive_remove_hotels_mlp_predictions', fname)
-removals_path = os.path.join('..', 'data', 'grid_search_naive_mlp_removals', fname)
+predictions_path = os.path.join('..', 'data', 'naive_lr_removal_predictions', fname)
+removals_path = os.path.join('..', 'data', 'naive_lr_removals', fname)
 
 for path in [predictions_path, removals_path]:
 	if not os.path.isdir(path):
@@ -70,18 +69,11 @@ for i in range(removals):
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Creating and training multi-layer perceptron regression model.')
+	print('Creating and training OLS regression model.')
 
-	param_grid = {'hidden_layer_sizes' : [[512, 256, 128], [1024, 512, 256],
-								  [512, 256, 128, 64], [1024, 512, 256, 128]],
-											'alpha' : [1e-5, 5e-5, 1e-4, 5e-4]}
+	model = LinearRegression().fit(train_features, train_targets)
 
-	model = GridSearchCV(MLPRegressor(), param_grid=param_grid, verbose=5, n_jobs=-1)
-	model.fit(train_features, train_targets)
-
-	print(); print('Best model hyper-parameters:', model.best_params_); print()
-
-	model = model.best_estimator_
+	print('Training complete. Getting predictions and calculating R^2, MSE.')
 
 	train_score = model.score(train_features, train_targets)
 	test_score = model.score(test_features, test_targets)
@@ -127,9 +119,9 @@ for i in range(removals):
 	# Remove offending hotel from data.
 	hotel_names = hotel_names[hotel_names != worst_hotel]
 	hotels, weekdays, months, years, targets = hotels[(hotels != worst_idx).ravel()], \
-		weekdays[(hotels != worst_idx).ravel()], months[(hotels != worst_idx).ravel()], \
-			years[(hotels != worst_idx).ravel()], targets[(hotels != worst_idx).ravel()]
-
+			weekdays[(hotels != worst_idx).ravel()], months[(hotels != worst_idx).ravel()], \
+					years[(hotels != worst_idx).ravel()], targets[(hotels != worst_idx).ravel()]
+				
 # Save hotel removal report to disk.
 df = pd.DataFrame(report, columns=['Hotel', 'Hotel Test MSE', 'Train MSE', 'Train R^2', 'Test MSE', 'Test R^2'])
 df.to_csv(os.path.join(removals_path, 'removals.csv'))
@@ -146,7 +138,7 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	
 	# Randomly permute the data to remove sequence biasing.
 	p = np.random.permutation(targets.shape[0])
-	hotels,  weekdays, months, years, targets = hotels[p], weekdays[p], months[p], years[p], targets[p]
+	hotels, weekdays, months, years, targets = hotels[p], weekdays[p], months[p], years[p], targets[p]
 
 	# Split the data into (training, test) subsets.
 	split = int(0.8 * len(targets))
@@ -160,9 +152,9 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Re-training multi-layer perceptron regression model.')
+	print('Creating and training OLS regression model.')
 
-	model.fit(train_features, train_targets)
+	model = LinearRegression().fit(train_features, train_targets)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')
 
