@@ -294,8 +294,20 @@ Removal & Hotel & Hotel Test MSE & Test MSE & Test $R^2 $ \\
 \end{center}
 \end{table}
 
-\section{Conclusion}
+\section{Conclusions and Future Work}
 \label{s:conclusion}
+
+We have demonstrated a fast method for processing large quantities of taxi data in relation to auxiliary information on hotel room sales. This method facilitates the reduction of uncertainty in downstream data analysis tasks without discarding too much relevant data. This point is demonstrated with a simple prediction task and two standard machine learning models. Models which learn nonlinear interactions between observation variables are much more accurate predictors.
+
+A distance threshold is found which enables maximal predictive power, a point past which additional data is not useful or provides diminishing returns, and trades off practically with computation time and storage requirements. The taxi data, however, is not always a robust indicator of hotel room sales, and several hotels appear to have inherently less predictable occupancy rates, with or without it. In the case that nearby taxi trip density does not match well with the per-hotel room sales distribution, we can expect that hotels with the worst divergences are more difficult to predict. This effect is difficult to determine, however, since the metrics employed to estimate it are only evaulated based on their properties and the prediction results they produced.
+
+Our methods are applicable also to scenarios in which a large quantity of spatiotemporal data is available, but where desired analyses concern only a small subset of it. Distributed processing of large data is crucial for rapidly estimating the parameters of statistical models and subsequently answering questions with them. Loading all available into a distributed memory would allow for even faster processing, but at a potentially much higher dollar cost. For this reason, our method is especially suitable for institutions or researchers with restrictive distributed computing resources.
+
+A more complex modeling approach, suitable to the problem of predicting time series data, may be a simple way to increase our system's predictive performance. Rather than training on mean-squared error of per-hotel daily rooms sold, a more effective loss function may be designed. In particular, outputting predictions of daily per-hotel shares (i.e., percentages) of rooms sold should constrain model outputs to discover important relations in between-hotel room demand.
+
+With evidence that nearby taxi data informs hotel occupancy rates, it seems likely that it can be used to predict other variables of economic interest. With the assumption that nearby taxi trips inform hotel guest rates in particular, we may additionally characterize where those supposed guests arrive from or travel to, enabling estimation of the degree to which hotels compete to provide access to nearby attractions. This is an exciting avenue for potential future work.
+
+
 
 \backmatter
 

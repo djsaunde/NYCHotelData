@@ -6,10 +6,10 @@ import argparse
 import numpy as  np
 import pandas as pd
 
-from datetime             import date
-from timeit               import default_timer
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics      import mean_squared_error
+from datetime               import date
+from timeit                 import default_timer
+from sklearn.neural_network import MLPRegressor
+from sklearn.metrics        import mean_squared_error
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--distance', default=25, type=int)
@@ -17,6 +17,8 @@ parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--trials', type=int, default=5)
+parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
+parser.add_argument('--alpha', type=float, default=1e-4)
 parser.add_argument('--removals', type=int, default=25)
 parser.add_argument('--metric', type=str, default='rel_diffs')
 
@@ -25,16 +27,19 @@ locals().update(vars(parser.parse_args()))
 report_fname = '_'.join(map(str, [25, 300, trip_type, start_date[0], start_date[1],
 					start_date[2], end_date[0], end_date[1], end_date[2], metric]))
 
-fname = '_'.join(map(str, [distance, start_date[0], start_date[1],
-			start_date[2], end_date[0], end_date[1], end_date[2]]))
+disk_fname = '_'.join(map(str, [distance, start_date[0], start_date[1],
+				start_date[2], end_date[0], end_date[1], end_date[2]]))
+
+fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2],
+				end_date[0], end_date[1], end_date[2], hidden_layer_sizes, alpha]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 
 reports_path = os.path.join('..', 'data', 'optimization_reports')
 data_path = os.path.join('..', 'data', 'all_preprocessed_%d' % distance)
-taxi_occupancy_path = os.path.join('..', 'data', 'taxi_occupancy', fname)
-predictions_path = os.path.join('..', 'data', 'taxi_lr_opt_removal_predictions', fname)
-removals_path = os.path.join('..', 'data', 'taxi_lr_opt_removals', fname)
+taxi_occupancy_path = os.path.join('..', 'data', 'taxi_occupancy', disk_fname)
+predictions_path = os.path.join('..', 'data', 'taxi_mlp_opt_removal_predictions', fname)
+removals_path = os.path.join('..', 'data', 'taxi_mlp_opt_removals', fname)
 
 for path in [data_path, taxi_occupancy_path, predictions_path, removals_path]:
 	if not os.path.isdir(path):
@@ -177,9 +182,10 @@ for i in range(removals):
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Creating and training OLS regression model.')
+	print('Creating and training multi-layer perceptron regression model.')
 
-	model = LinearRegression().fit(train_features, train_targets)
+	model = MLPRegressor(verbose=True, hidden_layer_sizes=hidden_layer_sizes,
+								 alpha=alpha).fit(train_features, train_targets)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')
 
@@ -268,9 +274,10 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Creating and training OLS regression model.')
+	print('Creating and training multi-layer perceptron regression model.')
 
-	model = LinearRegression().fit(train_features, train_targets)
+	model = MLPRegressor(verbose=True, hidden_layer_sizes=hidden_layer_sizes,
+								 alpha=alpha).fit(train_features, train_targets)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')
 
