@@ -10,7 +10,8 @@
 distance=${1:-100}
 trip_type=${2:-pickups}
 removals=${3:-15}
+metric=${4:-rel_diffs}
 
 cd ..
 
-python grid_search_taxi_opt_remove_mlp.py --distance $distance --trip_type $trip_type --removals $removals
+python grid_search_taxi_opt_remove_mlp.py --distance $distance --trip_type $trip_type --removals $removals --metric $metric
