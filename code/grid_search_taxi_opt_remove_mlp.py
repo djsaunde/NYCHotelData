@@ -18,7 +18,7 @@ parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--trials', type=int, default=5)
-parser.add_argument('--removals', type=int, default=25)
+parser.add_argument('--removals', type=int, default=15)
 parser.add_argument('--metric', type=str, default='rel_diffs')
 
 locals().update(vars(parser.parse_args()))
@@ -187,9 +187,8 @@ for i in range(removals):
 
 	print('Creating and training multi-layer perceptron regression model.')
 
-	param_grid = {'hidden_layer_sizes' : [[512, 256, 128], [1024, 512, 256],
-								[512, 256, 128, 64], [1024, 512, 256, 128]],
-				  'alpha' : [1e-5, 5e-5, 1e-4, 5e-4]}
+	param_grid = {'hidden_layer_sizes' : [[512, 256, 128], [1024, 512, 256], [1024, 512, 256, 128]],
+				  'alpha' : [5e-5, 1e-4]}
 
 	model = GridSearchCV(MLPRegressor(), param_grid=param_grid, verbose=5, n_jobs=-1)
 	model.fit(train_features, train_targets)

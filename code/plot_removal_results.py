@@ -18,7 +18,7 @@ removals_path = os.path.join('..', 'data', 'taxi_lr_removals')
 
 dirs = os.listdir(removals_path)
 distances = sorted(list(map(int, [d.split('_')[0] for d in dirs])))
-colors = cm.rainbow(np.linspace(0, 1, n_removals + 1))
+colors = cm.rainbow(np.linspace(0, 1, len(distances) + 1))
 
 fig, axes = plt.subplots(2, 2, figsize=(9, 9))
 
@@ -64,7 +64,7 @@ removals_path = os.path.join('..', 'data', 'grid_search_taxi_mlp_removals')
 
 dirs = os.listdir(removals_path)
 distances = sorted(list(map(int, [d.split('_')[0] for d in dirs])))
-colors = cm.rainbow(np.linspace(0, 1, n_removals + 1))
+colors = cm.rainbow(np.linspace(0, 1, len(distances) + 1))
 
 # Plot removals from all MLP regression models trained with taxi data.
 for d, c in zip(distances, colors):
