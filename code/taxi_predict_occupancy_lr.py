@@ -126,16 +126,15 @@ else:
 	
 	print('Time: %.4f' % (default_timer() - start))
 
-# Count number of rides per hotel and date.
-df = df.groupby(['Hotel Name', 'Date', 'Room Demand']).count().reset_index()
-df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'}) 
-
 hotels = np.array(df['Hotel Name'])
 trips = np.array(df['No. Nearby Trips']).reshape([-1, 1])
 weekdays = np.array(df['Date'].dt.weekday).reshape([-1, 1])
 months = np.array(df['Date'].dt.month).reshape([-1, 1])
 years = np.array(df['Date'].dt.year).reshape([-1, 1])
 targets = np.array(df['Room Demand'])
+
+hotel_names, hotels = np.unique(hotels, return_inverse=True)
+hotels = hotels.reshape([-1, 1])
 
 train_scores = []
 test_scores = []
@@ -148,9 +147,6 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	# Randomly permute the data to remove sequence biasing.
 	p = np.random.permutation(targets.shape[0])
 	hotels, trips, weekdays, months, years, targets = hotels[p], trips[p], weekdays[p], months[p], years[p], targets[p]
-
-	_, hotels = np.unique(hotels, return_inverse=True)
-	hotels = hotels.reshape([-1, 1])
 
 	# Split the data into (training, test) subsets.
 	split = int(0.8 * len(targets))
@@ -178,12 +174,22 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 
 	train_mses.append(mean_squared_error(train_targets, train_predictions))
 	test_mses.append(mean_squared_error(test_targets, test_predictions))
+	
+	print()
+	print('*** Results on %d / %d trial ***' % (i + 1, trials))
+	print()
+	print('Training MSE: %.0f' % train_mses[-1])
+	print('Training R^2: %.4f' % train_scores[-1])
+	print()
+	print('Test MSE: %.0f' % test_mses[-1])
+	print('Test R^2: %.4f' % test_scores[-1])
+	print()
 
-	np.save(os.path.join(predictions_path, 'train_targets_%d.npy' % i), train_targets)
-	np.save(os.path.join(predictions_path, 'train_predictions_%d.npy' % i), train_predictions)
+	np.save(os.path.join(predictions_path, 'train_targets_removals_%d.npy' % i), train_targets[-1])
+	np.save(os.path.join(predictions_path, 'train_predictions_removals_%d.npy' % i), train_predictions[-1])
 
-	np.save(os.path.join(predictions_path, 'test_targets_%d.npy' % i), test_targets)
-	np.save(os.path.join(predictions_path, 'test_predictions_%d.npy' % i), test_predictions)
+	np.save(os.path.join(predictions_path, 'test_targets_removals_%d.npy' % i), test_targets[-1])
+	np.save(os.path.join(predictions_path, 'test_predictions_removals_%d.npy' % i), test_predictions[-1])
 
 print()
 print('Mean, standard deviation of training MSE: %.0f $\pm$ %.0f' % (np.mean(train_mses), np.std(train_mses)))
@@ -191,4 +197,6 @@ print('Mean, standard deviation of training R^2: %.4f' % np.mean(train_scores))
 print()
 print('Mean, standard deviation of test MSE: %.0f $\pm$ %.0f' % (np.mean(test_mses), np.std(test_mses)))
 print('Mean, standard deviation of test R^2: %.4f' % np.mean(test_scores))
+print()
+print('%.0f $\pm$ %.0f & %.4f & %.0f $\pm$ %.0f & %.4f' % (np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.mean(test_mses), np.std(test_mses), np.mean(test_scores)))
 print()
