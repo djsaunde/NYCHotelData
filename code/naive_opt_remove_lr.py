@@ -12,145 +12,53 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics      import mean_squared_error
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--distance', default=25, type=int)
-parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--trials', type=int, default=5)
 parser.add_argument('--removals', type=int, default=25)
 parser.add_argument('--metric', type=str, default='rel_diffs')
+parser.add_argument('--trip_type', type=str, default='pickups')
 
 locals().update(vars(parser.parse_args()))
+
+fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2],
+						end_date[0], end_date[1], end_date[2], metric]))
 
 report_fname = '_'.join(map(str, [25, 300, trip_type, start_date[0], start_date[1],
 					start_date[2], end_date[0], end_date[1], end_date[2], metric]))
 
-fname = '_'.join(map(str, [distance, start_date[0], start_date[1],
-			start_date[2], end_date[0], end_date[1], end_date[2]]))
-
-disk_fname = '_'.join(map(str, [distance, start_date[0], start_date[1],
-			start_date[2], end_date[0], end_date[1], end_date[2], metric]))
-
 start_date, end_date = date(*start_date), date(*end_date)
 
 reports_path = os.path.join('..', 'data', 'optimization_reports')
-data_path = os.path.join('..', 'data', 'all_preprocessed_%d' % distance)
-taxi_occupancy_path = os.path.join('..', 'data', 'taxi_occupancy', fname)
-predictions_path = os.path.join('..', 'data', 'taxi_lr_opt_removal_predictions', disk_fname)
-removals_path = os.path.join('..', 'data', 'taxi_lr_opt_removals', disk_fname)
+predictions_path = os.path.join('..', 'data', 'naive_lr_opt_removal_predictions', fname)
+removals_path = os.path.join('..', 'data', 'naive_lr_opt_removals', fname)
 
-for path in [data_path, taxi_occupancy_path, predictions_path, removals_path]:
+for path in [predictions_path, removals_path]:
 	if not os.path.isdir(path):
 		os.makedirs(path)
 
-is_data_file = os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'))
-is_counts_file = os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
-		
-if not is_counts_file and not is_data_file:
-	# Load daily capacity data.
-	print('\nLoading daily per-hotel capacity data.'); start = default_timer()
+# Load daily capacity data.
+print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-	occupancy = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
-	occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
-	occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
-	occupancy['Date'] = occupancy['Date'].dt.date
-	occupancy = occupancy.rename(index=str, columns={'Share ID': 'Hotel Name'})
-	occupancy = occupancy.drop('Unnamed: 0', axis=1)
+df = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
+df = df.loc[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
 
-	print('Time: %.4f' % (default_timer() - start))
-
-	# Load preprocessed data according to command-line "distance" parameter.
-	print('\nReading in the pre-processed taxicab data.'); start = default_timer()
-
-	usecols = ['Hotel Name', 'Pick-up Time', 'Drop-off Time', 'Distance From Hotel']
-	if trip_type == 'pickups':
-		filename = os.path.join(data_path, 'destinations.csv')
-	elif trip_type == 'dropoffs':
-		filename = os.path.join(data_path, 'starting_points.csv')
-	else:
-		raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument "trip_type".')
-
-	taxi_rides = pd.read_csv(filename, header=0, usecols=usecols)
-
-	taxi_rides['Hotel Name'] = taxi_rides['Hotel Name'].apply(str.strip)
-	taxi_rides['Pick-up Time'] = pd.to_datetime(taxi_rides['Pick-up Time'], format='%Y-%m-%d')
-	taxi_rides['Drop-off Time'] = pd.to_datetime(taxi_rides['Drop-off Time'], format='%Y-%m-%d')
-	taxi_rides = taxi_rides.loc[(taxi_rides['Pick-up Time'] >= start_date) & \
-									(taxi_rides['Drop-off Time'] <= end_date)]
-	taxi_rides['Date'] = taxi_rides['Pick-up Time'].dt.date
-	taxi_rides = taxi_rides.drop(['Pick-up Time', 'Drop-off Time'], axis=1)
-
-	print('Time: %.4f' % (default_timer() - start))
-
-	# Build the dataset of ((hotel, taxi density), occupancy) input, output pairs.
-	print('\nMerging dataframes on Date and Hotel Name attributes.'); start = default_timer()
-
-	df = pd.merge(occupancy, taxi_rides, on=['Date', 'Hotel Name'])
-
-	print('Time: %.4f' % (default_timer() - start))
-
-	# Save merged occupancy and taxi data to disk.
-	print('\nSaving merged dataframes to disk.'); start = default_timer()
-
-	df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'))
-	
-	print('Time: %.4f' % (default_timer() - start))
-	
-	# Count number of rides per hotel and date.
-	df = df.groupby(['Hotel Name', 'Date', 'Room Demand']).count().reset_index()
-	df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'})
-	df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
-
-	# Save occupancy and taxi counts to disk.
-	print('\nSaving counts to disk.'); start = default_timer()
-
-	df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
-    
-	print('Time: %.4f' % (default_timer() - start))
-
-elif is_data_file and not is_counts_file:
-	# Load merged occupancy and taxi data to disk.
-	print('\nLoading merged taxi and occupancy dataframes from disk.'); start = default_timer()
-
-	df = pd.read_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'))
-	
-	print('Time: %.4f' % (default_timer() - start))
-	
-	# Count number of rides per hotel and date.
-	df = df.groupby(['Hotel Name', 'Date', 'Room Demand']).count().reset_index()
-	df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'})
-	df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
-
-	# Save occupancy and taxi counts to disk.
-	print('\nSaving counts to disk.'); start = default_timer()
-
-	df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
-    
-	print('Time: %.4f' % (default_timer() - start))
-
-else:
-	# Load merged occupancy and taxi data from disk.
-	print('\nLoading occupancy and taxi counts from disk.'); start = default_timer()
-	
-	df = pd.read_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
-	df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
-	
-	print('Time: %.4f' % (default_timer() - start))
+print('Time: %.4f' % (default_timer() - start))
 
 opt_report = pd.read_csv(os.path.join(reports_path, report_fname + '.csv'))
 order = list(np.array(opt_report['Removed hotel']))
 
-all_hotel_names = set(order) & set(df['Hotel Name'].unique())
+all_hotel_names = set(order) & set(df['Share ID'].unique())
 
-df = df[df['Hotel Name'].isin(all_hotel_names)]
+df = df[df['Share ID'].isin(all_hotel_names)]
 
 removal_order = []
 for name in order:
 	if name in all_hotel_names:
 		removal_order.append(name)
 
-hotels = np.array(df['Hotel Name'])
-trips = np.array(df['No. Nearby Trips']).reshape([-1, 1])
+hotels = np.array(df['Share ID'])
 weekdays = np.array(df['Date'].dt.weekday).reshape([-1, 1])
 months = np.array(df['Date'].dt.month).reshape([-1, 1])
 years = np.array(df['Date'].dt.year).reshape([-1, 1])
@@ -166,15 +74,15 @@ for i in range(removals):
 	
 	# Randomly permute the data to remove sequence biasing.
 	p = np.random.permutation(targets.shape[0])
-	hotels, trips, weekdays, months, years, targets = hotels[p], trips[p], weekdays[p], months[p], years[p], targets[p]
+	hotels, weekdays, months, years, targets = hotels[p], weekdays[p], months[p], years[p], targets[p]
 
 	# Split the data into (training, test) subsets.
 	split = int(0.8 * len(targets))
 
-	train_features = [hotels[:split], trips[:split], years[:split], months[:split], weekdays[:split]]
+	train_features = [hotels[:split], years[:split], months[:split], weekdays[:split]]
 	train_features = np.concatenate(train_features, axis=1)
 
-	test_features = [hotels[split:], trips[split:], years[split:], months[split:], weekdays[split:]]
+	test_features = [hotels[split:], years[split:], months[split:], weekdays[split:]]
 	test_features = np.concatenate(test_features, axis=1)
 
 	train_targets = targets[:split]
@@ -236,10 +144,9 @@ for i in range(removals):
 
 	# Remove offending hotel from data.
 	hotel_names = hotel_names[hotel_names != hotel]
-	hotels, trips, weekdays, months, years, targets = hotels[(hotels != hotel_idx).ravel()], \
-			trips[(hotels != hotel_idx).ravel()], weekdays[(hotels != hotel_idx).ravel()], \
-			months[(hotels != hotel_idx).ravel()], years[(hotels != hotel_idx).ravel()], \
-												targets[(hotels != hotel_idx).ravel()]
+	hotels, weekdays, months, years, targets = hotels[(hotels != hotel_idx).ravel()], \
+		weekdays[(hotels != hotel_idx).ravel()], months[(hotels != hotel_idx).ravel()], \
+			years[(hotels != hotel_idx).ravel()], targets[(hotels != hotel_idx).ravel()]
 				
 # Save hotel removal report to disk.
 df = pd.DataFrame(report, columns=['Hotel', 'Hotel Test MSE', 'Train MSE', 'Train R^2', 'Test MSE', 'Test R^2'])
@@ -257,15 +164,15 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	
 	# Randomly permute the data to remove sequence biasing.
 	p = np.random.permutation(targets.shape[0])
-	hotels, trips, weekdays, months, years, targets = hotels[p], trips[p], weekdays[p], months[p], years[p], targets[p]
+	hotels, weekdays, months, years, targets = hotels[p], weekdays[p], months[p], years[p], targets[p]
 
 	# Split the data into (training, test) subsets.
 	split = int(0.8 * len(targets))
 
-	train_features = [hotels[:split], trips[:split], years[:split], months[:split], weekdays[:split]]
+	train_features = [hotels[:split], years[:split], months[:split], weekdays[:split]]
 	train_features = np.concatenate(train_features, axis=1)
 
-	test_features = [hotels[split:], trips[split:], years[split:], months[split:], weekdays[split:]]
+	test_features = [hotels[split:], years[split:], months[split:], weekdays[split:]]
 	test_features = np.concatenate(test_features, axis=1)
 
 	train_targets = targets[:split]
