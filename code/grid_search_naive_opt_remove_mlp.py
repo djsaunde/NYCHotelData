@@ -13,7 +13,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics         import mean_squared_error
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--trip_type', default='pickups', type=str)
+parser.add_argument('--trip_type', type=str, default='pickups')
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--trials', type=int, default=5)
