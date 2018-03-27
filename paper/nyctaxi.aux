@@ -16,7 +16,8 @@
 \@writefile{toc}{\contentsline {section}{\numberline {3}Methods}{2}}
 \newlabel{s:methods}{{3}{2}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Data processing}{2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Distance criterion optimization}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Distance threshold optimization}{2}}
+\newlabel{ss:distance_opt}{{3.2}{2}}
 \citation{scikit-learn}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Removing hotel outliers}{3}}
 \newlabel{ss:hotel_outliers}{{3.3}{3}}
@@ -25,20 +26,24 @@
 \newlabel{s:results}{{4}{3}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Outlier removal: choosing optimal distance threshold}{3}}
 \newlabel{ss:optimization}{{4.1}{3}}
-\bibstyle{biom}
-\bibdata{nyctaxi}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Order of hotel removals and corresponding data using the relative difference divergence measure.}}{4}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Order of hotel removals and corresponding data using the relative difference difference measure.}}{4}}
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{t:relative_divergence}{{1}{4}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces MSE and $R^2$ values for OLS and MLP regression models trained without taxi data.}}{4}}
-\newlabel{t:baseline_performance}{{2}{4}}
+\newlabel{t:relative_difference}{{1}{4}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Predicting hotel occupancy}{4}}
 \newlabel{ss:predicting}{{4.2}{4}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Full hotel data}{4}}
-\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces MSE and $R^2$ values for OLS regression model trained with relevant taxi data with a range of distance thresholds $d$.}}{4}}
-\newlabel{t:taxi_performance}{{3}{4}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces MSE and $R^2$ values for OLS regression model trained with relevant taxi data with a range of distance thresholds $d$.}}{4}}
+\newlabel{t:full_data_performance}{{2}{4}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Outlier removal: distance optimization}{4}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.3}Outlier removal - predictive power}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}}{5}}
+\newlabel{fig:abs_diffs_removals}{{1}{5}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.3}Outlier removal - highest MSE}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}}{5}}
+\newlabel{fig:rel_diffs_removals}{{2}{5}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions and Future Work}{5}}
+\newlabel{s:conclusion}{{5}{5}}
+\bibstyle{biom}
+\bibdata{nyctaxi}
 \bibcite{dask}{{1}{2016}{{Arabie and Carroll}}{{Arabie and Carroll}}}
 \bibcite{bessel_calculation_2010}{{2}{2010}{{Bessel et~al.}}{{Bessel, Karney, and Deakin}}}
 \bibcite{Chu2014VisualizingHT}{{3}{2014}{{Chu et~al.}}{{Chu, Sheets, Zhao, Wu, Yang, Zheng, and Chen}}}
@@ -49,9 +54,7 @@
 \bibcite{scikit-learn}{{8}{2011}{{Pedregosa et~al.}}{{Pedregosa, Varoquaux, Gramfort, Michel, Thirion, Grisel, Blondel, Prettenhofer, Weiss, Dubourg, Vanderplas, Passos, Cournapeau, Brucher, Perrot, and Duchesnay}}}
 \bibcite{Stoyanovich2017ZoomingIO}{{9}{2017}{{Stoyanovich et~al.}}{{Stoyanovich, Gilbride, and Moffitt}}}
 \bibcite{Wu2016InterpretingTD}{{10}{2016}{{Wu et~al.}}{{Wu, Wang, and Li}}}
-\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Train, test MSE and $R^2$ values for OLS regression model with nearby taxi data ($d = 300$). Hotels with the highest test MSE are iteratively removed, and the OLS regression model is fit again.}}{5}}
-\newlabel{t:lr_removals}{{4}{5}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{5}}
-\newlabel{s:conclusion}{{5}{5}}
-\@writefile{toc}{\contentsline {section}{References}{5}}
-\newlabel{lastpage}{{5}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}}{6}}
+\newlabel{fig:removals}{{3}{6}}
+\@writefile{toc}{\contentsline {section}{References}{6}}
+\newlabel{lastpage}{{5}{6}}

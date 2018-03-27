@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 from datetime import date
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--distance', default=25, type=int)
+parser.add_argument('--distance', default=300, type=int)
 parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
 parser.add_argument('--taxi', type=str, default='taxi')
 parser.add_argument('--iteration', type=int, default=0)
 parser.add_argument('--nrows', type=int, default=None)
-parser.add_argument('--n', type=int, default=1000)
+parser.add_argument('--n', type=int, default=100)
 parser.add_argument('--plot_type', type=str, default='plot')
 
 locals().update(vars(parser.parse_args()))

@@ -31,7 +31,7 @@
 \efloatseparator
  
 \begin{table}
-\caption{MSE and $R^2$ values for OLS and MLP regression models trained without relevant taxi data.}
+\caption{MSE and $R^2$ values for OLS and MLP regression models trained without taxi data.}
 \label{t:baseline_performance}
 \begin{center}
 \resizebox{\columnwidth}{!}
@@ -81,10 +81,52 @@
  & 175 & 46,218 $\pm$ 6,021 & 0.5788 & 46,501 $\pm$ 6,034 & 0.5730 \\
  & 200 & 50,535 $\pm$ 12,527 & 0.5372 & 51,004 $\pm$ 13,138 & 0.5402 \\
  & 225 & 37,277 $\pm$ 6,933 & 0.6603 & 37,064 $\pm$ 6,297 & 0.6593 \\
- & 250 & 47,705 $\pm$ 13,422 & 0.5650 & 47,548 $\pm$ 11,538 & 0.5642 \\
+ & 250 & 44,971 $\pm$ 10,325 & 0.5896 & 43,966 $\pm$ 9,011 & 0.5895 \\
  & 275 & 35,077 $\pm$ 1,456 & 0.6809 & 35,401 $\pm$ 1,668 & 0.6727 \\
  & 300 & 38,173 $\pm$ 5,142 & 0.6514 & 38,251 $\pm$ 4,996 & 0.6513 \\
  \hline
+\end{tabular}
+}
+\end{center}
+\end{table}
+\efloatseparator
+ 
+\begin{table}
+\caption{Train, test MSE and $R^2$ values for OLS regression model with nearby taxi data ($d = 300$). Hotels with the highest test MSE are iteratively removed, and the OLS regression model is fit again.}
+\label{t:lr_removals}
+\begin{center}
+\resizebox{\columnwidth}{!}
+{
+ \begin{tabular}{||c|l|c|c|c||}
+\hline
+Removal & Hotel & Hotel Test MSE & Test MSE & Test $R^2 $ \\
+\hline
+1 & The Roosevelt Hotel & 1.92e+06 & 85392 &  0.23 \\
+2 & Holiday Inn ... Chelsea & 1.84e+06 & 70182 &  0.27 \\
+3 & Warwick NY Hotel & 1.38e+06 & 57105 &  0.29 \\
+4 & 11 Howard & 7.72e+05 & 46962 &  0.31 \\
+5 & Andaz Wall Street & 5.96e+05 & 40924 &  0.33 \\
+6 & Marriott NY East Side & 4.22e+05 & 37320 &  0.34 \\
+7 & Millennium One UN & 3.36e+05 & 34888 &  0.35 \\
+8 & Courtyard NY ... Central Park & 2.35e+05 & 32516 &  0.33 \\
+9 & Courtyard NY ... Times Square ... & 1.83e+05 & 30655 &  0.35 \\
+10 & W Hotel Union Square & 2.45e+05 & 29613 &  0.33 \\
+11 & Autograph Collection ... NYC & 1.57e+05 & 27732 &  0.34 \\
+12 & Courtyard NY ... Herald Square & 1.92e+05 & 26174 &  0.16 \\
+13 & Hampton Inn ... Garden Area & 1.78e+05 & 25686 &  0.14 \\
+14 & JW Marriott ... NY & 1.60e+05 & 23468 &  0.14 \\
+15 & Residence Inn ... Times Square & 1.67e+05 & 22258 &  0.14 \\
+16 & Paramount Hotel & 1.45e+05 &  21739 &  0.13 \\
+17 & Le Meridien Parker NY & 1.55e+05 & 20600 &  0.14 \\
+18 & Courtyard NY Manhattan SoHo & 1.23e+05 & 20007 &  0.15 \\
+19 & InterContinental NY Times Square & 1.04e+05 & 18679 &  0.14 \\
+20 & Shelburne NYC ... Affinia ... & 1.31e+05 & 18448 &  0.16 \\
+21 & Hilton Millenium Hotel & 1.23e+05 & 17428 &  0.16 \\
+22 & Edison Hotel & 9.09e+04 & 16138 &  0.17 \\
+23 & Novotel New York & 9.09e+04 & 15277 &  0.17 \\
+24 & Courtyard NY ... Chelsea & 6.35e+04 & 14785 &  0.18 \\
+25 & Fairfield ... NY Midtown & 7.78e+04 & 14232 &  0.22 \\
+\hline
 \end{tabular}
 }
 \end{center}
