@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-path = os.path.join('..', 'data', 'Unmasked Daily Capacity.csv')
+path = os.path.join('..', 'data', 'Hotel Occupancy.csv')
 df = pd.read_csv(path)
 
 print()

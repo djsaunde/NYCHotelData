@@ -37,7 +37,7 @@ def divergence(occupancy, taxi, metric):
 parser = argparse.ArgumentParser()
 parser.add_argument('--distance', default=25, type=int)
 parser.add_argument('--trip_type', default='pickups', type=str)
-parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
+parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--metric', type=str, default='rel_diffs')
 parser.add_argument('--nrows', type=int, default=None)

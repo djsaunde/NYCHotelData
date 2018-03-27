@@ -12,8 +12,8 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.metrics        import mean_squared_error
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
-parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
+parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
+parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--trials', type=int, default=5)
 parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
 parser.add_argument('--alpha', type=float, default=1e-4)

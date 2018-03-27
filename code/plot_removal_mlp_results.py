@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
-parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
+parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
+parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 locals().update(vars(parser.parse_args()))
 
 removals_path = os.path.join('..', 'data', 'grid_search_taxi_mlp_removals')
