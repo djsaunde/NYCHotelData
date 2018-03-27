@@ -11,21 +11,21 @@ parser.add_argument('--distance', default=25, type=int)
 parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
-parser.add_argument('--metric', type=str, default='rel_diffs')
 parser.add_argument('--nrows', type=int, default=None)
 parser.add_argument('--n', type=int, default=1000)
+parser.add_argument('--iteration', type=int, default=0)
 parser.add_argument('--plot_type', type=str, default='plot')
 
 locals().update(vars(parser.parse_args()))
 
-fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], metric]))
+fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2]]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-predictions_path = os.path.join('..', 'data', 'lr_predictions', fname)
+predictions_path = os.path.join('..', 'data', 'taxi_lr_predictions', fname)
 
-predictions = np.load(os.path.join(predictions_path, 'test_predictions.npy'))
-targets = np.load(os.path.join(predictions_path, 'test_targets.npy'))
+predictions = np.load(os.path.join(predictions_path, 'test_predictions_%d.npy' % iteration))
+targets = np.load(os.path.join(predictions_path, 'test_targets_%d.npy' % iteration))
 
 if plot_type == 'plot':
 	if n == -1:

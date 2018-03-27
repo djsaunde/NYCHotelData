@@ -202,8 +202,8 @@ if __name__ == '__main__':
 	parser.add_argument('--minimum', default=25, type=int)
 	parser.add_argument('--step', default=25, type=int)
 	parser.add_argument('--coord_type', default='pickups', type=str)
-	parser.add_argument('--start_date', type=int, nargs=3, default=[2013, 1, 1])
-	parser.add_argument('--end_date', type=int, nargs=3, default=[2015, 1, 1])
+	parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
+	parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 	parser.add_argument('--metric', type=str, default='rel_diffs')
 	parser.add_argument('--plot', dest='plot', action='store_true')
 	parser.add_argument('--no_plot', dest='plot', action='store_false')
@@ -224,7 +224,7 @@ if __name__ == '__main__':
 	print('\nLoading daily per-hotel capacity data.')
 	start = timeit.default_timer()
 
-	capacities = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+	capacities = pd.read_csv(os.path.join('..', 'data', 'Hotel Occupancy.csv'), index_col=False)
 	capacities['Date'] = pd.to_datetime(capacities['Date'], format='%Y-%m-%d')
 	capacities = capacities.loc[(capacities['Date'] >= start_date) & (capacities['Date'] <= end_date)]
 

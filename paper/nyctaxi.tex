@@ -82,7 +82,8 @@ Prior to pre-processing, each month of yellow and green taxi trip data requires 
 
 Pre-processing a month of yellow taxi data using the aforementioned Python program and distance criterion $d = 300$ requires \textit{at most} 40 minutes and 50Gb of random-access memory. Using the super-computing cluster with a 40-node per-user allotment, processing all 42 months of taxi trip date requires only $\approx$80 minutes. If equipped with 42 or more nodes with the same computing resources, processing time may be cut in half.
 
-\subsection{Distance criterion optimization}
+\subsection{Distance threshold optimization}
+\label{ss:distance_opt}
 
 A crucial assumption in the analyses of the taxi dataset is that taxi trips that originate or culminate near a hotel are likely to indicate that guests are arriving or leaving the hotel. With this in mind, we can use the per-hotel densities of nearby taxi trip pick-ups or drop-offs to make predictions about future hotel room demand or other quantities of interest. We additionally assume that some unknown distance threshold $d$ maximizes the likelihood, over all hotels, that the nearby taxi traffic does indeed indicate they are hotel guests. If $d$ is too small, too few guests are captured in the trip coordinates data; if $d$ is too large, too many taxi customers are mis-classified as hotel guests.
 
@@ -98,7 +99,7 @@ $$\sum_x | \hat{p}_{\mathrm{occ}} (x) - \hat{p}_{\mathrm{taxi}} (x) |,$$
 
 and summed relative differences, in which the smaller-valued proportion is used as the denominator in the quotient,
 
-$$\sum_x \frac{\min \{ \hat{p}_{\mathrm{taxi}} (x), \hspace*{0.1cm} \hat{p}_{\mathrm{occ}} (x) \}}{\max \{ \hat{p}_{\mathrm{taxi}} (x), \hspace*{0.1cm} \hat{p}_{\mathrm{occ}} (x) \}}.$$
+$$\sum_x \frac{\max \{ \hat{p}_{\mathrm{taxi}} (x), \hspace*{0.1cm} \hat{p}_{\mathrm{occ}} (x) \}}{\min \{ \hat{p}_{\mathrm{taxi}} (x), \hspace*{0.1cm} \hat{p}_{\mathrm{occ}} (x) \}}.$$
 
 Note that the divergence measures used are not necessarily true $f$-divergences. These measures are considered useful on the basis of their predictive power in modeling hotel occupancy rates.
 
@@ -237,7 +238,25 @@ Since the multi-layer perceptrons out-performed the OLS regression models in pre
 
 \subsubsection{Outlier removal: distance optimization}
 
-\textbf{TODO}.
+For each of the three divergence measures detailed in Section \ref{ss:distance_opt}, an ordering of hotel removals based on the magnitude of the measure evaluation can be found. While the procedure relied on the taxi dataset (pre-processed with a distance threshold of 300 feet relative to hotel locations), hotels can be removed from both machine learning models with and without access to taxi data as observations.
+
+The results for models trained with various distance thresholds $d$ and without taxi data are shown in Figure \ref{} in which the absolute differences metric is used, and in Figure \ref{} in which the relative differences metric is used.
+
+\begin{figure}
+	\centering
+    \captionsetup{justification=centering}
+	\includegraphics[width=0.475\textwidth, height=8cm]{../plots/opt_removals_results_abs_diffs.png}
+	\caption{MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}
+	\label{fig:abs_diffs_removals}
+\end{figure}
+
+\begin{figure}
+	\centering
+    \captionsetup{justification=centering}
+	\includegraphics[width=0.475\textwidth, height=8cm]{../plots/opt_removals_results_rel_diffs.png}
+	\caption{MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}
+	\label{fig:rel_diffs_removals}
+\end{figure}
 
 \subsubsection{Outlier removal - highest MSE}
 

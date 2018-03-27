@@ -100,5 +100,10 @@ axes[1][0].set_xticks(range(n_removals + 1)); axes[1][1].set_xticks(range(n_remo
 axes[1][0].legend(fontsize='x-small'); axes[1][1].legend(fontsize='x-small');
 plt.tight_layout()
 
+# fig.suptitle('Worst test MSE-based removals results', fontsize=14)
+	
+plt.tight_layout()
+# plt.subplots_adjust(top=0.9)
+
 plt.savefig(os.path.join('..', 'plots', 'removals_results.png'))
 plt.show()

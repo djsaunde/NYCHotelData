@@ -80,18 +80,18 @@ for d, c in zip(distances, colors):
 	axes[1][0].semilogy(results['Test MSE'][:n_removals + 1], c=c, label='d = %d' % d)
 	axes[1][1].plot(results['Test R^2'][:n_removals + 1], c=c, label='d = %d' % d)
 
-# # Plot removals from naive OLS regression model.
-# removals_path = os.path.join('..', 'data', 'grid_search_naive_mlp_opt_removals')
-# dirname = '_'.join(map(str, [start_date[0], start_date[1],
-# 	start_date[2], end_date[0], end_date[1], end_date[2], metric]))
-# path = os.path.join(removals_path, dirname, 'removals.csv')
+# Plot removals from naive OLS regression model.
+removals_path = os.path.join('..', 'data', 'grid_search_naive_mlp_opt_removals')
+dirname = '_'.join(map(str, [start_date[0], start_date[1],
+	start_date[2], end_date[0], end_date[1], end_date[2], metric]))
+path = os.path.join(removals_path, dirname, 'removals.csv')
 
-# # Get removal results .csv file.
-# results = pd.read_csv(path)
+# Get removal results .csv file.
+results = pd.read_csv(path)
 
-# # Plot the test mean-squared errors.
-# axes[1][0].semilogy(results['Test MSE'][:n_removals + 1], c='k', linestyle='--', label='Naive')
-# axes[1][1].plot(results['Test R^2'][:n_removals + 1], c='k', linestyle='--', label='Naive')
+# Plot the test mean-squared errors.
+axes[1][0].semilogy(results['Test MSE'][:n_removals + 1], c='k', linestyle='--', label='Naive')
+axes[1][1].plot(results['Test R^2'][:n_removals + 1], c='k', linestyle='--', label='Naive')
 
 axes[1][0].set_title('MLP: Test MSE vs. no. hotels removed')
 axes[1][1].set_title('MLP: Test R^2 vs. no. hotels removed')
@@ -99,7 +99,16 @@ axes[1][0].set_xlabel('No. of hotels removed'); axes[1][0].set_ylabel('Test MSE'
 axes[1][1].set_xlabel('No. of hotels removed'); axes[1][1].set_ylabel('Test R^2')
 axes[1][0].set_xticks(range(n_removals + 1)); axes[1][1].set_xticks(range(n_removals + 1))
 axes[1][0].legend(fontsize='x-small'); axes[1][1].legend(fontsize='x-small');
-plt.tight_layout()
 
-plt.savefig(os.path.join('..', 'plots', 'opt_removals_results.png'))
+# if metric == 'rel_diffs':
+# 	fig.suptitle('Removals results with %s metric' % 'relative differences', fontsize=14)
+# elif metric == 'abs_diffs':
+# 	fig.suptitle('Removals results with %s metric' % 'absolute differences', fontsize=14)
+# elif metric == 'relative_entropy':
+# 	fig.suptitle('Removals results with %s metric' % 'relative entropy', fontsize=14)
+	
+plt.tight_layout()
+# plt.subplots_adjust(top=0.9)
+
+plt.savefig(os.path.join('..', 'plots', 'opt_removals_results_%s.png' % metric))
 plt.show()
