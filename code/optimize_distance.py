@@ -245,8 +245,7 @@ if __name__ == '__main__':
 	print('\nReading in the pre-processed taxicab data.')
 	start = timeit.default_timer()
 
-	usecols = ['Share ID', 'Hotel Name', 'Distance From Hotel', 'Latitude', 'Longitude', 'Pick-up Time',
-								'Drop-off Time', 'Passenger Count', 'Trip Distance', 'Fare Amount']
+	usecols = ['Hotel Name', 'Distance From Hotel', 'Pick-up Time', 'Drop-off Time']
 	if coord_type == 'pickups':
 		filename = os.path.join('..', 'data', '_'.join(['all_preprocessed', str(maximum)]), 'destinations.csv')
 	elif coord_type == 'dropoffs':
