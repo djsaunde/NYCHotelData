@@ -166,9 +166,8 @@ for i in range(removals):
 
 	print('Creating and training multi-layer perceptron regression model.')
 
-	param_grid = {'hidden_layer_sizes' : [[512, 256, 128], [1024, 512, 256],
-								[512, 256, 128, 64], [1024, 512, 256, 128]],
-			  'alpha' : [1e-5, 5e-5, 1e-4, 5e-4]}
+	param_grid = {'hidden_layer_sizes' : [[512, 256, 128], [1024, 512, 256], [1024, 512, 256, 128]],
+			      'alpha' : [1e-5, 5e-5]}
 
 	model = GridSearchCV(MLPRegressor(), param_grid=param_grid, verbose=5, n_jobs=-1)
 	model.fit(train_features, train_targets)
