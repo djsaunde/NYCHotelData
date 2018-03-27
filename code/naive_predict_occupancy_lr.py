@@ -43,6 +43,9 @@ months = np.array(occupancy['Date'].dt.month).reshape([-1, 1])
 years = np.array(occupancy['Date'].dt.year).reshape([-1, 1])
 targets = np.array(occupancy['Room Demand'])
 
+hotel_names, hotels = np.unique(hotels, return_inverse=True)
+hotels = hotels.reshape([-1, 1])
+
 train_scores = []
 test_scores = []
 train_mses = []
@@ -54,9 +57,6 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	# Randomly permute the data to remove sequence biasing.
 	p = np.random.permutation(targets.shape[0])
 	hotels, weekdays, months, years, targets = hotels[p], weekdays[p], months[p], years[p], targets[p]
-
-	_, hotels = np.unique(hotels, return_inverse=True)
-	hotels = hotels.reshape([-1, 1])
 
 	# Split the data into (training, test) subsets.
 	split = int(0.8 * len(targets))
