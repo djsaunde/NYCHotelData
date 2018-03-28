@@ -157,7 +157,7 @@ def optimize_distance(hotel_capacities, taxi_rides, minimum, maximum, step, metr
 		
 		removal_data.append([to_remove, distances[min_eval_idx], capacity_distros[to_remove],
 					taxi_distros[min_eval_idx][to_remove], abs_diffs[min_eval_idx][worst_idx],
-								rel_diffs[min_eval_idx][worst_idx], rel_entropies[min_eval_idx][worst_idx]])
+								divergences[worst_idx], rel_entropies[min_eval_idx][worst_idx]])
 
 	df = pd.DataFrame(removal_data, columns=['Removed hotel', 'Best distance', 'Capacity share', 'Taxi share', 'Abs. difference', 'Rel. divergence', 'Rel. entropy'])
 	df.to_csv(os.path.join(reports_path, fname) + '.csv')

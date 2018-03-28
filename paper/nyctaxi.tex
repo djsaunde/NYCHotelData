@@ -74,20 +74,20 @@ The efficient processing of spatio-temporal datasets (e.g, NYC taxi trip records
 
 \subsection{Data processing}
 
-The dataset of hotel occupancy rates contains information from January 2013 until present day. The dataset of NYC hotel taxi records contains data from January 2009 until present day; however, geospatial coordinates of pick-up and drop-off locations are only recorded from January 2009 until June 2016. Given these constraints, our experiments consider only those records which lie in the date range of January 2013 until June 2016, approximately 3.5 years of joint data. Our analyses are concerned only with the yellow and green taxi services in NYC, and we discard all data concerning ``for-hire vehicle'' services (e.g., Uber, Lyft, and others).
+The dataset of hotel occupancy rates contains recordings from January 2013 until present day, although there are many hotels for which data is not available until a later starting date. The dataset of NYC hotel taxi records contains data from January 2009 until present day; however, geospatial coordinates of pick-up and drop-off locations are only recorded from January 2009 until June 2016. Given these constraints, our experiments consider only those records which lie in the date range of January 2014 until the end of June 2016, approximately 2.5 years of joint recordings. This allows for the retention of 148 of the 178 hotels in the dataset, an approximate 83\% coverage for downstream analysis of the combined hotel and taxi trips data. Our experiments are concerned only with the NYC yellow and green taxi services, and we discard all data concerning ``for-hire vehicle'' services (e.g., Uber, Lyft, and others).
 
 We use a supercomputing cluster in which users are provisioned with a maximum of 40 CPU compute nodes. On each node, a Python program is dispatched to \textit{pre-process} a single month's worth of taxicab trip data with respect to the set of NYC hotels of interest. In particular, upon specifying a \textit{distance criterion} $d$, each process will independently extract trips from its designated month of data which begin or end with $d$ feet of any of the hotels under consideration. Geospatial distance calculations are accomplished using Vincenty's formula \citep{bessel_calculation_2010}. Fast loading and processing of the taxi trip records is accomplished using the \texttt{dask} parallel computation and task scheduling Python library \citep{dask}.
 
-Prior to pre-processing, each month of yellow and green taxi trip data requires approximately 2.5Gb and 300Mb of disk space, respectively, totalling $\approx$110Gb over the course of the experimental date range. Pre-processing the dataset using a distance criterion $d = 300$ feet reduces this to two files of size $\approx$10Gb each, one of trips beginning near hotels of interest (\textit{nearby pick-ups}), and another ending nearby (\textit{nearby drop-offs}). This represents an approximate reduction of 82\% of the original data.
+Prior to pre-processing, each month of yellow and green taxi trip data requires approximately 2.5Gb and 300Mb of disk space, respectively, totalling $\approx$110Gb over the course of the experimental date range. Pre-processing the dataset using a distance criterion $d = 300$ feet reduces this to two files of size $\approx$5Gb each, one of trips beginning near hotels of interest (\textit{nearby pick-ups}), and another ending nearby (\textit{nearby drop-offs}). This represents an approximate reduction of 91\% of the original data.
 
-Pre-processing a month of yellow taxi data using the aforementioned Python program and distance criterion $d = 300$ requires \textit{at most} 40 minutes and 50Gb of random-access memory. Using the super-computing cluster with a 40-node per-user allotment, processing all 42 months of taxi trip date requires only $\approx$80 minutes. If equipped with 42 or more nodes with the same computing resources, processing time may be cut in half.
+Pre-processing a month of yellow taxi data using the aforementioned Python program and distance criterion $d = 300$ requires approximately 40 minutes and no more than 50Gb of random-access memory. Using the super-computing cluster with a 40-node per-user allotment, processing all 42 months of taxi trip date requires only $\approx$80 minutes. If equipped with 42 or more nodes with the same computing resources, processing time may be cut in half.
 
 \subsection{Distance threshold optimization}
 \label{ss:distance_opt}
 
 A crucial assumption in the analyses of the taxi dataset is that taxi trips that originate or culminate near a hotel are likely to indicate that guests are arriving or leaving the hotel. With this in mind, we can use the per-hotel densities of nearby taxi trip pick-ups or drop-offs to make predictions about future hotel room demand or other quantities of interest. We additionally assume that some unknown distance threshold $d$ maximizes the likelihood, over all hotels, that the nearby taxi traffic does indeed indicate they are hotel guests. If $d$ is too small, too few guests are captured in the trip coordinates data; if $d$ is too large, too many taxi customers are mis-classified as hotel guests.
 
-We suggest that the distance criterion $d$ should be selected such that it maximizes the predictability of some quantity of interest. We compare a dataset of hotel occupancy information with counts of nearby taxi trips, per hotel and per day. We denote the observed per-hotel distribution of hotel occupancy as $\hat{p}_{\mathrm{occ}}$ and the observed per-hotel distribution of nearby taxi trips as $\hat{p}_{\mathrm{taxi}}$. In our experiments, these distributions are estimated using per-hotel proportions of aggregated hotel occupancy and taxi data from January 1st, 2013 until June 30th, 2016, and the distribution of nearby taxi trips depends on the choice of distance criterion $d$.
+We suggest that the distance criterion $d$ should be selected such that it maximizes the predictability of some quantity of interest. We compare a dataset of hotel occupancy information with counts of nearby taxi trips, per hotel and per day. We denote the observed per-hotel distribution of hotel occupancy as $\hat{p}_{\mathrm{occ}}$ and the observed per-hotel distribution of nearby taxi trips as $\hat{p}_{\mathrm{taxi}}$. In our experiments, these distributions are estimated using per-hotel proportions of aggregated hotel occupancy and taxi data from January 1st, 2014 until June 30th, 2016, and the distribution of nearby taxi trips depends on the choice of distance criterion $d$.
 
 We want to choose $d$ such that some divergence measure $\mathcal{D}$ between empirically observed distributions $\hat{p}_{\mathrm{occ}}$ and $\hat{p}_{\mathrm{taxi}}$ is minimized. We consider relative entropy,
 
@@ -242,21 +242,21 @@ For each of the three divergence measures detailed in Section \ref{ss:distance_o
 
 The results for models trained with various distance thresholds $d$ and without taxi data are shown in Figure \ref{} in which the absolute differences metric is used, and in Figure \ref{} in which the relative differences metric is used.
 
-\begin{figure}
-	\centering
-    \captionsetup{justification=centering}
-	\includegraphics[width=0.475\textwidth, height=8cm]{../plots/opt_removals_results_abs_diffs.png}
-	\caption{MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}
-	\label{fig:abs_diffs_removals}
-\end{figure}
-
-\begin{figure}
-	\centering
-    \captionsetup{justification=centering}
-	\includegraphics[width=0.475\textwidth, height=8cm]{../plots/opt_removals_results_rel_diffs.png}
-	\caption{MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}
-	\label{fig:rel_diffs_removals}
-\end{figure}
+%\begin{figure}
+%	\centering
+%    \captionsetup{justification=centering}
+%	\includegraphics[width=0.475\textwidth, height=8cm]{../plots/opt_removals_results_abs_diffs.png}
+%	\caption{MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}
+%	\label{fig:abs_diffs_removals}
+%\end{figure}
+%
+%\begin{figure}
+%	\centering
+%    \captionsetup{justification=centering}
+%	\includegraphics[width=0.475\textwidth, height=8cm]{../plots/opt_removals_results_rel_diffs.png}
+%	\caption{MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}
+%	\label{fig:rel_diffs_removals}
+%\end{figure}
 
 \subsubsection{Outlier removal - highest MSE}
 
@@ -266,13 +266,13 @@ In most cases, the networks with access to the nearby taxi trip counts obtain lo
 
 As hotels are removed from the dataset, both metrics trend towards improvement, but not monotonically so. We argue that this is due to two opposing forces: while removing noisy hotels reduces the degree of unpredictibility, it also has the effect of shrinking the size of the dataset. Without large amounts of data, it is often difficult to train complex machine learning models; i.e., the multi-layer perceptron. The drastic drop in OLS $R^2$ values may indicate that, for some values of $d$, too much training data has been removed. The trend towards improved modeling validates the use of this method for identifying hotels with abnormally unpredictable occupancy rates.
 
-\begin{figure}
-	\centering
-    \captionsetup{justification=centering}
-	\includegraphics[width=0.475\textwidth, height=8cm]{../plots/removals_results.png}
-	\caption{MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}
-	\label{fig:removals}
-\end{figure}
+%\begin{figure}
+%	\centering
+%    \captionsetup{justification=centering}
+%	\includegraphics[width=0.475\textwidth, height=8cm]{../plots/removals_results.png}
+%	\caption{MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}
+%	\label{fig:removals}
+%\end{figure}
 
 \section{Conclusions and Future Work}
 \label{s:conclusion}
