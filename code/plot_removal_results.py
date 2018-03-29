@@ -15,9 +15,11 @@ parser.add_argument('--n_removals', type=int, default=10)
 locals().update(vars(parser.parse_args()))
 
 removals_path = os.path.join('..', 'data', 'taxi_lr_removals')
+fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2],
+							end_date[0], end_date[1], end_date[2]]))
 
 dirs = os.listdir(removals_path)
-distances = sorted(list(map(int, [d.split('_')[0] for d in dirs])))
+distances = sorted(list(map(int, [d.split('_')[0] for d in dirs if fname in d])))
 colors = cm.rainbow(np.linspace(0, 1, len(distances) + 1))
 
 fig, axes = plt.subplots(2, 2, figsize=(9, 9))
@@ -53,8 +55,7 @@ axes[0][1].set_title('OLS: Test R^2 vs. no. hotels removed')
 axes[0][0].set_xlabel('No. of hotels removed'); axes[0][0].set_ylabel('Test MSE')
 axes[0][1].set_xlabel('No. of hotels removed'); axes[0][1].set_ylabel('Test R^2')
 axes[0][0].set_xticks(range(n_removals + 1)); axes[0][1].set_xticks(range(n_removals + 1))
-axes[0][0].legend(fontsize='x-small'); axes[0][1].legend(fontsize='x-small');
-plt.tight_layout()
+axes[0][0].legend(fontsize='x-small', loc=1); axes[0][1].legend(fontsize='x-small', loc=4);
 
 ##################
 # MLP regression #
@@ -63,7 +64,7 @@ plt.tight_layout()
 removals_path = os.path.join('..', 'data', 'grid_search_taxi_mlp_removals')
 
 dirs = os.listdir(removals_path)
-distances = sorted(list(map(int, [d.split('_')[0] for d in dirs])))
+distances = sorted(list(map(int, [d.split('_')[0] for d in dirs if fname in d])))
 colors = cm.rainbow(np.linspace(0, 1, len(distances) + 1))
 
 # Plot removals from all MLP regression models trained with taxi data.
@@ -74,7 +75,7 @@ for d, c in zip(distances, colors):
 	
 	# Get removal results .csv file.
 	results = pd.read_csv(path)
-	
+
 	# Plot the test mean-squared errors.
 	axes[1][0].semilogy(results['Test MSE'][:n_removals + 1], c=c, label='d = %d' % d)
 	axes[1][1].plot(results['Test R^2'][:n_removals + 1], c=c, label='d = %d' % d)
@@ -97,13 +98,8 @@ axes[1][1].set_title('MLP: Test R^2 vs. no. hotels removed')
 axes[1][0].set_xlabel('No. of hotels removed'); axes[1][0].set_ylabel('Test MSE')
 axes[1][1].set_xlabel('No. of hotels removed'); axes[1][1].set_ylabel('Test R^2')
 axes[1][0].set_xticks(range(n_removals + 1)); axes[1][1].set_xticks(range(n_removals + 1))
-axes[1][0].legend(fontsize='x-small'); axes[1][1].legend(fontsize='x-small');
-plt.tight_layout()
+axes[1][0].legend(fontsize='x-small', loc=1); axes[1][1].legend(fontsize='x-small', loc=4);
 
-# fig.suptitle('Worst test MSE-based removals results', fontsize=14)
-	
 plt.tight_layout()
-# plt.subplots_adjust(top=0.9)
-
 plt.savefig(os.path.join('..', 'plots', 'removals_results.png'))
 plt.show()

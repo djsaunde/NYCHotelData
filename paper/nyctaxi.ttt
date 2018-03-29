@@ -1,47 +1,29 @@
 \begin{table}
-\caption{Order of hotel removals and corresponding data using the relative difference divergence measure.}
-\label{t:relative_divergence}
+\caption{Order of hotel removals and corresponding data using the relative difference difference measure.}
+\label{t:relative_difference}
 \begin{center}
 \resizebox{\columnwidth}{!}
 {
- \begin{tabular}{||c|c|c|c|c|c||}
+ \begin{tabular}{||c|l|c|c|c|c||}
  \hline
  Removal & Hotel & $\hat{p}_{\mathrm{occ}}$ & $\hat{p}_{\mathrm{taxi}}$ & Best $d$ & Rel. diff. \\ [0.5ex]
  \hline
- 1 & Res. Inn ... Trade Center & $6 \times 10^{-7}$ & $2.6 \times 10^{-3}$ & 300 & 4,549 \\
- 2 & Hotel Gansevoort & $3 \times 10^{-3}$ & $2 \times 10^{-2}$ & 190 & 6.33 \\
- 3 & Courtyard ... Herald Sqr. & $2.2 \times 10^{-3}$ & $1.3 \times 10^{-2}$ & 180 & 5.93 \\
- 4 & Hilton ... Park Avenue & $5.7 \times 10^{-4}$ & $3.3 \times 10^{-3}$ & 180 & 5.74 \\
- 5 & Hotel On Rivington & $1.7 \times 10^{-3}$ & $9.6 \times 10^{-3}$ & 195 & 5.62 \\
- 6 & Holiday Inn Express ... & $4.3 \times 10^{-3}$ & $8 \times 10^{-4}$ & 195 & 5.28 \\
- 7 & Hilton NY Midtown & $3.6 \times 10^{-2}$ & $7.4 \times 10^{-3}$ & 195 & 4.91 \\
- 8 & Doubletree ... Fin. Distr. & $7 \times 10^{-3}$ & $1.6 \times 10^{-3}$ & 190 & 4.27 \\
- 9 & Sohotel & $9 \times 10^{-4}$ & $3.8 \times 10^{-3}$ & 190 & 4.2 \\
- 10 & Res. Inn ... Central Park & $2 \times 10^{-3}$ & $8.1 \times 10^{-3}$ & 180 & 4.02 \\
- 11 & Hilton ... Square Central & $9.2 \times 10^{-4} $ & $3.6 \times 10^{-3}$ & 180 & 3.87 \\
- 12 & Marriott NY Marquis & $3.8 \times 10^{-2}$ & $9.9 \times 10^{-3}$ & 180 & 3.8 \\
- 13 & Sheraton ... Times Square & $3.5 \times 10^{-2}$ & $9.5 \times 10^{-3}$ & 190 & 3.72 \\
- 14 & Fairfield ... Penn Station & $4.2 \times 10^{-3}$ & $1.1 \times 10^{-3}$ & 195 & 3.65 \\
- 15 & Holiday Inn ... 57th St. & $1.2 \times 10^{-2}$ & $3.5 \times 10^{-3}$ & 195 & 3.5 \\
- \hline
-\end{tabular}
-}
-\end{center}
-\end{table}
-\efloatseparator
- 
-\begin{table}
-\caption{MSE and $R^2$ values for OLS and MLP regression models trained without taxi data.}
-\label{t:baseline_performance}
-\begin{center}
-\resizebox{\columnwidth}{!}
-{
- \begin{tabular}{||c|c|c|c|c||}
- \hline
- Model & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
- \hline
- OLS & 106,552 $\pm$ 481 & 0.0166 & 105,463 $\pm$ 1,923 & 0.0165 \\
- MLP & 79,592 $\pm$ 3,382 & 0.2620 & 80718 $\pm$ 5113 & 0.2610 \\
+1   & Marriott New York Marquis & 300 & 0.034678 & 0.008646 & 5.504272 \\
+2   & Hilton New York Midtown & 300 & 0.035888 & 0.010083 & 4.703882 \\
+3   & Sheraton ... Times Square & 300 & 0.034274 & 0.010320 & 4.450418 \\
+4   & Waldorf Astoria New York & 300 & 0.027579 & 0.009804 & 4.138792 \\
+5   & Row NYC & 300 & 0.027087 & 0.011239 & 3.993213 \\
+6   & Holiday Inn ... 57th St & 300 & 0.012890 & 0.002459 & 4.047989 \\
+7   & The Roosevelt Hotel & 300 & 0.021280 & 0.007908 & 3.806310 \\
+8   & Lotte NY Palace & 300 & 0.018808 & 0.007360 & 3.727761 \\
+9   & Wyndham New Yorker Hotel & 300 & 0.021757 & 0.009457 & 3.701483 \\
+10  & Hilton Millenium Hotel & 300 & 0.012483 & 0.003789 & 3.681267 \\
+11  & Yotel NY @ Times Square & 300 & 0.016021 & 0.006479 & 3.784685 \\
+12  & Grand Hyatt New York & 300 & 0.029967 & 0.018311 & 3.440488 \\
+13  & Hudson Hotel & 300 & 0.020890 & 0.010127 & 3.271367 \\
+14  & Westin NY Grand Central & 300 & 0.018530 & 0.008008 & 3.231396 \\
+15  & Crowne Plaza ... Manhattan & 300 & 0.021043 & 0.009871 & 3.136236 \\
+
  \hline
 \end{tabular}
 }
@@ -51,26 +33,29 @@
  
 \begin{table}
 \caption{MSE and $R^2$ values for OLS regression model trained with relevant taxi data with a range of distance thresholds $d$.}
-\label{t:taxi_performance}
+\label{t:full_data_performance}
 \begin{center}
 \resizebox{\columnwidth}{!}
 {
  \begin{tabular}{||c|c|c|c|c|c||}
  \hline
- Model & $d$ (ft.) & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
+ Model & $d$ & MSE (train) & $R^2$ (train) & MSE (test) & $R^2$ (test) \\
  \hline
- OLS & 25 & 117,339 $\pm$ 499 & 0.0193 & 116,856 $\pm$ 1,990 & 0.0193 \\
- & 50 & 108,431 $\pm$ 631 & 0.0160 & 105,588 $\pm$ 2,524 & 0.0154 \\
- & 75 & 106,501 $\pm$ 258 & 0.0167 & 106,314 $\pm$ 1,030 & 0.0167 \\
- & 100 & 108,146 $\pm$ 454 & 0.0211 & 106,199 $\pm$ 1,818 & 0.0211 \\
- & 125 & 107,166 $\pm$ 549 & 0.0215 & 107,298 $\pm$ 2,196 & 0.0217 \\
- & 150 & 107,491 $\pm$ 693 & 0.0213 & 105,996 $\pm$ 2,779 & 0.0223 \\
- & 175 & 107,277 $\pm$ 684 & 0.0212 & 106,929 $\pm$ 2,740 & 0.0228 \\
- & 200 & 107,378 $\pm$ 495 & 0.0214 & 106,525 $\pm$ 1,979 & 0.0220 \\
- & 225 & 107,256 $\pm$ 525 & 0.0212 & 106,999 $\pm$ 2,098 & 0.0226 \\
- & 250 & 107,251 $\pm$ 411 & 0.0213 & 107,006 $\pm$ 1,643 & 0.0223 \\
- & 275 & 106,844 $\pm$ 506 & 0.0218 & 108,628 $\pm$ 2,023 & 0.0205 \\
- & 300 & 107,212 $\pm$ 634 & 0.0214 & 107,157 $\pm$ 2,538 & 0.0220 \\
+ OLS & - & 106,552 $\pm$ 481 & 0.0166 & 105,463 $\pm$ 1,923 & 0.0165 \\
+ MLP & - & 79,592 $\pm$ 3,382 & 0.2620 & 80,718 $\pm$ 5,113 & 0.2610 \\
+ \hline
+ OLS & 25 & 109,353 $\pm$ 567 & 0.0963 & 107,669 $\pm$ 2,276 & 0.0921 \\
+ & 50 & 95,367 $\pm$ 512 & 0.1428 & 94,824 $\pm$ 2,046 & 0.1437 \\
+ & 75 & 94,594 $\pm$ 144 & 0.1390 & 94,970 $\pm$ 583 & 0.1462 \\
+ & 100 & 96,411 $\pm$ 227 & 0.1225 & 98,077 $\pm$ 907 & 0.1158 \\
+ & 125 & 95,403 $\pm$ 631 & 0.1308 & 94,481 $\pm$ 2,521 & 0.1307 \\
+ & 150 & 92,105 $\pm$ 301 & 0.1554 & 93,720 $\pm$ 1,205 & 0.1598 \\
+ & 175 & 90,397 $\pm$ 446 & 0.1787 & 88,569 $\pm$ 1,787 & 0.1765 \\
+ & 200 & 88,093 $\pm$ 308 & 0.1973 & 87,165 $\pm$ 1,231 & 0.1992 \\
+ & 225 & 86,192 $\pm$ 275 & 0.2141 & 85,492 $\pm$ 1,097 & 0.2164 \\
+ & 250 & 84,369 $\pm$ 249 & 0.2292 & 85,484 $\pm$ 999 & 0.2226 \\
+ & 275 & \textbf{83,345 $\pm$ 371} & \textbf{0.2386} & 83,810 $\pm$ 1,484 & 0.2376 \\
+ & 300 & 83,633 $\pm$ 263 & 0.2382 & \textbf{82,655 $\pm$ 1,053} & \textbf{0.2394} \\
  \hline
  MLP & 25 & 60,384 $\pm$ 8,877 & 0.4994 & 60,428 $\pm$ 9,796 & 0.4967 \\
  & 50 & 50,176 $\pm$ 5,267 & 0.5476 & 50,122 $\pm$ 5,589 & 0.5530 \\
@@ -82,51 +67,9 @@
  & 200 & 50,535 $\pm$ 12,527 & 0.5372 & 51,004 $\pm$ 13,138 & 0.5402 \\
  & 225 & 37,277 $\pm$ 6,933 & 0.6603 & 37,064 $\pm$ 6,297 & 0.6593 \\
  & 250 & 44,971 $\pm$ 10,325 & 0.5896 & 43,966 $\pm$ 9,011 & 0.5895 \\
- & 275 & 35,077 $\pm$ 1,456 & 0.6809 & 35,401 $\pm$ 1,668 & 0.6727 \\
+ & 275 & \textbf{35,077 $\pm$ 1,456} & \textbf{0.6809} & \textbf{35,401 $\pm$ 1,668} & \textbf{0.6727} \\
  & 300 & 38,173 $\pm$ 5,142 & 0.6514 & 38,251 $\pm$ 4,996 & 0.6513 \\
  \hline
-\end{tabular}
-}
-\end{center}
-\end{table}
-\efloatseparator
- 
-\begin{table}
-\caption{Train, test MSE and $R^2$ values for OLS regression model with nearby taxi data ($d = 300$). Hotels with the highest test MSE are iteratively removed, and the OLS regression model is fit again.}
-\label{t:lr_removals}
-\begin{center}
-\resizebox{\columnwidth}{!}
-{
- \begin{tabular}{||c|l|c|c|c||}
-\hline
-Removal & Hotel & Hotel Test MSE & Test MSE & Test $R^2 $ \\
-\hline
-1 & The Roosevelt Hotel & 1.92e+06 & 85392 &  0.23 \\
-2 & Holiday Inn ... Chelsea & 1.84e+06 & 70182 &  0.27 \\
-3 & Warwick NY Hotel & 1.38e+06 & 57105 &  0.29 \\
-4 & 11 Howard & 7.72e+05 & 46962 &  0.31 \\
-5 & Andaz Wall Street & 5.96e+05 & 40924 &  0.33 \\
-6 & Marriott NY East Side & 4.22e+05 & 37320 &  0.34 \\
-7 & Millennium One UN & 3.36e+05 & 34888 &  0.35 \\
-8 & Courtyard NY ... Central Park & 2.35e+05 & 32516 &  0.33 \\
-9 & Courtyard NY ... Times Square ... & 1.83e+05 & 30655 &  0.35 \\
-10 & W Hotel Union Square & 2.45e+05 & 29613 &  0.33 \\
-11 & Autograph Collection ... NYC & 1.57e+05 & 27732 &  0.34 \\
-12 & Courtyard NY ... Herald Square & 1.92e+05 & 26174 &  0.16 \\
-13 & Hampton Inn ... Garden Area & 1.78e+05 & 25686 &  0.14 \\
-14 & JW Marriott ... NY & 1.60e+05 & 23468 &  0.14 \\
-15 & Residence Inn ... Times Square & 1.67e+05 & 22258 &  0.14 \\
-16 & Paramount Hotel & 1.45e+05 &  21739 &  0.13 \\
-17 & Le Meridien Parker NY & 1.55e+05 & 20600 &  0.14 \\
-18 & Courtyard NY Manhattan SoHo & 1.23e+05 & 20007 &  0.15 \\
-19 & InterContinental NY Times Square & 1.04e+05 & 18679 &  0.14 \\
-20 & Shelburne NYC ... Affinia ... & 1.31e+05 & 18448 &  0.16 \\
-21 & Hilton Millenium Hotel & 1.23e+05 & 17428 &  0.16 \\
-22 & Edison Hotel & 9.09e+04 & 16138 &  0.17 \\
-23 & Novotel New York & 9.09e+04 & 15277 &  0.17 \\
-24 & Courtyard NY ... Chelsea & 6.35e+04 & 14785 &  0.18 \\
-25 & Fairfield ... NY Midtown & 7.78e+04 & 14232 &  0.22 \\
-\hline
 \end{tabular}
 }
 \end{center}

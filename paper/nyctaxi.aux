@@ -5,14 +5,14 @@
 \newlabel{firstpage}{{}{1}}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}}
 \newlabel{s:intro}{{1}{1}}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{1}}
-\newlabel{s:related}{{2}{1}}
 \citation{Doraiswamy2014UsingTA}
 \citation{Wu2016InterpretingTD}
 \citation{Chu2014VisualizingHT}
 \citation{Doraiswamy2016AGI}
 \citation{bessel_calculation_2010}
 \citation{dask}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}}
+\newlabel{s:related}{{2}{2}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Methods}{2}}
 \newlabel{s:methods}{{3}{2}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Data processing}{2}}
@@ -32,23 +32,31 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Predicting hotel occupancy}{4}}
 \newlabel{ss:predicting}{{4.2}{4}}
 \@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Full hotel data}{4}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces MSE and $R^2$ values for OLS regression model trained with relevant taxi data with a range of distance thresholds $d$.}}{4}}
-\newlabel{t:full_data_performance}{{2}{4}}
+\newlabel{ss:outlier_optimization}{{4.2.2}{4}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Outlier removal: distance optimization}{4}}
+\newlabel{ss:outlier_mse}{{4.2.3}{4}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.3}Outlier removal - highest MSE}{4}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest absolute value differences between proportions of nearby taxi trip data and hotel occupancy are iteratively removed. This seems to have a near-random effect on the fit of the predictive models.}}{5}}
+\newlabel{fig:abs_diffs_removals}{{1}{5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest relative differences between proportions of nearby taxi trip data and hotel occupancy are iteratively removed. This seems to have a near-random effect on the fit of the predictive models.}}{5}}
+\newlabel{fig:rel_diffs_removals}{{2}{5}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces MSE and $R^2$ values for OLS regression model trained with relevant taxi data with a range of distance thresholds $d$.}}{5}}
+\newlabel{t:full_data_performance}{{2}{5}}
 \bibstyle{biom}
 \bibdata{nyctaxi}
 \bibcite{dask}{{1}{2016}{{Arabie and Carroll}}{{Arabie and Carroll}}}
 \bibcite{bessel_calculation_2010}{{2}{2010}{{Bessel et~al.}}{{Bessel, Karney, and Deakin}}}
 \bibcite{Chu2014VisualizingHT}{{3}{2014}{{Chu et~al.}}{{Chu, Sheets, Zhao, Wu, Yang, Zheng, and Chen}}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.2}Outlier removal: distance optimization}{5}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.3}Outlier removal - highest MSE}{5}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions and Future Work}{5}}
-\newlabel{s:conclusion}{{5}{5}}
-\@writefile{toc}{\contentsline {section}{References}{5}}
 \bibcite{Doraiswamy2014UsingTA}{{4}{2014}{{Doraiswamy et~al.}}{{Doraiswamy, Ferreira, Damoulas, Freire, and Silva}}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces MSE and $R^2$ values for OLS and MLP models fit with various distance thresholds $d$. Hotels with the largest MSE are iteratively removed, decreasing available training data but increasing hotel occupancy predictability. For a small number of hotel removals, this causes better MSE and $R^2$ values.}}{6}}
+\newlabel{fig:removals}{{3}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions and Future Work}{6}}
+\newlabel{s:conclusion}{{5}{6}}
+\@writefile{toc}{\contentsline {section}{References}{6}}
 \bibcite{Doraiswamy2016AGI}{{5}{2016}{{Doraiswamy et~al.}}{{Doraiswamy, Vo, Silva, and Freire}}}
 \bibcite{Ferreira2013VisualEO}{{6}{2013}{{Ferreira et~al.}}{{Ferreira, Poco, Vo, Freire, and Silva}}}
 \bibcite{Huang2016TrajGraphAG}{{7}{2016}{{Huang et~al.}}{{Huang, Zhao, Ma, Yang, Ye, and Zhang}}}
 \bibcite{scikit-learn}{{8}{2011}{{Pedregosa et~al.}}{{Pedregosa, Varoquaux, Gramfort, Michel, Thirion, Grisel, Blondel, Prettenhofer, Weiss, Dubourg, Vanderplas, Passos, Cournapeau, Brucher, Perrot, and Duchesnay}}}
 \bibcite{Stoyanovich2017ZoomingIO}{{9}{2017}{{Stoyanovich et~al.}}{{Stoyanovich, Gilbride, and Moffitt}}}
 \bibcite{Wu2016InterpretingTD}{{10}{2016}{{Wu et~al.}}{{Wu, Wang, and Li}}}
-\newlabel{lastpage}{{5}{6}}
+\newlabel{lastpage}{{5}{7}}
