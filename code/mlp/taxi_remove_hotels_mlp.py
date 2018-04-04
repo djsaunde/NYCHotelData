@@ -6,10 +6,10 @@ import argparse
 import numpy as  np
 import pandas as pd
 
-from datetime             import date
-from timeit               import default_timer
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics      import mean_squared_error
+from datetime               import date
+from timeit                 import default_timer
+from sklearn.neural_network import MLPRegressor
+from sklearn.metrics        import mean_squared_error
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--distance', default=25, type=int)
@@ -17,20 +17,24 @@ parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--trials', type=int, default=5)
+parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
+parser.add_argument('--alpha', type=float, default=1e-4)
 parser.add_argument('--removals', type=int, default=25)
 
 locals().update(vars(parser.parse_args()))
 
-fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2]]))
+disk_fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2]]))
+fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], hidden_layer_sizes, alpha]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-data_path = os.path.join('..', 'data', 'all_preprocessed_%d' % distance)
-taxi_occupancy_path = os.path.join('..', 'data', 'taxi_occupancy', fname)
-predictions_path = os.path.join('..', 'data', 'taxi_lr_removal_predictions', fname)
-removals_path = os.path.join('..', 'data', 'taxi_lr_removals', fname)
+data_path = os.path.join('..', '..', 'data')
+preproc_data_path = os.path.join(data_path, 'all_preprocessed_%d' % distance)
+taxi_occupancy_path = os.path.join(data_path, 'taxi_occupancy', disk_fname)
+predictions_path = os.path.join(data_path, 'taxi_mlp_removal_predictions', fname)
+removals_path = os.path.join(data_path, 'taxi_mlp_removals', fname)
 
-for path in [data_path, taxi_occupancy_path, predictions_path, removals_path]:
+for path in [taxi_occupancy_path, predictions_path, removals_path]:
 	if not os.path.isdir(path):
 		os.makedirs(path)
 
@@ -41,7 +45,7 @@ if not is_counts_file and not is_data_file:
 	# Load daily capacity data.
 	print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-	occupancy = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+	occupancy = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
 	occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
 	occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
 	occupancy['Date'] = occupancy['Date'].dt.date
@@ -55,9 +59,9 @@ if not is_counts_file and not is_data_file:
 
 	usecols = ['Hotel Name', 'Pick-up Time', 'Drop-off Time', 'Distance From Hotel']
 	if trip_type == 'pickups':
-		filename = os.path.join(data_path, 'destinations.csv')
+		filename = os.path.join(preproc_data_path, 'destinations.csv')
 	elif trip_type == 'dropoffs':
-		filename = os.path.join(data_path, 'starting_points.csv')
+		filename = os.path.join(preproc_data_path, 'starting_points.csv')
 	else:
 		raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument "trip_type".')
 
@@ -159,9 +163,10 @@ for i in range(removals):
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Creating and training OLS regression model.')
+	print('Creating and training multi-layer perceptron regression model.')
 
-	model = LinearRegression().fit(train_features, train_targets)
+	model = MLPRegressor(verbose=True, hidden_layer_sizes=hidden_layer_sizes,
+								 alpha=alpha).fit(train_features, train_targets)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')
 
@@ -212,7 +217,7 @@ for i in range(removals):
 			trips[(hotels != worst_idx).ravel()], weekdays[(hotels != worst_idx).ravel()], \
 			months[(hotels != worst_idx).ravel()], years[(hotels != worst_idx).ravel()], \
 												targets[(hotels != worst_idx).ravel()]
-				
+
 # Save hotel removal report to disk.
 df = pd.DataFrame(report, columns=['Hotel', 'Hotel Test MSE', 'Train MSE', 'Train R^2', 'Test MSE', 'Test R^2'])
 df.to_csv(os.path.join(removals_path, 'removals.csv'))
@@ -243,9 +248,10 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Creating and training OLS regression model.')
+	print('Creating and training multi-layer perceptron regression model.')
 
-	model = LinearRegression().fit(train_features, train_targets)
+	model = MLPRegressor(verbose=True, hidden_layer_sizes=hidden_layer_sizes,
+								 alpha=alpha).fit(train_features, train_targets)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')
 

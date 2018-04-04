@@ -6,36 +6,28 @@ import argparse
 import numpy as  np
 import pandas as pd
 
-from datetime                import date
-from timeit                  import default_timer
-from sklearn.neural_network  import MLPRegressor
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics         import mean_squared_error
+from datetime               import date
+from timeit                 import default_timer
+from sklearn.neural_network import MLPRegressor
+from sklearn.metrics        import mean_squared_error
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--trip_type', type=str, default='pickups')
 parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--trials', type=int, default=5)
-parser.add_argument('--removals', type=int, default=15)
-parser.add_argument('--metric', type=str, default='rel_diffs')
+parser.add_argument('--removals', type=int, default=25)
+parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
+parser.add_argument('--alpha', type=float, default=1e-4)
 
 locals().update(vars(parser.parse_args()))
 
-print('Trip type: %s' % trip_type)
-print('Removals: %d' % removals)
-
-report_fname = '_'.join(map(str, [25, 300, trip_type, start_date[0], start_date[1],
-					start_date[2], end_date[0], end_date[1], end_date[2], metric]))
-
-fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2],
-						end_date[0], end_date[1], end_date[2], metric]))
+fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], hidden_layer_sizes, alpha]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-reports_path = os.path.join('..', 'data', 'optimization_reports')
-predictions_path = os.path.join('..', 'data', 'grid_search_naive_opt_remove_mlp_predictions', fname)
-removals_path = os.path.join('..', 'data', 'grid_search_naive_mlp_opt_removals', fname)
+data_path = os.path.join('..', '..', 'data')
+predictions_path = os.path.join(data_path, 'naive_mlp_removal_predictions', fname)
+removals_path = os.path.join(data_path, 'naive_mlp_removals', fname)
 
 for path in [predictions_path, removals_path]:
 	if not os.path.isdir(path):
@@ -44,23 +36,11 @@ for path in [predictions_path, removals_path]:
 # Load daily capacity data.
 print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-df = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+df = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
 df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 df = df.loc[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
 
 print('Time: %.4f' % (default_timer() - start))
-
-opt_report = pd.read_csv(os.path.join(reports_path, report_fname + '.csv'))
-order = list(np.array(opt_report['Removed hotel']))
-
-all_hotel_names = set(order) & set(df['Share ID'].unique())
-
-df = df[df['Share ID'].isin(all_hotel_names)]
-
-removal_order = []
-for name in order:
-	if name in all_hotel_names:
-		removal_order.append(name)
 
 hotels = np.array(df['Share ID'])
 weekdays = np.array(df['Date'].dt.weekday).reshape([-1, 1])
@@ -92,17 +72,12 @@ for i in range(removals):
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Creating and training multi-layer perceptron regression model.')
+	print('Creating and training OLS regression model.')
 
-	param_grid = {'hidden_layer_sizes' : [[512, 256, 128], [1024, 512, 256], [1024, 512, 256, 128]],
-				  'alpha' : [5e-5, 1e-4]}
-
-	model = GridSearchCV(MLPRegressor(), param_grid=param_grid, verbose=5, n_jobs=-1)
+	model = MLPRegressor(verbose=True, hidden_layer_sizes=hidden_layer_sizes, alpha=alpha)
 	model.fit(train_features, train_targets)
 
-	print(); print('Best model hyper-parameters:', model.best_params_); print()
-
-	model = model.best_estimator_
+	print('Training complete. Getting predictions and calculating R^2, MSE.')
 
 	train_score = model.score(train_features, train_targets)
 	test_score = model.score(test_features, test_targets)
@@ -131,33 +106,26 @@ for i in range(removals):
 	
 	# Calculate per-hotel test MSEs.
 	per_hotel_test_mses = {}
-	per_hotel_idxs = {}
 	for idx, name in zip(hotels.ravel(), hotel_names):
 		hotel_test_targs = test_targets[(hotels == idx)[split:].ravel()]
 		hotel_test_preds = test_predictions[(hotels == idx)[split:].ravel()]
-		per_hotel_test_mses[name] = mean_squared_error(hotel_test_targs, hotel_test_preds)
-		per_hotel_idxs[name] = idx
-		
+		per_hotel_test_mses[(name, idx)] = mean_squared_error(hotel_test_targs, hotel_test_preds)
+	
 	worst = max(list(per_hotel_test_mses.items()), key=lambda x : x[1])
+	worst_mse, worst_hotel, worst_idx = worst[1], worst[0][0], worst[0][1]
 	
-	name = removal_order[i]
-	
-	hotel, hotel_mse, hotel_idx = name, per_hotel_test_mses[name], per_hotel_idxs[name]
-	worst_hotel, worst_mse = worst[0], worst[1]
-	
-	print('Removed hotel\'s test MSE: %.2f' % hotel_mse)
-	print('Hotel removed: %s' % hotel)
 	print('Worst MSE: %.2f' % worst_mse)
 	print('Hotel with worst test MSE: %s' % worst_hotel)
+	print('Index of hotel with worst test MSE: %d' % worst_idx)
 	
-	report.append([hotel, hotel_mse, train_mse, train_score, test_mse, test_score])
+	report.append([worst_hotel, worst_mse, train_mse, train_score, test_mse, test_score])
 
 	# Remove offending hotel from data.
-	hotel_names = hotel_names[hotel_names != hotel]
-	hotels, weekdays, months, years, targets = hotels[(hotels != hotel_idx).ravel()], \
-		weekdays[(hotels != hotel_idx).ravel()], months[(hotels != hotel_idx).ravel()], \
-			years[(hotels != hotel_idx).ravel()], targets[(hotels != hotel_idx).ravel()]
-
+	hotel_names = hotel_names[hotel_names != worst_hotel]
+	hotels, weekdays, months, years, targets = hotels[(hotels != worst_idx).ravel()], \
+			weekdays[(hotels != worst_idx).ravel()], months[(hotels != worst_idx).ravel()], \
+					years[(hotels != worst_idx).ravel()], targets[(hotels != worst_idx).ravel()]
+				
 # Save hotel removal report to disk.
 df = pd.DataFrame(report, columns=['Hotel', 'Hotel Test MSE', 'Train MSE', 'Train R^2', 'Test MSE', 'Test R^2'])
 df.to_csv(os.path.join(removals_path, 'removals.csv'))
@@ -188,8 +156,9 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Re-training multi-layer perceptron regression model.')
+	print('Creating and training OLS regression model.')
 
+	model = MLPRegressor(verbose=True, hidden_layer_sizes=hidden_layer_sizes, alpha=alpha)
 	model.fit(train_features, train_targets)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')

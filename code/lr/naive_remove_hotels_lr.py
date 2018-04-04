@@ -23,8 +23,9 @@ fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2], end_date
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-predictions_path = os.path.join('..', 'data', 'naive_lr_removal_predictions', fname)
-removals_path = os.path.join('..', 'data', 'naive_lr_removals', fname)
+data_path = os.path.join('..', '..', 'data')
+predictions_path = os.path.join(data_path, 'naive_lr_removal_predictions', fname)
+removals_path = os.path.join(data_path, 'naive_lr_removals', fname)
 
 for path in [predictions_path, removals_path]:
 	if not os.path.isdir(path):
@@ -33,7 +34,7 @@ for path in [predictions_path, removals_path]:
 # Load daily capacity data.
 print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-df = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+df = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
 df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 df = df.loc[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
 

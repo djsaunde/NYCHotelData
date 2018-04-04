@@ -6,13 +6,14 @@ import argparse
 import numpy as  np
 import pandas as pd
 
-from datetime             import date
-from timeit               import default_timer
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics      import mean_squared_error
+from datetime                import date
+from timeit                  import default_timer
+from sklearn.neural_network  import MLPRegressor
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics         import mean_squared_error
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--distance', default=100, type=int)
+parser.add_argument('--distance', default=25, type=int)
 parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
@@ -24,11 +25,15 @@ fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2]
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-data_path = os.path.join('..', 'data', 'all_preprocessed_%d' % distance)
-taxi_occupancy_path = os.path.join('..', 'data', 'taxi_occupancy', fname)
-predictions_path = os.path.join('..', 'data', 'taxi_lr_predictions', fname)
+print()
+print(distance, trip_type, start_date, end_date, trials)
 
-for path in [data_path, taxi_occupancy_path, predictions_path]:
+data_path = os.path.join('..', '..', 'data')
+preproc_data_path = os.path.join(data_path, 'all_preprocessed_%d' % distance)
+taxi_occupancy_path = os.path.join(data_path, 'taxi_occupancy', fname)
+predictions_path = os.path.join(data_path, 'grid_search_taxi_mlp_predictions', fname)
+
+for path in [taxi_occupancy_path, predictions_path]:
 	if not os.path.isdir(path):
 		os.makedirs(path)
 
@@ -39,7 +44,7 @@ if not is_counts_file and not is_data_file:
 	# Load daily capacity data.
 	print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-	occupancy = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+	occupancy = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
 	occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
 	occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
 	occupancy['Date'] = occupancy['Date'].dt.date
@@ -53,9 +58,9 @@ if not is_counts_file and not is_data_file:
 
 	usecols = ['Hotel Name', 'Pick-up Time', 'Drop-off Time', 'Distance From Hotel']
 	if trip_type == 'pickups':
-		filename = os.path.join(data_path, 'destinations.csv')
+		filename = os.path.join(preproc_data_path, 'destinations.csv')
 	elif trip_type == 'dropoffs':
-		filename = os.path.join(data_path, 'starting_points.csv')
+		filename = os.path.join(preproc_data_path, 'starting_points.csv')
 	else:
 		raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument "trip_type".')
 
@@ -133,8 +138,40 @@ months = np.array(df['Date'].dt.month).reshape([-1, 1])
 years = np.array(df['Date'].dt.year).reshape([-1, 1])
 targets = np.array(df['Room Demand'])
 
-hotel_names, hotels = np.unique(hotels, return_inverse=True)
+print('\nRunning random search over hyper-parameters.')
+
+# Randomly permute the data to remove sequence biasing.
+p = np.random.permutation(targets.shape[0])
+hotels, trips, weekdays, months, years, targets = hotels[p], trips[p], weekdays[p], months[p], years[p], targets[p]
+
+_, hotels = np.unique(hotels, return_inverse=True)
 hotels = hotels.reshape([-1, 1])
+
+# Split the data into (training, test) subsets.
+split = int(0.8 * len(targets))
+
+train_features = [hotels[:split], trips[:split], years[:split], months[:split], weekdays[:split]]
+train_features = np.concatenate(train_features, axis=1)
+
+test_features = [hotels[split:], trips[split:], years[split:], months[split:], weekdays[split:]]
+test_features = np.concatenate(test_features, axis=1)
+
+train_targets = targets[:split]
+test_targets = targets[split:]
+
+print('Creating and training multi-layer perceptron regression model.')
+
+param_grid = {'hidden_layer_sizes' : [[512, 256, 128], [1024, 512, 256], [1024, 512, 256, 128]],
+			  'alpha' : [1e-5, 5e-5]}
+
+model = GridSearchCV(MLPRegressor(), param_grid=param_grid, verbose=5, n_jobs=-1)
+model.fit(train_features, train_targets)
+
+print(); print('Best model hyper-parameters:', model.best_params_); print()
+
+model = model.best_estimator_
+
+print('Training complete. Running multiple train / test iterations with best hyper-parameters.')
 
 train_scores = []
 test_scores = []
@@ -148,6 +185,9 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	p = np.random.permutation(targets.shape[0])
 	hotels, trips, weekdays, months, years, targets = hotels[p], trips[p], weekdays[p], months[p], years[p], targets[p]
 
+	_, hotels = np.unique(hotels, return_inverse=True)
+	hotels = hotels.reshape([-1, 1])
+
 	# Split the data into (training, test) subsets.
 	split = int(0.8 * len(targets))
 
@@ -160,9 +200,9 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Creating and training OLS regression model.')
+	print('Re-training multi-layer perceptron regression model.')
 
-	model = LinearRegression().fit(train_features, train_targets)
+	model.fit(train_features, train_targets)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')
 
@@ -174,22 +214,12 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 
 	train_mses.append(mean_squared_error(train_targets, train_predictions))
 	test_mses.append(mean_squared_error(test_targets, test_predictions))
-	
-	print()
-	print('*** Results on %d / %d trial ***' % (i + 1, trials))
-	print()
-	print('Training MSE: %.0f' % train_mses[-1])
-	print('Training R^2: %.4f' % train_scores[-1])
-	print()
-	print('Test MSE: %.0f' % test_mses[-1])
-	print('Test R^2: %.4f' % test_scores[-1])
-	print()
 
-	np.save(os.path.join(predictions_path, 'train_targets_removals_%d.npy' % i), train_targets[-1])
-	np.save(os.path.join(predictions_path, 'train_predictions_removals_%d.npy' % i), train_predictions[-1])
+	np.save(os.path.join(predictions_path, 'train_targets_%d.npy' % i), train_targets)
+	np.save(os.path.join(predictions_path, 'train_predictions_%d.npy' % i), train_predictions)
 
-	np.save(os.path.join(predictions_path, 'test_targets_removals_%d.npy' % i), test_targets[-1])
-	np.save(os.path.join(predictions_path, 'test_predictions_removals_%d.npy' % i), test_predictions[-1])
+	np.save(os.path.join(predictions_path, 'test_targets_%d.npy' % i), test_targets)
+	np.save(os.path.join(predictions_path, 'test_predictions_%d.npy' % i), test_predictions)
 
 print()
 print('Mean, standard deviation of training MSE: %.0f $\pm$ %.0f' % (np.mean(train_mses), np.std(train_mses)))
@@ -197,6 +227,4 @@ print('Mean, standard deviation of training R^2: %.4f' % np.mean(train_scores))
 print()
 print('Mean, standard deviation of test MSE: %.0f $\pm$ %.0f' % (np.mean(test_mses), np.std(test_mses)))
 print('Mean, standard deviation of test R^2: %.4f' % np.mean(test_scores))
-print()
-print('%.0f $\pm$ %.0f & %.4f & %.0f $\pm$ %.0f & %.4f' % (np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.mean(test_mses), np.std(test_mses), np.mean(test_scores)))
 print()

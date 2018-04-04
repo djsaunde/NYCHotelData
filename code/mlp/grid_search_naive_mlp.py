@@ -6,25 +6,28 @@ import argparse
 import numpy as  np
 import pandas as pd
 
-from datetime               import date
-from timeit                 import default_timer
-from sklearn.neural_network import MLPRegressor
-from sklearn.metrics        import mean_squared_error
+from datetime                import date
+from timeit                  import default_timer
+from sklearn.neural_network  import MLPRegressor
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics         import mean_squared_error
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--trials', type=int, default=5)
-parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
-parser.add_argument('--alpha', type=float, default=1e-4)
 
 locals().update(vars(parser.parse_args()))
 
-fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2], hidden_layer_sizes, alpha]))
+fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2]]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-predictions_path = os.path.join('..', 'data', 'naive_mlp_predictions', fname)
+print()
+print(start_date, end_date, trials)
+
+data_path = os.path.join('..', '..', 'data')
+predictions_path = os.path.join(data_path, 'grid_search_taxi_mlp_predictions', fname)
 
 for path in [predictions_path]:
 	if not os.path.isdir(path):
@@ -33,7 +36,7 @@ for path in [predictions_path]:
 # Load daily capacity data.
 print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-occupancy = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+occupancy = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
 occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
 occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
 
@@ -44,6 +47,41 @@ weekdays = np.array(occupancy['Date'].dt.weekday).reshape([-1, 1])
 months = np.array(occupancy['Date'].dt.month).reshape([-1, 1])
 years = np.array(occupancy['Date'].dt.year).reshape([-1, 1])
 targets = np.array(occupancy['Room Demand'])
+
+print('\nRunning random search over hyper-parameters.')
+
+# Randomly permute the data to remove sequence biasing.
+p = np.random.permutation(targets.shape[0])
+hotels, weekdays, months, years, targets = hotels[p], weekdays[p], months[p], years[p], targets[p]
+
+_, hotels = np.unique(hotels, return_inverse=True)
+hotels = hotels.reshape([-1, 1])
+
+# Split the data into (training, test) subsets.
+split = int(0.8 * len(targets))
+
+train_features = [hotels[:split], years[:split], months[:split], weekdays[:split]]
+train_features = np.concatenate(train_features, axis=1)
+
+test_features = [hotels[split:], years[split:], months[split:], weekdays[split:]]
+test_features = np.concatenate(test_features, axis=1)
+
+train_targets = targets[:split]
+test_targets = targets[split:]
+
+print('Creating and training multi-layer perceptron regression model.')
+
+param_grid = {'hidden_layer_sizes' : [[512, 256, 128], [1024, 512, 256], [1024, 512, 256, 128]],
+			  'alpha' : [1e-5, 5e-5]}
+
+model = GridSearchCV(MLPRegressor(), param_grid=param_grid, verbose=5, n_jobs=-1)
+model.fit(train_features, train_targets)
+
+print(); print('Best model hyper-parameters:', model.best_params_); print()
+
+model = model.best_estimator_
+
+print('Training complete. Running multiple train / test iterations with best hyper-parameters.')
 
 train_scores = []
 test_scores = []
@@ -72,9 +110,8 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Creating and training multi-layer perceptron regression model.')
+	print('Re-training multi-layer perceptron regression model.')
 
-	model = MLPRegressor(verbose=True, hidden_layer_sizes=hidden_layer_sizes, alpha=alpha)
 	model.fit(train_features, train_targets)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')

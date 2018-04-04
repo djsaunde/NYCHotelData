@@ -14,7 +14,9 @@ parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--n_removals', type=int, default=10)
 locals().update(vars(parser.parse_args()))
 
-removals_path = os.path.join('..', 'data', 'taxi_lr_removals')
+data_path = os.path.join('..', '..', 'data')
+plots_path = os.path.join('..', '..', 'plots')
+removals_path = os.path.join(data_path, 'taxi_lr_removals')
 fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2],
 							end_date[0], end_date[1], end_date[2]]))
 
@@ -38,7 +40,7 @@ for d, c in zip(distances, colors):
 	axes[0][1].plot(results['Test R^2'][:n_removals + 1], c=c, label='d = %d' % d)
 
 # Plot removals from naive OLS regression model.
-removals_path = os.path.join('..', 'data', 'naive_lr_removals')
+removals_path = os.path.join(data_path, 'naive_lr_removals')
 dirname = '_'.join(map(str, [start_date[0], start_date[1],
 	start_date[2], end_date[0], end_date[1], end_date[2]]))
 path = os.path.join(removals_path, dirname, 'removals.csv')
@@ -61,7 +63,7 @@ axes[0][0].legend(fontsize='x-small', loc=1); axes[0][1].legend(fontsize='x-smal
 # MLP regression #
 ##################
 
-removals_path = os.path.join('..', 'data', 'grid_search_taxi_mlp_removals')
+removals_path = os.path.join(data_path, 'grid_search_taxi_mlp_removals')
 
 dirs = os.listdir(removals_path)
 distances = sorted(list(map(int, [d.split('_')[0] for d in dirs if fname in d])))
@@ -81,7 +83,7 @@ for d, c in zip(distances, colors):
 	axes[1][1].plot(results['Test R^2'][:n_removals + 1], c=c, label='d = %d' % d)
 
 # Plot removals from naive OLS regression model.
-removals_path = os.path.join('..', 'data', 'grid_search_naive_mlp_removals')
+removals_path = os.path.join(data_path, 'grid_search_naive_mlp_removals')
 dirname = '_'.join(map(str, [start_date[0], start_date[1],
 	start_date[2], end_date[0], end_date[1], end_date[2]]))
 path = os.path.join(removals_path, dirname, 'removals.csv')
@@ -101,5 +103,5 @@ axes[1][0].set_xticks(range(n_removals + 1)); axes[1][1].set_xticks(range(n_remo
 axes[1][0].legend(fontsize='x-small', loc=1); axes[1][1].legend(fontsize='x-small', loc=4);
 
 plt.tight_layout()
-plt.savefig(os.path.join('..', 'plots', 'removals_results.png'))
+plt.savefig(os.path.join(plots_path, 'removals_results.png'))
 plt.show()

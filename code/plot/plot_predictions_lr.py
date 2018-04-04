@@ -18,11 +18,13 @@ parser.add_argument('--plot_type', type=str, default='plot')
 
 locals().update(vars(parser.parse_args()))
 
+data_path = os.path.join('..', '..', 'data')
+
 fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2]]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-predictions_path = os.path.join('..', 'data', 'taxi_lr_predictions', fname)
+predictions_path = os.path.join(data_path, 'taxi_lr_predictions', fname)
 
 predictions = np.load(os.path.join(predictions_path, 'test_predictions_%d.npy' % iteration))
 targets = np.load(os.path.join(predictions_path, 'test_targets_%d.npy' % iteration))

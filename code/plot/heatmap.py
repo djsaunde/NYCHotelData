@@ -24,8 +24,8 @@ warnings.filterwarnings('ignore')
 
 from util import *
 
-plots_path = os.path.join('..', 'plots')
-data_path = os.path.join('..', 'data', 'preprocessed_100')
+plots_path = os.path.join('..', '..', 'plots')
+data_path = os.path.join('..', '..', 'data', 'preprocessed_100')
 
 
 def plot_heatmap_times(taxi_data, distance, days, times, map_type):

@@ -6,32 +6,37 @@ import argparse
 import numpy as  np
 import pandas as pd
 
-from datetime             import date
-from timeit               import default_timer
-from sklearn.linear_model import LinearRegression
-from sklearn.metrics      import mean_squared_error
+from datetime                import date
+from timeit                  import default_timer
+from sklearn.neural_network  import MLPRegressor
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics         import mean_squared_error
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--trip_type', type=str, default='pickups')
 parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--trials', type=int, default=5)
-parser.add_argument('--removals', type=int, default=25)
+parser.add_argument('--removals', type=int, default=15)
 parser.add_argument('--metric', type=str, default='rel_diffs')
-parser.add_argument('--trip_type', type=str, default='pickups')
 
 locals().update(vars(parser.parse_args()))
 
-fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2],
-						end_date[0], end_date[1], end_date[2], metric]))
+print('Trip type: %s' % trip_type)
+print('Removals: %d' % removals)
 
 report_fname = '_'.join(map(str, [25, 300, trip_type, start_date[0], start_date[1],
 					start_date[2], end_date[0], end_date[1], end_date[2], metric]))
 
+fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2],
+						end_date[0], end_date[1], end_date[2], metric]))
+
 start_date, end_date = date(*start_date), date(*end_date)
 
-reports_path = os.path.join('..', 'data', 'optimization_reports')
-predictions_path = os.path.join('..', 'data', 'naive_lr_opt_removal_predictions', fname)
-removals_path = os.path.join('..', 'data', 'naive_lr_opt_removals', fname)
+data_path = os.path.join('..', '..', 'data')
+reports_path = os.path.join(data_path, 'optimization_reports')
+predictions_path = os.path.join(data_path, 'grid_search_naive_opt_remove_mlp_predictions', fname)
+removals_path = os.path.join(data_path, 'grid_search_naive_mlp_opt_removals', fname)
 
 for path in [predictions_path, removals_path]:
 	if not os.path.isdir(path):
@@ -40,7 +45,7 @@ for path in [predictions_path, removals_path]:
 # Load daily capacity data.
 print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-df = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+df = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
 df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 df = df.loc[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
 
@@ -88,11 +93,17 @@ for i in range(removals):
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Creating and training OLS regression model.')
+	print('Creating and training multi-layer perceptron regression model.')
 
-	model = LinearRegression().fit(train_features, train_targets)
+	param_grid = {'hidden_layer_sizes' : [[512, 256, 128], [1024, 512, 256], [1024, 512, 256, 128]],
+				  'alpha' : [5e-5, 1e-4]}
 
-	print('Training complete. Getting predictions and calculating R^2, MSE.')
+	model = GridSearchCV(MLPRegressor(), param_grid=param_grid, verbose=5, n_jobs=-1)
+	model.fit(train_features, train_targets)
+
+	print(); print('Best model hyper-parameters:', model.best_params_); print()
+
+	model = model.best_estimator_
 
 	train_score = model.score(train_features, train_targets)
 	test_score = model.score(test_features, test_targets)
@@ -147,7 +158,7 @@ for i in range(removals):
 	hotels, weekdays, months, years, targets = hotels[(hotels != hotel_idx).ravel()], \
 		weekdays[(hotels != hotel_idx).ravel()], months[(hotels != hotel_idx).ravel()], \
 			years[(hotels != hotel_idx).ravel()], targets[(hotels != hotel_idx).ravel()]
-				
+
 # Save hotel removal report to disk.
 df = pd.DataFrame(report, columns=['Hotel', 'Hotel Test MSE', 'Train MSE', 'Train R^2', 'Test MSE', 'Test R^2'])
 df.to_csv(os.path.join(removals_path, 'removals.csv'))
@@ -178,9 +189,9 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	train_targets = targets[:split]
 	test_targets = targets[split:]
 
-	print('Creating and training OLS regression model.')
+	print('Re-training multi-layer perceptron regression model.')
 
-	model = LinearRegression().fit(train_features, train_targets)
+	model.fit(train_features, train_targets)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')
 

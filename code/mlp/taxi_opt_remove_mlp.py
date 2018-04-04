@@ -35,13 +35,14 @@ fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2]
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-reports_path = os.path.join('..', 'data', 'optimization_reports')
-data_path = os.path.join('..', 'data', 'all_preprocessed_%d' % distance)
-taxi_occupancy_path = os.path.join('..', 'data', 'taxi_occupancy', disk_fname)
-predictions_path = os.path.join('..', 'data', 'taxi_mlp_opt_removal_predictions', fname)
-removals_path = os.path.join('..', 'data', 'taxi_mlp_opt_removals', fname)
+data_path = os.path.join('..', '..', 'data')
+reports_path = os.path.join(data_path, 'optimization_reports')
+preproc_data_path = os.path.join(data_path, 'all_preprocessed_%d' % distance)
+taxi_occupancy_path = os.path.join(data_path, 'taxi_occupancy', disk_fname)
+predictions_path = os.path.join(data_path, 'taxi_mlp_opt_removal_predictions', fname)
+removals_path = os.path.join(data_path, 'taxi_mlp_opt_removals', fname)
 
-for path in [data_path, taxi_occupancy_path, predictions_path, removals_path]:
+for path in [taxi_occupancy_path, predictions_path, removals_path]:
 	if not os.path.isdir(path):
 		os.makedirs(path)
 
@@ -52,7 +53,7 @@ if not is_counts_file and not is_data_file:
 	# Load daily capacity data.
 	print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-	occupancy = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+	occupancy = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
 	occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
 	occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
 	occupancy['Date'] = occupancy['Date'].dt.date
@@ -66,9 +67,9 @@ if not is_counts_file and not is_data_file:
 
 	usecols = ['Hotel Name', 'Pick-up Time', 'Drop-off Time', 'Distance From Hotel']
 	if trip_type == 'pickups':
-		filename = os.path.join(data_path, 'destinations.csv')
+		filename = os.path.join(preproc_data_path, 'destinations.csv')
 	elif trip_type == 'dropoffs':
-		filename = os.path.join(data_path, 'starting_points.csv')
+		filename = os.path.join(preproc_data_path, 'starting_points.csv')
 	else:
 		raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument "trip_type".')
 

@@ -19,7 +19,6 @@ parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--trials', type=int, default=5)
 parser.add_argument('--hidden_layer_sizes', nargs='+', type=int, default=[100])
 parser.add_argument('--alpha', type=float, default=1e-4)
-parser.add_argument('--removals', type=int, default=25)
 
 locals().update(vars(parser.parse_args()))
 
@@ -28,12 +27,12 @@ fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2]
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-data_path = os.path.join('..', 'data', 'all_preprocessed_%d' % distance)
-taxi_occupancy_path = os.path.join('..', 'data', 'taxi_occupancy', disk_fname)
-predictions_path = os.path.join('..', 'data', 'taxi_mlp_removal_predictions', fname)
-removals_path = os.path.join('..', 'data', 'taxi_mlp_removals', fname)
+data_path = os.path.join('..', '..', 'data')
+preproc_data_path = os.path.join(data_path, 'all_preprocessed_%d' % distance)
+taxi_occupancy_path = os.path.join(data_path, 'taxi_occupancy', disk_fname)
+predictions_path = os.path.join(data_path, 'taxi_mlp_predictions', fname)
 
-for path in [data_path, taxi_occupancy_path, predictions_path, removals_path]:
+for path in [taxi_occupancy_path, predictions_path]:
 	if not os.path.isdir(path):
 		os.makedirs(path)
 
@@ -44,7 +43,7 @@ if not is_counts_file and not is_data_file:
 	# Load daily capacity data.
 	print('\nLoading daily per-hotel capacity data.'); start = default_timer()
 
-	occupancy = pd.read_csv(os.path.join('..', 'data', 'Unmasked Daily Capacity.csv'), index_col=False)
+	occupancy = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
 	occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
 	occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
 	occupancy['Date'] = occupancy['Date'].dt.date
@@ -58,9 +57,9 @@ if not is_counts_file and not is_data_file:
 
 	usecols = ['Hotel Name', 'Pick-up Time', 'Drop-off Time', 'Distance From Hotel']
 	if trip_type == 'pickups':
-		filename = os.path.join(data_path, 'destinations.csv')
+		filename = os.path.join(preproc_data_path, 'destinations.csv')
 	elif trip_type == 'dropoffs':
-		filename = os.path.join(data_path, 'starting_points.csv')
+		filename = os.path.join(preproc_data_path, 'starting_points.csv')
 	else:
 		raise Exception('Expecting one of "pickups" or "dropoffs" for command-line argument "trip_type".')
 
@@ -138,91 +137,6 @@ months = np.array(df['Date'].dt.month).reshape([-1, 1])
 years = np.array(df['Date'].dt.year).reshape([-1, 1])
 targets = np.array(df['Room Demand'])
 
-hotel_names, hotels = np.unique(hotels, return_inverse=True)
-hotels = hotels.reshape([-1, 1])
-
-report = []
-
-for i in range(removals):
-	print('\nTraining, testing model (removal %d / %d)' % (i + 1, removals))
-	
-	# Randomly permute the data to remove sequence biasing.
-	p = np.random.permutation(targets.shape[0])
-	hotels, trips, weekdays, months, years, targets = hotels[p], trips[p], weekdays[p], months[p], years[p], targets[p]
-
-	# Split the data into (training, test) subsets.
-	split = int(0.8 * len(targets))
-
-	train_features = [hotels[:split], trips[:split], years[:split], months[:split], weekdays[:split]]
-	train_features = np.concatenate(train_features, axis=1)
-
-	test_features = [hotels[split:], trips[split:], years[split:], months[split:], weekdays[split:]]
-	test_features = np.concatenate(test_features, axis=1)
-
-	train_targets = targets[:split]
-	test_targets = targets[split:]
-
-	print('Creating and training multi-layer perceptron regression model.')
-
-	model = MLPRegressor(verbose=True, hidden_layer_sizes=hidden_layer_sizes,
-								 alpha=alpha).fit(train_features, train_targets)
-
-	print('Training complete. Getting predictions and calculating R^2, MSE.')
-
-	train_score = model.score(train_features, train_targets)
-	test_score = model.score(test_features, test_targets)
-
-	train_predictions = model.predict(train_features)
-	test_predictions = model.predict(test_features)
-
-	train_mse = mean_squared_error(train_targets, train_predictions)
-	test_mse = mean_squared_error(test_targets, test_predictions)
-
-	np.save(os.path.join(predictions_path, 'train_targets_removals_%d.npy' % i), train_targets)
-	np.save(os.path.join(predictions_path, 'train_predictions_removals_%d.npy' % i), train_predictions)
-
-	np.save(os.path.join(predictions_path, 'test_targets_removals_%d.npy' % i), test_targets)
-	np.save(os.path.join(predictions_path, 'test_predictions_removals_%d.npy' % i), test_predictions)
-	
-	print()
-	print('*** Results after %d / %d removals ***' % (i, removals))
-	print()
-	print('Training MSE: %.0f' % train_mse)
-	print('Training R^2: %.4f' % train_score)
-	print()
-	print('Test MSE: %.0f' % test_mse)
-	print('Test R^2: %.4f' % test_score)
-	print()
-	
-	# Calculate per-hotel test MSEs.
-	per_hotel_test_mses = {}
-	for idx, name in zip(hotels.ravel(), hotel_names):
-		hotel_test_targs = test_targets[(hotels == idx)[split:].ravel()]
-		hotel_test_preds = test_predictions[(hotels == idx)[split:].ravel()]
-		per_hotel_test_mses[(name, idx)] = mean_squared_error(hotel_test_targs, hotel_test_preds)
-	
-	worst = max(list(per_hotel_test_mses.items()), key=lambda x : x[1])
-	worst_mse, worst_hotel, worst_idx = worst[1], worst[0][0], worst[0][1]
-	
-	print('Worst MSE: %.2f' % worst_mse)
-	print('Hotel with worst test MSE: %s' % worst_hotel)
-	print('Index of hotel with worst test MSE: %d' % worst_idx)
-	
-	report.append([worst_hotel, worst_mse, train_mse, train_score, test_mse, test_score])
-
-	# Remove offending hotel from data.
-	hotel_names = hotel_names[hotel_names != worst_hotel]
-	hotels, trips, weekdays, months, years, targets = hotels[(hotels != worst_idx).ravel()], \
-			trips[(hotels != worst_idx).ravel()], weekdays[(hotels != worst_idx).ravel()], \
-			months[(hotels != worst_idx).ravel()], years[(hotels != worst_idx).ravel()], \
-												targets[(hotels != worst_idx).ravel()]
-
-# Save hotel removal report to disk.
-df = pd.DataFrame(report, columns=['Hotel', 'Hotel Test MSE', 'Train MSE', 'Train R^2', 'Test MSE', 'Test R^2'])
-df.to_csv(os.path.join(removals_path, 'removals.csv'))
-
-print()
-
 train_scores = []
 test_scores = []
 train_mses = []
@@ -234,6 +148,9 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	# Randomly permute the data to remove sequence biasing.
 	p = np.random.permutation(targets.shape[0])
 	hotels, trips, weekdays, months, years, targets = hotels[p], trips[p], weekdays[p], months[p], years[p], targets[p]
+
+	_, hotels = np.unique(hotels, return_inverse=True)
+	hotels = hotels.reshape([-1, 1])
 
 	# Split the data into (training, test) subsets.
 	split = int(0.8 * len(targets))
@@ -269,8 +186,6 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	np.save(os.path.join(predictions_path, 'test_targets_%d.npy' % i), test_targets)
 	np.save(os.path.join(predictions_path, 'test_predictions_%d.npy' % i), test_predictions)
 
-print()
-print('*** Multiple averaged results after %d / %d removals ***' % (removals, removals))
 print()
 print('Mean, standard deviation of training MSE: %.0f $\pm$ %.0f' % (np.mean(train_mses), np.std(train_mses)))
 print('Mean, standard deviation of training R^2: %.4f' % np.mean(train_scores))

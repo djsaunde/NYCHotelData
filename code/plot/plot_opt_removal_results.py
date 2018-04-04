@@ -16,7 +16,10 @@ parser.add_argument('--n_removals_mlp', type=int, default=10)
 parser.add_argument('--metric', type=str, default='rel_diffs')
 locals().update(vars(parser.parse_args()))
 
-removals_path = os.path.join('..', 'data', 'taxi_lr_opt_removals')
+data_path = os.path.join('..', '..', 'data')
+plots_path = os.path.join('..', '..', 'plots')
+removals_path = os.path.join(data_path, 'taxi_lr_opt_removals')
+
 fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2],
 							end_date[0], end_date[1], end_date[2]]))
 
@@ -64,7 +67,7 @@ plt.tight_layout()
 # MLP regression #
 ##################
 
-removals_path = os.path.join('..', 'data', 'grid_search_taxi_mlp_opt_removals')
+removals_path = os.path.join(data_path, 'grid_search_taxi_mlp_opt_removals')
 
 dirs = [d for d in os.listdir(removals_path) if metric in d and fname in d]
 distances = sorted(list(map(int, [d.split('_')[0] for d in dirs])))
@@ -84,7 +87,7 @@ for d, c in zip(distances, colors):
 	axes[1][1].plot(results['Test R^2'][:n_removals_mlp + 1], c=c, label='d = %d' % d)
 
 # Plot removals from naive OLS regression model.
-removals_path = os.path.join('..', 'data', 'grid_search_naive_mlp_opt_removals')
+removals_path = os.path.join(data_path, 'grid_search_naive_mlp_opt_removals')
 dirname = '_'.join(map(str, [start_date[0], start_date[1],
 	start_date[2], end_date[0], end_date[1], end_date[2], metric]))
 path = os.path.join(removals_path, dirname, 'removals.csv')
@@ -111,7 +114,6 @@ axes[1][0].legend(fontsize='x-small', loc=1); axes[1][1].legend(fontsize='x-smal
 # 	fig.suptitle('Removals results with %s metric' % 'relative entropy', fontsize=14)
 	
 plt.tight_layout()
-# plt.subplots_adjust(top=0.9)
 
-plt.savefig(os.path.join('..', 'plots', 'opt_removals_results_%s.png' % metric))
+plt.savefig(os.path.join(plots_path, 'opt_removals_results_%s.png' % metric))
 plt.show()
