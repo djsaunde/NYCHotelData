@@ -113,3 +113,8 @@ key.txt
 
 # Vim swap files.
 .*.swp
+
+# Packaging things.
+build/
+nyctaxi.egg-info/
+
