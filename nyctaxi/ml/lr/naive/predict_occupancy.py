@@ -24,8 +24,9 @@ start_date, end_date = date(*start_date), date(*end_date)
 
 data_path = os.path.join('..', '..', '..', '..', 'data')
 predictions_path = os.path.join(data_path, 'naive_lr_predictions', fname)
+results_path = os.path.join('..', '..', '..', '..', 'results', 'naive_lr_results')
 
-for path in [predictions_path]:
+for path in [predictions_path, results_path]:
 	if not os.path.isdir(path):
 		os.makedirs(path)
 
@@ -95,3 +96,20 @@ print('Mean, standard deviation of test R^2: %.4f' % np.mean(test_scores))
 print()
 print('%.0f $\pm$ %.0f & %.4f & %.0f $\pm$ %.0f & %.4f' % (np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.mean(test_mses), np.std(test_mses), np.mean(test_scores)))
 print()
+
+columns = ['Train MSE', 'Train MSE Std.', 'Train R^2', 'Train R^2 Std.',
+		   'Test MSE', 'Test MSE Std.', 'Test R^2', 'Test R^2 Std.']
+data = [[np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.std(train_scores),
+		   np.mean(test_mses), np.std(test_mses), np.mean(test_scores), np.std(test_scores)]]
+
+path = os.path.join(results_path, 'results.csv')
+if not os.path.isfile(path):
+	df = pd.DataFrame(data=data, index=[fname], columns=columns)
+else:
+	df = pd.read_csv(path, index_col=0)
+	if not fname in df.index:
+		df.append(pd.DataFrame(data=data, index=[fname], columns=columns))
+	else:
+		df.loc[fname] = data[0]
+
+df.to_csv(path, index=True)

@@ -6,6 +6,7 @@ import argparse
 import numpy as  np
 import pandas as pd
 
+from nyctaxi.ml.utils                import *
 from datetime             import date
 from timeit               import default_timer
 from sklearn.linear_model import LinearRegression
@@ -23,7 +24,7 @@ fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2], end_date
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-data_path = os.path.join('..', '..', 'data')
+data_path = os.path.join('..', '..', '..', '..', 'data')
 predictions_path = os.path.join(data_path, 'naive_lr_removal_predictions', fname)
 removals_path = os.path.join(data_path, 'naive_lr_removals', fname)
 
@@ -32,22 +33,12 @@ for path in [predictions_path, removals_path]:
 		os.makedirs(path)
 
 # Load daily capacity data.
-print('\nLoading daily per-hotel capacity data.'); start = default_timer()
+df = load_occupancy_data(data_path, start_date, end_date)
+observations, targets = encode_data(df)
 
-df = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
-df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
-df = df.loc[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
-
-print('Time: %.4f' % (default_timer() - start))
-
-hotels = np.array(df['Share ID'])
-weekdays = np.array(df['Date'].dt.weekday).reshape([-1, 1])
-months = np.array(df['Date'].dt.month).reshape([-1, 1])
-years = np.array(df['Date'].dt.year).reshape([-1, 1])
-targets = np.array(df['Room Demand'])
-
-hotel_names, hotels = np.unique(hotels, return_inverse=True)
-hotels = hotels.reshape([-1, 1])
+# Save (observations, targets) to disk.
+np.save(os.path.join(data_path, 'naive_observations.npy'), observations)
+np.save(os.path.join(data_path, 'targets.npy'), targets)
 
 report = []
 
@@ -56,40 +47,34 @@ for i in range(removals):
 	
 	# Randomly permute the data to remove sequence biasing.
 	p = np.random.permutation(targets.shape[0])
-	hotels, weekdays, months, years, targets = hotels[p], weekdays[p], months[p], years[p], targets[p]
+	x = observations[p]
+	y = targets[p]
 
 	# Split the data into (training, test) subsets.
-	split = int(0.8 * len(targets))
-
-	train_features = [hotels[:split], years[:split], months[:split], weekdays[:split]]
-	train_features = np.concatenate(train_features, axis=1)
-
-	test_features = [hotels[split:], years[split:], months[split:], weekdays[split:]]
-	test_features = np.concatenate(test_features, axis=1)
-
-	train_targets = targets[:split]
-	test_targets = targets[split:]
+	split = int(0.8 * len(y))
+	train_x, train_y = x[:split], y[:split]
+	test_x, test_y = x[split:], y[split:]
 
 	print('Creating and training OLS regression model.')
 
-	model = LinearRegression().fit(train_features, train_targets)
+	model = LinearRegression().fit(train_x, train_y)
 
 	print('Training complete. Getting predictions and calculating R^2, MSE.')
 
-	train_score = model.score(train_features, train_targets)
-	test_score = model.score(test_features, test_targets)
+	train_score= model.score(train_x, train_y)
+	test_score = model.score(test_x, test_y)
 
-	train_predictions = model.predict(train_features)
-	test_predictions = model.predict(test_features)
+	train_y_hat = model.predict(train_x)
+	test_y_hat = model.predict(test_x)
 
-	train_mse = mean_squared_error(train_targets, train_predictions)
-	test_mse = mean_squared_error(test_targets, test_predictions)
+	train_mse = mean_squared_error(train_y, train_y_hat)
+	test_mse = mean_squared_error(test_y, test_y_hat)
 
-	np.save(os.path.join(predictions_path, 'train_targets_removals_%d.npy' % i), train_targets)
-	np.save(os.path.join(predictions_path, 'train_predictions_removals_%d.npy' % i), train_predictions)
+	np.save(os.path.join(predictions_path, 'train_targets_removals_%d.npy' % i), train_y)
+	np.save(os.path.join(predictions_path, 'train_predictions_removals_%d.npy' % i), train_y_hat)
 
-	np.save(os.path.join(predictions_path, 'test_targets_removals_%d.npy' % i), test_targets)
-	np.save(os.path.join(predictions_path, 'test_predictions_removals_%d.npy' % i), test_predictions)
+	np.save(os.path.join(predictions_path, 'test_targets_removals_%d.npy' % i), test_y)
+	np.save(os.path.join(predictions_path, 'test_predictions_removals_%d.npy' % i), test_y_hat)
 	
 	print()
 	print('*** Results after %d / %d removals ***' % (i, removals))

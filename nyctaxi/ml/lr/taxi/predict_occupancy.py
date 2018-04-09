@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os
 import sys
+import prwlock
 import argparse
 import numpy as  np
 import pandas as pd
@@ -20,6 +21,11 @@ parser.add_argument('--trials', type=int, default=5)
 
 locals().update(vars(parser.parse_args()))
 
+print('Distance:', distance)
+print('Trip type:', trip_type)
+print('Start date:', start_date)
+print('End date:', end_date)
+
 fname = '_'.join(map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2]]))
 
 start_date, end_date = date(*start_date), date(*end_date)
@@ -28,13 +34,15 @@ data_path = os.path.join('..', '..', '..', '..', 'data')
 preproc_data_path = os.path.join(data_path, 'all_preprocessed_%d' % distance)
 taxi_occupancy_path = os.path.join(data_path, 'taxi_occupancy', fname)
 predictions_path = os.path.join(data_path, 'taxi_lr_predictions', fname)
+results_path = os.path.join('..', '..', '..', '..', 'results', 'taxi_lr_results')
 
-for path in [taxi_occupancy_path, predictions_path]:
+for path in [taxi_occupancy_path, predictions_path, results_path]:
 	if not os.path.isdir(path):
 		os.makedirs(path)
 
 # Load daily capacity data.
-df = load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_date, end_date)
+df = load_merged_data(data_path, taxi_occupancy_path, preproc_data_path,
+					  start_date, end_date, trip_type)
 observations, targets = encode_data(df)
 
 # Save (observations, targets) to disk.
@@ -99,3 +107,20 @@ print('Mean, standard deviation of test R^2: %.4f' % np.mean(test_scores))
 print()
 print('%.0f $\pm$ %.0f & %.4f & %.0f $\pm$ %.0f & %.4f' % (np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.mean(test_mses), np.std(test_mses), np.mean(test_scores)))
 print()
+
+columns = ['Train MSE', 'Train MSE Std.', 'Train R^2', 'Train R^2 Std.',
+		   'Test MSE', 'Test MSE Std.', 'Test R^2', 'Test R^2 Std.']
+data = [[np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.std(train_scores),
+		   np.mean(test_mses), np.std(test_mses), np.mean(test_scores), np.std(test_scores)]]
+
+path = os.path.join(results_path, 'results.csv')
+if not os.path.isfile(path):
+	df = pd.DataFrame(data=data, index=[fname], columns=columns)
+else:
+	df = pd.read_csv(path, index_col=0)
+	if not fname in df.index:
+		df = df.append(pd.DataFrame(data=data, index=[fname], columns=columns))
+	else:
+		df.loc[fname] = data[0]
+
+df.to_csv(path, index=True)

@@ -9,8 +9,10 @@ def load_occupancy_data(data_path, start_date, end_date):
 	print('\nLoading daily per-hotel capacity data.'); start = time()
 
 	# Load daily capacity data.
-	df = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
+	df = pd.read_csv(os.path.join(data_path, 'Unmasked Capacity and Price Data.csv'), index_col=False)
 	df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
+	df['ADR'] = df['ADR'].astype(str).str.replace(',', '')
+	df['Room Demand'] = df['Room Demand'].astype(str).str.replace(',', '')
 	df = df.loc[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
 	df = df.rename(index=str, columns={'Share ID' : 'Hotel Name'})
 
@@ -18,18 +20,23 @@ def load_occupancy_data(data_path, start_date, end_date):
 	
 	return df
 
-def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_date, end_date):
-	is_data_file = os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'))
-	is_counts_file = os.path.isfile(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
+def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_date, end_date, trip_type):
+	data_fname = 'Taxi occupancy price data.csv'
+	counts_fname = 'Taxi occupancy price counts.csv'
+	
+	is_data_file = os.path.isfile(os.path.join(taxi_occupancy_path, data_fname))
+	is_counts_file = os.path.isfile(os.path.join(taxi_occupancy_path, counts_fname))
 	
 	if not is_counts_file and not is_data_file:
 		# Load daily capacity data.
 		print('\nLoading daily per-hotel capacity data.'); start = time()
 
-		occupancy = pd.read_csv(os.path.join(data_path, 'Unmasked Daily Capacity.csv'), index_col=False)
+		occupancy = pd.read_csv(os.path.join(data_path, 'Unmasked Capacity and Price Data.csv'), index_col=False)
 		occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
 		occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
 		occupancy['Date'] = occupancy['Date'].dt.date
+		occupancy['ADR'] = occupancy['ADR'].astype(str).str.replace(',', '')
+		occupancy['Room Demand'] = occupancy['Room Demand'].astype(str).str.replace(',', '')
 		occupancy = occupancy.rename(index=str, columns={'Share ID': 'Hotel Name'})
 		occupancy = occupancy.drop('Unnamed: 0', axis=1)
 
@@ -68,19 +75,19 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
 		# Save merged occupancy and taxi data to disk.
 		print('\nSaving merged dataframes to disk.'); start = time()
 
-		df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'))
+		df.to_csv(os.path.join(taxi_occupancy_path, data_fname))
 
 		print('Time: %.4f' % (time() - start))
 
 		# Count number of rides per hotel and date.
-		df = df.groupby(['Hotel Name', 'Date', 'Room Demand']).count().reset_index()
+		df = df.groupby(['Hotel Name', 'Date', 'Room Demand', 'ADR']).count().reset_index()
 		df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'})
 		df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
 		# Save occupancy and taxi counts to disk.
 		print('\nSaving counts to disk.'); start = time()
 
-		df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
+		df.to_csv(os.path.join(taxi_occupancy_path, counts_fname))
 
 		print('Time: %.4f' % (time() - start))
 
@@ -88,19 +95,19 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
 		# Load merged occupancy and taxi data to disk.
 		print('\nLoading merged taxi and occupancy dataframes from disk.'); start = default_timer()
 
-		df = pd.read_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'))
+		df = pd.read_csv(os.path.join(taxi_occupancy_path, data_fname))
 
 		print('Time: %.4f' % (time() - start))
 
 		# Count number of rides per hotel and date.
-		df = df.groupby(['Hotel Name', 'Date', 'Room Demand']).count().reset_index()
+		df = df.groupby(['Hotel Name', 'Date', 'Room Demand', 'ADR']).count().reset_index()
 		df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'})
 		df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
 		# Save occupancy and taxi counts to disk.
 		print('\nSaving counts to disk.'); start = time()
 
-		df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
+		df.to_csv(os.path.join(taxi_occupancy_path, counts_fname))
 
 		print('Time: %.4f' % (time() - start))
 
@@ -108,7 +115,7 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
 		# Load merged occupancy and taxi data from disk.
 		print('\nLoading occupancy and taxi counts from disk.'); start = time()
 
-		df = pd.read_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy counts.csv'))
+		df = pd.read_csv(os.path.join(taxi_occupancy_path, counts_fname))
 		df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
 		print('Time: %.4f' % (time() - start))
@@ -144,9 +151,7 @@ def encode_data(df):
 	else:
 		observations = np.array(hotels + weekdays + months + years).T
 
-	# Get the target outputs.
-	targets = np.array(df['Room Demand'])
+	# Get the target outputs (occupancy and room pricing).
+	targets = np.array([df['Room Demand'], df['ADR']]).T
 	
-	print(observations)
-
 	return observations, targets
