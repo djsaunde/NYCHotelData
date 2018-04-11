@@ -29,7 +29,7 @@ if not os.path.isdir(taxi_occupancy_path):
 	os.makedirs(taxi_occupancy_path)
 
 print(); print('Loading merged taxi and occupancy data with distance criterion d = %d.' % old)
-df = pd.read_csv(os.path.join(other_taxi_occupancy_path, 'Taxi and occupancy data.csv'))
+df = pd.read_csv(os.path.join(other_taxi_occupancy_path, 'Taxi occupancy price data.csv'))
 
 print('Reducing by distance criterion d = %d.' % distance, end=' ')
 start = default_timer()
@@ -39,4 +39,4 @@ df = df[df['Distance From Hotel'] <= distance]
 print('(Time: %.4f)' % (default_timer() - start))
 
 print('Writing to disk.'); print()
-df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi and occupancy data.csv'), index=False)
+df.to_csv(os.path.join(taxi_occupancy_path, 'Taxi occupancy price data.csv'), index=False)

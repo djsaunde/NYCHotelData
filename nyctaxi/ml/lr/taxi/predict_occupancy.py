@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import os
 import sys
-import prwlock
 import argparse
 import numpy as  np
 import pandas as pd
