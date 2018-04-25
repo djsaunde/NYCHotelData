@@ -17,6 +17,7 @@ parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--trials', type=int, default=5)
+parser.add_argument('--targets', type=str, nargs='+', default=['Room Demand', 'ADR'])
 
 locals().update(vars(parser.parse_args()))
 
@@ -40,9 +41,8 @@ for path in [taxi_occupancy_path, predictions_path, results_path]:
 		os.makedirs(path)
 
 # Load daily capacity data.
-df = load_merged_data(data_path, taxi_occupancy_path, preproc_data_path,
-					  start_date, end_date, trip_type)
-observations, targets = encode_data(df)
+df = load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_date, end_date, trip_type)
+observations, targets = encode_data(df, targets=targets)
 
 # Save (observations, targets) to disk.
 np.save(os.path.join(data_path, 'naive_observations.npy'), observations)

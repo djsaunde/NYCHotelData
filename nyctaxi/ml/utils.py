@@ -93,7 +93,7 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
 
 	elif is_data_file and not is_counts_file:
 		# Load merged occupancy and taxi data to disk.
-		print('\nLoading merged taxi and occupancy dataframes from disk.'); start = default_timer()
+		print('\nLoading merged taxi and occupancy dataframes from disk.'); start = time()
 
 		df = pd.read_csv(os.path.join(taxi_occupancy_path, data_fname))
 
@@ -122,7 +122,7 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
 	
 	return df
 
-def encode_data(df):
+def encode_data(df, targets=['Room Demand', 'ADR']):
 	# One-hot encoding the hotel IDs.
 	hotels = np.array(df['Hotel Name'])
 	hotel_names, hotels = np.unique(hotels, return_inverse=True)
@@ -152,6 +152,6 @@ def encode_data(df):
 		observations = np.array(hotels + weekdays + months + years).T
 
 	# Get the target outputs (occupancy and room pricing).
-	targets = np.array([df['Room Demand'], df['ADR']]).T
+	targets = np.array(df[targets])
 	
 	return observations, targets
