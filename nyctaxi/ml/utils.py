@@ -2,7 +2,22 @@ import os
 import numpy  as np
 import pandas as pd
 
-from time import time
+from time                 import time
+from sklearn.linear_model import LinearRegression
+
+
+class LogitRegression(LinearRegression):
+	
+	def fit(self, x, p):
+		p = np.asarray(p)
+		p[p == 0.0] = 1e-8
+		p[p == 1.0] = 1 - 1e-2
+		y = np.log(p / (1 - p))
+		return super().fit(x, y)
+
+	def predict(self, x):
+		y = super().predict(x)
+		return 1 / (np.exp(-y) + 1)
 
 
 def load_occupancy_data(data_path, start_date, end_date):
@@ -13,9 +28,10 @@ def load_occupancy_data(data_path, start_date, end_date):
 	df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 	df['ADR'] = df['ADR'].astype(str).str.replace(',', '')
 	df['Room Demand'] = df['Room Demand'].astype(str).str.replace(',', '')
+	df['Occ'] = df['Occ'] / 100
 	df = df.loc[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
 	df = df.rename(index=str, columns={'Share ID' : 'Hotel Name'})
-
+	
 	print('Time: %.4f' % (time() - start))
 	
 	return df
@@ -122,7 +138,7 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
 	
 	return df
 
-def encode_data(df, targets=['Room Demand', 'ADR']):
+def encode_data(df, targets=['Occ']):
 	# One-hot encoding the hotel IDs.
 	hotels = np.array(df['Hotel Name'])
 	hotel_names, hotels = np.unique(hotels, return_inverse=True)
@@ -152,6 +168,6 @@ def encode_data(df, targets=['Room Demand', 'ADR']):
 		observations = np.array(hotels + weekdays + months + years).T
 
 	# Get the target outputs (occupancy and room pricing).
-	targets = np.array(df[targets])
+	targets = np.array(df[targets], dtype=np.float32)
 	
 	return observations, targets

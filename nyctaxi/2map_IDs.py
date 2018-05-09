@@ -9,7 +9,7 @@ print('... Loading hotel identification Excel worksheet.')
 hotel_id_mapping = pd.read_excel(os.path.join('..', 'data', 'Final hotel Identification.xlsx'))
 
 print('... Loading daily hotel capacity and price data.')
-capacity_and_price_data = pd.read_csv(os.path.join('..', 'data', 'occ and price data.csv'))
+capacity_and_price_data = pd.read_csv(os.path.join('..', 'data', 'occ room and price data.csv'))
 
 print('... Converting hotel identification worksheet to a dictionary object.')
 hotel_id_mapping = { int(id_) : hotel_name for (id_, hotel_name) in zip(hotel_id_mapping['Share ID'], hotel_id_mapping['Name']) if not np.isnan(id_) }
