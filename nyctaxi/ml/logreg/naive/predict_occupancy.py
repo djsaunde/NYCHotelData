@@ -35,7 +35,8 @@ for path in [predictions_path, results_path]:
 df = load_occupancy_data(data_path, start_date, end_date)
 observations, targets = encode_data(df, targets=targets)
 
-targets = targets / targets.max()
+targets = targets / 100
+targets = np.minimum(1, targets)
 
 # Save (observations, targets) to disk.
 np.save(os.path.join(data_path, 'naive_observations.npy'), observations)
@@ -77,11 +78,11 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	print()
 	print('*** Results on %d / %d trial ***' % (i + 1, trials))
 	print()
-	print('Training MSE: %.4f' % train_mses[-1])
-	print('Training R^2: %.4f' % train_scores[-1])
+	print('Training MSE: %.8f' % train_mses[-1])
+	print('Training R^2: %.8f' % train_scores[-1])
 	print()
-	print('Test MSE: %.4f' % test_mses[-1])
-	print('Test R^2: %.4f' % test_scores[-1])
+	print('Test MSE: %.8f' % test_mses[-1])
+	print('Test R^2: %.8f' % test_scores[-1])
 	print()
 
 	np.save(os.path.join(predictions_path, 'train_targets_%d.npy' % i), train_y)
@@ -91,13 +92,13 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 	np.save(os.path.join(predictions_path, 'test_predictions_%d.npy' % i), test_y_hat)
 
 print()
-print('Mean, standard deviation of training MSE: %.0f $\pm$ %.0f' % (np.mean(train_mses), np.std(train_mses)))
-print('Mean, standard deviation of training R^2: %.4f' % np.mean(train_scores))
+print('Mean, standard deviation of training MSE: %.8f $\pm$ %.8f' % (np.mean(train_mses), np.std(train_mses)))
+print('Mean, standard deviation of training R^2: %.8f' % np.mean(train_scores))
 print()
-print('Mean, standard deviation of test MSE: %.0f $\pm$ %.0f' % (np.mean(test_mses), np.std(test_mses)))
-print('Mean, standard deviation of test R^2: %.4f' % np.mean(test_scores))
+print('Mean, standard deviation of test MSE: %.8f $\pm$ %.8f' % (np.mean(test_mses), np.std(test_mses)))
+print('Mean, standard deviation of test R^2: %.8f' % np.mean(test_scores))
 print()
-print('%.0f $\pm$ %.0f & %.4f & %.0f $\pm$ %.0f & %.4f' % (np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.mean(test_mses), np.std(test_mses), np.mean(test_scores)))
+print('%.8f $\pm$ %.8f & %.8f & %.8f $\pm$ %.8f & %.8f' % (np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.mean(test_mses), np.std(test_mses), np.mean(test_scores)))
 print()
 
 columns = ['Train MSE', 'Train MSE Std.', 'Train R^2', 'Train R^2 Std.',

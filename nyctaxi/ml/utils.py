@@ -53,6 +53,7 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
 		occupancy['Date'] = occupancy['Date'].dt.date
 		occupancy['ADR'] = occupancy['ADR'].astype(str).str.replace(',', '')
 		occupancy['Room Demand'] = occupancy['Room Demand'].astype(str).str.replace(',', '')
+		occupancy['Occ'] = occupancy['Occ'] / 100
 		occupancy = occupancy.rename(index=str, columns={'Share ID': 'Hotel Name'})
 		occupancy = occupancy.drop('Unnamed: 0', axis=1)
 
@@ -96,7 +97,7 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
 		print('Time: %.4f' % (time() - start))
 
 		# Count number of rides per hotel and date.
-		df = df.groupby(['Hotel Name', 'Date', 'Room Demand', 'ADR']).count().reset_index()
+		df = df.groupby(['Hotel Name', 'Date', 'Room Demand', 'ADR', 'Occ']).count().reset_index()
 		df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'})
 		df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
@@ -116,7 +117,7 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
 		print('Time: %.4f' % (time() - start))
 
 		# Count number of rides per hotel and date.
-		df = df.groupby(['Hotel Name', 'Date', 'Room Demand', 'ADR']).count().reset_index()
+		df = df.groupby(['Hotel Name', 'Date', 'Room Demand', 'ADR', 'Occ']).count().reset_index()
 		df = df.rename(index=str, columns={'Distance From Hotel': 'No. Nearby Trips'})
 		df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
 
