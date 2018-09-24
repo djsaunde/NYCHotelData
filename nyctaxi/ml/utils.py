@@ -53,6 +53,7 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
 		occupancy['Date'] = occupancy['Date'].dt.date
 		occupancy['ADR'] = occupancy['ADR'].astype(str).str.replace(',', '')
 		occupancy['Room Demand'] = occupancy['Room Demand'].astype(str).str.replace(',', '')
+		occupancy['Occ'] = occupancy['Occ'] / 100
 		occupancy = occupancy.rename(index=str, columns={'Share ID': 'Hotel Name'})
 		occupancy = occupancy.drop('Unnamed: 0', axis=1)
 
