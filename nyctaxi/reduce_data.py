@@ -2,11 +2,9 @@ from __future__ import print_function
 
 import os
 import argparse
-import pandas as pd
 import dask.dataframe as dd
 
-from util             import *
-from timeit           import default_timer
+from timeit import default_timer
 
 
 parser = argparse.ArgumentParser()
