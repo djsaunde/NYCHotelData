@@ -81,15 +81,15 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
         taxi_rides['Date'] = taxi_rides['Pick-up Time'].dt.date
         taxi_rides = taxi_rides.drop(['Pick-up Time', 'Drop-off Time'], axis=1)
 
-		occupancy = pd.read_csv(os.path.join(data_path, 'Unmasked Capacity and Price Data.csv'), index_col=False)
-		occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
-		occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
-		occupancy['Date'] = occupancy['Date'].dt.date
-		occupancy['ADR'] = occupancy['ADR'].astype(str).str.replace(',', '')
-		occupancy['Room Demand'] = occupancy['Room Demand'].astype(str).str.replace(',', '')
-		occupancy['Occ'] = occupancy['Occ'] / 100
-		occupancy = occupancy.rename(index=str, columns={'Share ID': 'Hotel Name'})
-		occupancy = occupancy.drop('Unnamed: 0', axis=1)
+        occupancy = pd.read_csv(os.path.join(data_path, 'Unmasked Capacity and Price Data.csv'), index_col=False)
+        occupancy['Date'] = pd.to_datetime(occupancy['Date'], format='%Y-%m-%d')
+        occupancy = occupancy.loc[(occupancy['Date'] >= start_date) & (occupancy['Date'] <= end_date)]
+        occupancy['Date'] = occupancy['Date'].dt.date
+        occupancy['ADR'] = occupancy['ADR'].astype(str).str.replace(',', '')
+        occupancy['Room Demand'] = occupancy['Room Demand'].astype(str).str.replace(',', '')
+        occupancy['Occ'] = occupancy['Occ'] / 100
+        occupancy = occupancy.rename(index=str, columns={'Share ID': 'Hotel Name'})
+        occupancy = occupancy.drop('Unnamed: 0', axis=1)
 
         # Build the dataset of ((hotel, taxi density), occupancy) input, output pairs.
         print('\nMerging dataframes on Date and Hotel Name attributes.'); start = time()
