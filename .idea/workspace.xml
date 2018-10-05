@@ -3,8 +3,12 @@
   <component name="ChangeListManager">
     <list default="true" id="afedf4b4-3976-4919-8f54-5fbf568430a4" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nyctaxi/ml/logit/naive/predict_occupancy.py" beforeDir="false" afterPath="$PROJECT_DIR$/nyctaxi/ml/logit/naive/predict_occupancy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nyctaxi/ml/logit/taxi/predict_occupancy.py" beforeDir="false" afterPath="$PROJECT_DIR$/nyctaxi/ml/logit/taxi/predict_occupancy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nyctaxi/ml/logreg/taxi/predict_occupancy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/nyctaxi/ml/lr/naive/predict_occupancy.py" beforeDir="false" afterPath="$PROJECT_DIR$/nyctaxi/ml/lr/naive/predict_occupancy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nyctaxi/ml/lr/taxi/predict_occupancy.py" beforeDir="false" afterPath="$PROJECT_DIR$/nyctaxi/ml/lr/taxi/predict_occupancy.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nyctaxi/ml/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/nyctaxi/ml/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -16,32 +20,33 @@
     <session id="-1708203565">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="3" />
+          <entry key="project.closed" value="5" />
           <entry key="project.open.time.0" value="2" />
-          <entry key="project.open.time.5" value="1" />
-          <entry key="project.opened" value="3" />
+          <entry key="project.open.time.5" value="2" />
+          <entry key="project.open.time.6" value="1" />
+          <entry key="project.opened" value="5" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="py" value="13" />
+          <entry key="py" value="19" />
           <entry key="txt" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="PLAIN_TEXT" value="1" />
-          <entry key="Python" value="13" />
+          <entry key="Python" value="19" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="py" value="1415" />
+          <entry key="py" value="2254" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="1415" />
+          <entry key="Python" value="2254" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.vcs.git.usages" />
@@ -52,8 +57,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/nyctaxi/ml/logit/naive/predict_occupancy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="105">
-              <caret line="17" column="43" selection-start-line="17" selection-start-column="43" selection-end-line="17" selection-end-column="43" />
+            <state relative-caret-position="450">
+              <caret line="40" column="71" selection-start-line="40" selection-start-column="71" selection-end-line="40" selection-end-column="71" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -64,8 +69,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/nyctaxi/ml/logit/taxi/predict_occupancy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="495">
-              <caret line="43" selection-start-line="43" selection-end-line="43" />
+            <state relative-caret-position="525">
+              <caret line="45" column="14" selection-start-line="45" selection-start-column="14" selection-end-line="45" selection-end-column="14" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -74,35 +79,9 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/nyctaxi/ml/utils.py">
+        <entry file="file://$PROJECT_DIR$/nyctaxi/ml/lr/taxi/predict_occupancy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="255">
-              <caret line="17" column="15" selection-start-line="17" selection-start-column="15" selection-end-line="17" selection-end-column="15" />
-              <folding>
-                <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/setup.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="180">
-              <caret line="12" column="1" lean-forward="true" selection-start-line="12" selection-start-column="1" selection-end-line="12" selection-end-column="1" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/requirements.txt">
-          <provider selected="true" editor-type-id="text-editor" />
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/nyctaxi/reduce_count_data.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="360">
+            <state relative-caret-position="285">
               <caret line="31" column="54" selection-start-line="31" selection-start-column="54" selection-end-line="31" selection-end-column="54" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
@@ -112,10 +91,34 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/nyctaxi/reduce_data.py">
+        <entry file="file://$PROJECT_DIR$/nyctaxi/ml/lr/fixed_effects/predict_occupancy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="15" column="14" selection-start-line="15" selection-start-column="14" selection-end-line="15" selection-end-column="14" />
+            <state relative-caret-position="450">
+              <caret line="41" column="81" selection-start-line="41" selection-start-column="81" selection-end-line="41" selection-end-column="81" />
+              <folding>
+                <element signature="e#0#37#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/nyctaxi/ml/utils.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="200">
+              <caret line="38" column="4" selection-start-line="38" selection-start-column="4" selection-end-line="38" selection-end-column="4" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/nyctaxi/ml/lr/taxi_no_fixed_effects/predict_occupancy.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="585">
+              <caret line="51" column="52" selection-start-line="51" selection-start-column="52" selection-end-line="51" selection-end-column="52" />
               <folding>
                 <element signature="e#0#37#0" expanded="true" />
               </folding>
@@ -124,13 +127,19 @@
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/nyctaxi/combine_daily_coordinates.py">
+        <entry file="file://$PROJECT_DIR$/nyctaxi/ml/lr/naive/predict_occupancy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="405">
-              <caret line="34" column="45" selection-start-line="34" selection-start-column="45" selection-end-line="34" selection-end-column="45" />
-              <folding>
-                <element signature="e#0#37#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="150">
+              <caret line="10" column="49" selection-start-line="10" selection-start-column="49" selection-end-line="10" selection-end-column="49" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/setup.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="120">
+              <caret line="8" column="41" selection-start-line="8" selection-start-column="41" selection-end-line="8" selection-end-column="41" />
             </state>
           </provider>
         </entry>
@@ -164,6 +173,11 @@
       </list>
     </option>
   </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>reading in the pre</find>
+    </findStrings>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -171,17 +185,21 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/nyctaxi/ml/logit/fixed_effects.py" />
-        <option value="$PROJECT_DIR$/nyctaxi/ml/logit/naive/predict_occupancy.py" />
-        <option value="$PROJECT_DIR$/nyctaxi/ml/logit/taxi/predict_occupancy.py" />
         <option value="$PROJECT_DIR$/nyctaxi/ml/logit/fixed_effects/predict_occupancy.py" />
         <option value="$PROJECT_DIR$/nyctaxi/reduce_data.py" />
         <option value="$PROJECT_DIR$/nyctaxi/combine_daily_coordinates.py" />
-        <option value="$PROJECT_DIR$/nyctaxi/ml/utils.py" />
         <option value="$PROJECT_DIR$/setup.py" />
+        <option value="$PROJECT_DIR$/nyctaxi/ml/logit/naive/predict_occupancy.py" />
+        <option value="$PROJECT_DIR$/nyctaxi/ml/lr/naive/predict_occupancy.py" />
+        <option value="$PROJECT_DIR$/nyctaxi/ml/lr/taxi/predict_occupancy.py" />
+        <option value="$PROJECT_DIR$/nyctaxi/ml/logit/taxi/predict_occupancy.py" />
+        <option value="$PROJECT_DIR$/nyctaxi/ml/lr/fixed_effects/predict_occupancy.py" />
+        <option value="$PROJECT_DIR$/nyctaxi/ml/utils.py" />
+        <option value="$PROJECT_DIR$/nyctaxi/ml/lr/taxi_no_fixed_effects/predict_occupancy.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
+  <component name="ProjectFrameBounds" extendedState="7">
     <option name="x" value="64" />
     <option name="y" value="-11" />
     <option name="width" value="1857" />
@@ -221,6 +239,74 @@
               <item name="nyctaxi" type="b2602c69:ProjectViewProjectNode" />
               <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
               <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="nyctaxi" type="b2602c69:ProjectViewProjectNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="ml" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="nyctaxi" type="b2602c69:ProjectViewProjectNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="ml" type="462c0819:PsiDirectoryNode" />
+              <item name="logit" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="nyctaxi" type="b2602c69:ProjectViewProjectNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="ml" type="462c0819:PsiDirectoryNode" />
+              <item name="logit" type="462c0819:PsiDirectoryNode" />
+              <item name="naive" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="nyctaxi" type="b2602c69:ProjectViewProjectNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="ml" type="462c0819:PsiDirectoryNode" />
+              <item name="logit" type="462c0819:PsiDirectoryNode" />
+              <item name="taxi" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="nyctaxi" type="b2602c69:ProjectViewProjectNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="ml" type="462c0819:PsiDirectoryNode" />
+              <item name="lr" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="nyctaxi" type="b2602c69:ProjectViewProjectNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="ml" type="462c0819:PsiDirectoryNode" />
+              <item name="lr" type="462c0819:PsiDirectoryNode" />
+              <item name="fixed_effects" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="nyctaxi" type="b2602c69:ProjectViewProjectNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="ml" type="462c0819:PsiDirectoryNode" />
+              <item name="lr" type="462c0819:PsiDirectoryNode" />
+              <item name="naive" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="nyctaxi" type="b2602c69:ProjectViewProjectNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="ml" type="462c0819:PsiDirectoryNode" />
+              <item name="lr" type="462c0819:PsiDirectoryNode" />
+              <item name="taxi" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="nyctaxi" type="b2602c69:ProjectViewProjectNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="nyctaxi" type="462c0819:PsiDirectoryNode" />
+              <item name="ml" type="462c0819:PsiDirectoryNode" />
+              <item name="lr" type="462c0819:PsiDirectoryNode" />
+              <item name="taxi_no_fixed_effects" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -267,6 +353,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.24972677" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -301,10 +388,34 @@
     <entry file="file://$PROJECT_DIR$/nyctaxi/hotel_stats.py">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
+    <entry file="file://$PROJECT_DIR$/requirements.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/nyctaxi/reduce_count_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="31" column="54" selection-start-line="31" selection-start-column="54" selection-end-line="31" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/nyctaxi/reduce_data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="135">
+          <caret line="15" column="14" selection-start-line="15" selection-start-column="14" selection-end-line="15" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/nyctaxi/combine_daily_coordinates.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="405">
+          <caret line="34" column="45" selection-start-line="34" selection-start-column="45" selection-end-line="34" selection-end-column="45" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/nyctaxi/ml/logit/naive/predict_occupancy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
-          <caret line="17" column="43" selection-start-line="17" selection-start-column="43" selection-end-line="17" selection-end-column="43" />
+        <state relative-caret-position="450">
+          <caret line="40" column="71" selection-start-line="40" selection-start-column="71" selection-end-line="40" selection-end-column="71" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
@@ -313,17 +424,17 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/nyctaxi/ml/logit/taxi/predict_occupancy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="495">
-          <caret line="43" selection-start-line="43" selection-end-line="43" />
+        <state relative-caret-position="525">
+          <caret line="45" column="14" selection-start-line="45" selection-start-column="14" selection-end-line="45" selection-end-column="14" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/nyctaxi/reduce_count_data.py">
+    <entry file="file://$PROJECT_DIR$/nyctaxi/ml/lr/taxi/predict_occupancy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="360">
+        <state relative-caret-position="285">
           <caret line="31" column="54" selection-start-line="31" selection-start-column="54" selection-end-line="31" selection-end-column="54" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
@@ -331,23 +442,37 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/nyctaxi/reduce_data.py">
+    <entry file="file://$PROJECT_DIR$/nyctaxi/ml/lr/fixed_effects/predict_occupancy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="15" column="14" selection-start-line="15" selection-start-column="14" selection-end-line="15" selection-end-column="14" />
+        <state relative-caret-position="450">
+          <caret line="41" column="81" selection-start-line="41" selection-start-column="81" selection-end-line="41" selection-end-column="81" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/nyctaxi/combine_daily_coordinates.py">
+    <entry file="file://$PROJECT_DIR$/nyctaxi/ml/lr/taxi_no_fixed_effects/predict_occupancy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="405">
-          <caret line="34" column="45" selection-start-line="34" selection-start-column="45" selection-end-line="34" selection-end-column="45" />
+        <state relative-caret-position="585">
+          <caret line="51" column="52" selection-start-line="51" selection-start-column="52" selection-end-line="51" selection-end-column="52" />
           <folding>
             <element signature="e#0#37#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/nyctaxi/ml/lr/naive/predict_occupancy.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="150">
+          <caret line="10" column="49" selection-start-line="10" selection-start-column="49" selection-end-line="10" selection-end-column="49" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/setup.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" column="41" selection-start-line="8" selection-start-column="41" selection-end-line="8" selection-end-column="41" />
         </state>
       </provider>
     </entry>
@@ -369,21 +494,11 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/nyctaxi/ml/utils.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="17" column="15" selection-start-line="17" selection-start-column="15" selection-end-line="17" selection-end-column="15" />
+        <state relative-caret-position="200">
+          <caret line="38" column="4" selection-start-line="38" selection-start-column="4" selection-end-line="38" selection-end-column="4" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/requirements.txt">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/setup.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="180">
-          <caret line="12" column="1" lean-forward="true" selection-start-line="12" selection-start-column="1" selection-end-line="12" selection-end-column="1" />
         </state>
       </provider>
     </entry>

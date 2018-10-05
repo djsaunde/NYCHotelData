@@ -7,47 +7,39 @@ import pandas as pd
 
 from datetime import date
 from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
 
-from nyctaxi.ml.utils import load_merged_data, encode_data, LogitRegression
+from nyctaxi.ml.utils import load_occupancy_data, encode_data
+
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--distance', default=100, type=int)
-parser.add_argument('--trip_type', default='pickups', type=str)
 parser.add_argument('--start_date', type=int, nargs=3, default=[2014, 1, 1])
 parser.add_argument('--end_date', type=int, nargs=3, default=[2016, 6, 30])
 parser.add_argument('--trials', type=int, default=5)
 parser.add_argument('--targets', type=str, nargs='+', default=['Occ'])
 args = parser.parse_args()
 
-distance = args.distance
-trip_type = args.trip_type
 start_date = args.start_date
 end_date = args.end_date
 trials = args.trials
 targets = args.targets
 
-fname = '_'.join(
-    map(str, [distance, start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2]])
-)
+fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2], end_date[0], end_date[1], end_date[2]]))
 
 start_date, end_date = date(*start_date), date(*end_date)
 
 top = os.path.join('..', '..', '..', '..')
 data_path = os.path.join(top, 'data')
-preproc_data_path = os.path.join(data_path, 'all_preprocessed_%d' % distance)
-taxi_occupancy_path = os.path.join(data_path, 'taxi_occupancy', fname)
-predictions_path = os.path.join(data_path, 'taxi_logreg_predictions', fname)
-results_path = os.path.join(top, 'results', 'taxi_logreg_results')
+predictions_path = os.path.join(data_path, 'naive_logreg_predictions', fname)
+results_path = os.path.join(top, 'results', 'naive_logreg_results')
 
-for path in [taxi_occupancy_path, predictions_path, results_path]:
+for path in [predictions_path, results_path]:
     if not os.path.isdir(path):
         os.makedirs(path)
 
 # Load daily capacity data.
-df = load_merged_data(
-    data_path, taxi_occupancy_path, preproc_data_path, start_date, end_date, trip_type
-)
-observations, targets = encode_data(df, targets=targets)
+df = load_occupancy_data(data_path, start_date, end_date)
+observations, targets = encode_data(df, obs=('IDs', 'Weekdays', 'Months', 'Years'), targets=targets)
 
 # Save (observations, targets) to disk.
 np.save(os.path.join(data_path, 'naive_observations.npy'), observations)
@@ -71,9 +63,9 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
     train_x, train_y = x[:split], y[:split]
     test_x, test_y = x[split:], y[split:]
 
-    print('Creating and training logit regression model.')
+    print('Creating and training linear regression model.')
 
-    model = LogitRegression().fit(train_x, train_y)
+    model = LinearRegression().fit(train_x, train_y)
 
     print('Training complete. Getting predictions and calculating R^2, MSE.')
 
@@ -110,8 +102,9 @@ print('Mean, standard deviation of test MSE: %.8f $\pm$ %.8f' % (np.mean(test_ms
 print('Mean, standard deviation of test R^2: %.8f' % np.mean(test_scores))
 print()
 print('%.8f $\pm$ %.8f & %.8f & %.8f $\pm$ %.8f & %.8f' % (
-np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.mean(test_mses), np.std(test_mses),
-np.mean(test_scores)))
+    np.mean(train_mses), np.std(train_mses), np.mean(train_scores),
+    np.mean(test_mses), np.std(test_mses), np.mean(test_scores)
+))
 print()
 
 columns = [
@@ -129,7 +122,7 @@ if not os.path.isfile(path):
 else:
     df = pd.read_csv(path, index_col=0)
     if not fname in df.index:
-        df = df.append(pd.DataFrame(data=data, index=[fname], columns=columns))
+        df.append(pd.DataFrame(data=data, index=[fname], columns=columns))
     else:
         df.loc[fname] = data[0]
 

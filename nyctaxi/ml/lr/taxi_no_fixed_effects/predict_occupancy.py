@@ -6,9 +6,11 @@ import numpy as np
 import pandas as pd
 
 from datetime import date
-from sklearn.metrics import mean_squared_error
 
-from nyctaxi.ml.utils import load_merged_data, encode_data, LogitRegression
+from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
+
+from nyctaxi.ml.utils import load_merged_data, encode_data
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--distance', default=100, type=int)
@@ -47,7 +49,7 @@ for path in [taxi_occupancy_path, predictions_path, results_path]:
 df = load_merged_data(
     data_path, taxi_occupancy_path, preproc_data_path, start_date, end_date, trip_type
 )
-observations, targets = encode_data(df, targets=targets)
+observations, targets = encode_data(df, obs=('IDs', ), targets=targets)
 
 # Save (observations, targets) to disk.
 np.save(os.path.join(data_path, 'naive_observations.npy'), observations)
@@ -71,9 +73,9 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
     train_x, train_y = x[:split], y[:split]
     test_x, test_y = x[split:], y[split:]
 
-    print('Creating and training logit regression model.')
+    print('Creating and training linear regression model.')
 
-    model = LogitRegression().fit(train_x, train_y)
+    model = LinearRegression().fit(train_x, train_y)
 
     print('Training complete. Getting predictions and calculating R^2, MSE.')
 

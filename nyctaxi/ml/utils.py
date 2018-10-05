@@ -43,6 +43,8 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
     is_data_file = os.path.isfile(os.path.join(taxi_occupancy_path, data_fname))
     is_counts_file = os.path.isfile(os.path.join(taxi_occupancy_path, counts_fname))
 
+    print(os.path.join(taxi_occupancy_path, counts_fname))
+
     if not is_counts_file and not is_data_file:
         # Load daily capacity data.
         print('\nLoading daily per-hotel capacity data.'); start = time()
@@ -165,7 +167,7 @@ def load_merged_data(data_path, taxi_occupancy_path, preproc_data_path, start_da
     return df
 
 
-def encode_data(df, obs=('IDs', 'Weekdays', 'Months', 'Years'), targets=('Occ', )):
+def encode_data(df, obs=('IDs', 'Weekdays', 'Months', 'Years'), targets=('Revenue', )):
     observations = []
 
     # One-hot encoding the hotel IDs.
@@ -201,6 +203,13 @@ def encode_data(df, obs=('IDs', 'Weekdays', 'Months', 'Years'), targets=('Occ', 
 
     # Get the observations and target outputs (occupancy and room pricing).
     observations = np.array(observations).T
-    outputs = np.array(df[list(targets)], dtype=np.float32)
 
+    df['Room Demand'] = df['Room Demand'].astype(float)
+    df['Occ'] = np.minimum(df['Occ'].astype(float), 1)
+    df['ADR'] = df['ADR'].astype(float)
+
+    if 'Revenue' in targets:
+        df['Revenue'] = df['Room Demand'] * df['ADR']
+
+    outputs = np.array(df[list(targets)], dtype=np.float32)
     return observations, outputs

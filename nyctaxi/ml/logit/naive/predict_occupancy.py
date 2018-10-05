@@ -27,9 +27,10 @@ fname = '_'.join(map(str, [start_date[0], start_date[1], start_date[2], end_date
 
 start_date, end_date = date(*start_date), date(*end_date)
 
-data_path = os.path.join('..', '..', '..', '..', 'data')
+top = os.path.join('..', '..', '..', '..')
+data_path = os.path.join(top, 'data')
 predictions_path = os.path.join(data_path, 'naive_logreg_predictions', fname)
-results_path = os.path.join('..', '..', '..', '..', 'results', 'naive_logreg_results')
+results_path = os.path.join(top, 'results', 'naive_logreg_results')
 
 for path in [predictions_path, results_path]:
     if not os.path.isdir(path):
@@ -38,9 +39,6 @@ for path in [predictions_path, results_path]:
 # Load daily capacity data.
 df = load_occupancy_data(data_path, start_date, end_date)
 observations, targets = encode_data(df, obs=('IDs', ), targets=targets)
-
-targets = targets / 100
-targets = np.minimum(1, targets)
 
 # Save (observations, targets) to disk.
 np.save(os.path.join(data_path, 'naive_observations.npy'), observations)
