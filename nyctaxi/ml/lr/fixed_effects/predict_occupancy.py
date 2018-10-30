@@ -30,8 +30,8 @@ start_date, end_date = date(*start_date), date(*end_date)
 
 top = os.path.join('..', '..', '..', '..')
 data_path = os.path.join(top, 'data')
-predictions_path = os.path.join(data_path, 'naive_logreg_predictions', fname)
-results_path = os.path.join(top, 'results', 'naive_logreg_results')
+predictions_path = os.path.join(data_path, 'fixed_effects_lr_predictions', fname)
+results_path = os.path.join(top, 'results', 'fixed_effects_lr_results')
 
 for path in [predictions_path, results_path]:
     if not os.path.isdir(path):

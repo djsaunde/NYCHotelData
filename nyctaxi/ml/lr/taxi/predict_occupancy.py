@@ -38,8 +38,8 @@ top = os.path.join('..', '..', '..', '..')
 data_path = os.path.join(top, 'data')
 preproc_data_path = os.path.join(data_path, 'all_preprocessed_%d' % distance)
 taxi_occupancy_path = os.path.join(data_path, 'taxi_occupancy', fname)
-predictions_path = os.path.join(data_path, 'taxi_logreg_predictions', fname)
-results_path = os.path.join(top, 'results', 'taxi_logreg_results')
+predictions_path = os.path.join(data_path, 'taxi_lr_predictions', fname)
+results_path = os.path.join(top, 'results', 'taxi_lr_results')
 
 for path in [taxi_occupancy_path, predictions_path, results_path]:
     if not os.path.isdir(path):
@@ -112,8 +112,9 @@ print('Mean, standard deviation of test MSE: %.8f $\pm$ %.8f' % (np.mean(test_ms
 print('Mean, standard deviation of test R^2: %.8f' % np.mean(test_scores))
 print()
 print('%.8f $\pm$ %.8f & %.8f & %.8f $\pm$ %.8f & %.8f' % (
-np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.mean(test_mses), np.std(test_mses),
-np.mean(test_scores)))
+    np.mean(train_mses), np.std(train_mses), np.mean(train_scores), np.mean(test_mses), np.std(test_mses),
+    np.mean(test_scores)
+))
 print()
 
 columns = [
