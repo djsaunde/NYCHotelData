@@ -45,6 +45,8 @@ preproc_data_path = os.path.join(data_path, f'all_preprocessed_{distance}')
 predictions_path = os.path.join(data_path, f'{dataset}_revenue_predictions', fname)
 taxi_occupancy_path = os.path.join(data_path, 'taxi_occupancy', fname)
 results_path = os.path.join(top, 'results', f'{dataset}_revenue_results')
+lr_results_path = os.path.join(top, 'results', f'{dataset}_lr_results')
+logit_results_path = os.path.join(top, 'results', f'{dataset}_logit_results')
 
 for path in [predictions_path, results_path]:
     if not os.path.isdir(path):
@@ -61,12 +63,14 @@ elif dataset == 'taxi_no_fixed_effects':
     observations, targets = encode_data(df, obs=('IDs',), targets=('Occ', 'ADR', 'Revenue', 'Capacity'))
 elif dataset == 'fixed_effects':
     df = load_occupancy_data(data_path, start_date, end_date)
-    observations, targets = encode_data(df, obs=('IDs', 'Weekdays', 'Months', 'Years'), targets=('Occ', 'ADR', 'Revenue', 'Capacity'))
+    observations, targets = encode_data(df, obs=('IDs', 'Weekdays', 'Months', 'Years'),
+                                        targets=('Occ', 'ADR', 'Revenue', 'Capacity'))
 elif dataset == 'taxi':
     df = load_merged_data(
         data_path, taxi_occupancy_path, preproc_data_path, start_date, end_date, trip_type
     )
-    observations, targets = encode_data(df, obs=('IDs', 'Weekdays', 'Months', 'Years'), targets=('Occ', 'ADR', 'Revenue', 'Capacity'))
+    observations, targets = encode_data(df, obs=('IDs', 'Weekdays', 'Months', 'Years'),
+                                        targets=('Occ', 'ADR', 'Revenue', 'Capacity'))
 else:
     raise NotImplementedError
 
@@ -78,6 +82,16 @@ train_scores = []
 test_scores = []
 train_mses = []
 test_mses = []
+
+# train_lr_scores = []
+# test_lr_scores = []
+# train_lr_mses = []
+# test_lr_mses = []
+#
+# train_logit_scores = []
+# test_logit_scores = []
+# train_logit_mses = []
+# test_logit_mses = []
 
 for i in range(trials):  # Run 5 independent realizations of training / test.
     print('\nTraining, testing model %d / %d' % (i + 1, trials))
@@ -94,20 +108,16 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
 
     print('Creating and training occupancy regression model.')
 
-    occ_model = LogitRegression().fit(train_x[:, 0].reshape(-1, 1), train_y[:, 0].reshape(-1, 1))
+    occ_model = LogitRegression().fit(train_x, train_y[:, 0].reshape(-1, 1))
 
     print('Creating and training ADR regression model.')
 
-    adr_model = LinearRegression().fit(train_x[:, 1].reshape(-1, 1), train_y[:, 1].reshape(-1, 1))
+    adr_model = LinearRegression().fit(train_x, train_y[:, 1].reshape(-1, 1))
 
     print('Training complete. Getting predictions and calculating R^2, MSE.')
 
-    train_preds = occ_model.predict(train_x[:, 0].reshape(-1, 1)) * \
-                  adr_model.predict(train_x[:, 1].reshape(-1, 1)) * \
-                  train_y[:, 3].reshape(-1, 1)
-    test_preds = occ_model.predict(test_x[:, 0].reshape(-1, 1)) * \
-                 adr_model.predict(test_x[:, 1].reshape(-1, 1)) * \
-                 test_y[:, 3].reshape(-1, 1)
+    train_preds = occ_model.predict(train_x) * adr_model.predict(train_x) * train_y[:, 3].reshape(-1, 1)
+    test_preds = occ_model.predict(test_x) * adr_model.predict(test_x) * test_y[:, 3].reshape(-1, 1)
 
     train_r2 = r2_score(train_y[:, 2].reshape(-1, 1), train_preds)
     test_r2 = r2_score(test_y[:, 2].reshape(-1, 1), test_preds)
@@ -127,6 +137,26 @@ for i in range(trials):  # Run 5 independent realizations of training / test.
     print('Test MSE: %.8f' % test_mses[-1])
     print('Test R^2: %.8f' % test_scores[-1])
     print()
+
+    # train_lr_scores.append(r2_score(train_y[:, 1].reshape(-1, 1), adr_model.predict(train_x[:, 1].reshape(-1, 1))))
+    # test_lr_scores.append(r2_score(test_y[:, 1].reshape(-1, 1), adr_model.predict(test_x[:, 1].reshape(-1, 1))))
+    #
+    # train_lr_mses.append(
+    #     mean_squared_error(train_y[:, 1].reshape(-1, 1), adr_model.predict(train_x[:, 1].reshape(-1, 1)))
+    # )
+    # train_lr_mses.append(
+    #     mean_squared_error(test_y[:, 1].reshape(-1, 1), adr_model.predict(test_x[:, 1].reshape(-1, 1)))
+    # )
+    #
+    # train_lr_scores.append(r2_score(train_y[:, 0].reshape(-1, 1), adr_model.predict(train_x[:, 0].reshape(-1, 1))))
+    # test_lr_scores.append(r2_score(test_y[:, 0].reshape(-1, 1), adr_model.predict(test_x[:, 0].reshape(-1, 1))))
+    #
+    # train_lr_mses.append(
+    #     mean_squared_error(train_y[:, 0].reshape(-1, 1), adr_model.predict(train_x[:, 0].reshape(-1, 1)))
+    # )
+    # train_lr_mses.append(
+    #     mean_squared_error(test_y[:, 0].reshape(-1, 1), adr_model.predict(test_x[:, 0].reshape(-1, 1)))
+    # )
 
     np.save(os.path.join(predictions_path, 'train_targets_%d.npy' % i), train_y)
     np.save(os.path.join(predictions_path, 'train_predictions_%d.npy' % i), train_preds)
