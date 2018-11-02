@@ -38,8 +38,8 @@ top = os.path.join('..', '..', '..', '..')
 data_path = os.path.join(top, 'data')
 preproc_data_path = os.path.join(data_path, 'all_preprocessed_%d' % distance)
 taxi_occupancy_path = os.path.join(data_path, 'taxi_occupancy', fname)
-predictions_path = os.path.join(data_path, 'taxi_logreg_predictions', fname)
-results_path = os.path.join(top, 'results', 'taxi_logreg_results')
+predictions_path = os.path.join(data_path, 'taxi_no_fixed_effects_lr_predictions', fname)
+results_path = os.path.join(top, 'results', 'taxi_no_fixed_effects_lr_results')
 
 for path in [taxi_occupancy_path, predictions_path, results_path]:
     if not os.path.isdir(path):
